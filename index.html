@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Barlow+Condensed:wght@400;500;600;700&family=Barlow:wght@400;500&display=swap');
+
+  :root {
+    --pink: #E8186A;
+    --pink-light: #FF4D9E;
+    --yellow: #FFD600;
+    --orange: #FF6B00;
+    --cream: #FFF5E0;
+    --dark: #0F0800;
+    --card-bg: #1A0E05;
+    --border: rgba(232,24,106,0.25);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--dark);
+    color: var(--cream);
+    font-family: 'Barlow', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.4;
+  }
+
+  .ticker {
+    background: var(--pink);
+    padding: 8px 0;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .ticker-inner {
+    display: inline-block;
+    animation: ticker 22s linear infinite;
+  }
+  @keyframes ticker {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  .ticker-item {
+    display: inline-block;
+    font-family: 'Black Ops One', sans-serif;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.9);
+    margin: 0 24px;
+  }
+  .ticker-sep { display: inline-block; color: rgba(255,255,255,0.4); margin: 0 8px; }
+
+  nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 0.5px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: rgba(15,8,0,0.92);
+    backdrop-filter: blur(12px);
+    z-index: 100;
+  }
+  .nav-logo {
+    font-family: 'Black Ops One', sans-serif;
+    font-size: 22px;
+    color: var(--pink);
+    letter-spacing: 2px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .nav-logo span { color: var(--yellow); }
+  .nav-right { display: flex; align-items: center; gap: 12px; }
+  .nav-link {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,245,224,0.5);
+    cursor: pointer;
+    transition: color .2s;
+  }
+  .nav-link:hover { color: var(--cream); }
+  .connect-btn {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: var(--pink);
+    color: #fff;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background .2s, transform .1s;
+  }
+  .connect-btn:hover { background: var(--pink-light); }
+  .connect-btn:active { transform: scale(0.97); }
+
+  .hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 480px;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .hero-left {
+    padding: 48px 36px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-right: 0.5px solid var(--border);
+  }
+  .hero-eyebrow {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--pink);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .live-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--pink);
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.4); }
+  }
+  .hero-title {
+    font-family: 'Black Ops One', sans-serif;
+    font-size: 64px;
+    line-height: 0.95;
+    margin-bottom: 6px;
+  }
+  .hero-title .hot { color: var(--pink); }
+  .hero-title .fire { font-size: 48px; }
+
+  .hero-tagline {
+    margin-top: 14px;
+    margin-bottom: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .tagline-main {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--yellow);
+    text-transform: uppercase;
+  }
+  .tagline-sub {
+    font-size: 14px;
+    color: rgba(255,245,224,0.5);
+    line-height: 1.7;
+    max-width: 360px;
+  }
+  .tagline-sub span {
+    color: rgba(255,245,224,0.75);
+    font-weight: 500;
+  }
+
+  .hero-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 28px;
+  }
+  .stat { background: var(--card-bg); padding: 14px 16px; }
+  .stat-val {
+    font-family: 'Black Ops One', sans-serif;
+    font-size: 22px;
+    color: var(--yellow);
+    line-height: 1;
+  }
+  .stat-lbl {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,245,224,0.4);
+    margin-top: 4px;
+  }
+  .buy-section { display: flex; flex-direction: column; gap: 10px; }
+  .price-tag { display: flex; align-items: baseline; gap: 10px; }
+  .price-eth { font-family: 'Black Ops One', sans-serif; font-size: 36px; color: var(--cream); }
+  .price-usd { font-size: 14px; color: rgba(255,245,224,0.4); }
+  .price-change { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; color: var(--orange); letter-spacing: 0.05em; }
+  .hold-timer {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: rgba(255,245,224,0.35);
+    margin-top: 2px;
+  }
+  .timer-val { font-family: 'Black Ops One', sans-serif; font-size: 13px; color: var(--orange); }
+  .buy-btn {
+    font-family: 'Black Ops One', sans-serif;
+    font-size: 18px;
+    letter-spacing: 2px;
+    background: var(--pink);
+    color: #fff;
+    border: none;
+    padding: 16px 32px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all .2s;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: fit-content;
+  }
+  .buy-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.4s;
+  }
+  .buy-btn:hover::after { transform: translateX(100%); }
+  .buy-btn:hover { background: var(--pink-light); transform: translateY(-2px); }
+  .buy-btn:active { transform: scale(0.98); }
+  .buy-note { font-size: 12px; color: rgba(255,245,224,0.3); }
+
+  .hero-right {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    background: radial-gradient(ellipse at center, rgba(232,24,106,0.12) 0%, transparent 70%);
+    position: relative;
+  }
+  .potato-card {
+    background: var(--pink);
+    border-radius: 16px;
+    width: 260px;
+    height: 260px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    box-shadow: 0 0 60px rgba(232,24,106,0.4), 0 0 120px rgba(232,24,106,0.15);
+    animation: float 4s ease-in-out infinite;
+  }
+  .potato-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 16px;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-12px); }
+  }
+  .potato-emoji { font-size: 120px; line-height: 1; }
+  .potato-badge {
+    position: absolute;
+    top: -12px; right: -12px;
+    background: var(--yellow);
+    color: var(--dark);
+    font-family: 'Black Ops One', sans-serif;
+    font-size: 11px;
+    padding: 5px 10px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+  }
+  .potato-owner {
+    position: absolute;
+    bottom: -36px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255,245,224,0.4);
+    white-space: nowrap;
+  }
+  .heat-meter {
+    position: absolute;
+    left: -48px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .heat-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,245,224,0.3);
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+  }
+  .heat-bar { width: 8px; height: 120px; background: rgba(255,245,224,0.08); border-radius: 4px; overflow: hidden; display: flex; flex-direction: column-reverse; }
+  .heat-fill {
+    width: 100%;
+    background: linear-gradient(to top, var(--orange), var(--pink), var(--yellow));
+    border-radius: 4px;
+    animation: heatrise 6s ease-in-out infinite;
+  }
+  @keyframes heatrise {
+    0%, 100% { height: 45%; }
+    50% { height: 65%; }
+  }
+
+  .section { padding: 48px 24px; border-bottom: 0.5px solid var(--border); }
+  .section-header { display: flex; align-items: baseline; gap: 16px; margin-bottom: 24px; }
+  .section-title { font-family: 'Black Ops One', sans-serif; font-size: 20px; color: var(--cream); letter-spacing: 1px; }
+  .section-count { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--pink); }
+
+  .history-table { width: 100%; border-collapse: collapse; }
+  .history-table th { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(255,245,224,0.3); padding: 8px 12px; text-align: left; border-bottom: 0.5px solid var(--border); }
+  .history-table td { font-size: 13px; padding: 12px 12px; border-bottom: 0.5px solid rgba(232,24,106,0.08); color: rgba(255,245,224,0.8); }
+  .history-table tr:hover td { background: rgba(232,24,106,0.05); }
+  .addr { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; color: rgba(255,245,224,0.6); }
+  .price-cell { font-family: 'Black Ops One', sans-serif; font-size: 14px; color: var(--yellow); }
+  .hand-num { font-family: 'Black Ops One', sans-serif; font-size: 11px; color: rgba(255,245,224,0.3); letter-spacing: 1px; }
+  .rarity-pill { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; display: inline-block; }
+  .r-common  { background: rgba(180,178,169,0.15); color: #D3D1C7; }
+  .r-rare    { background: rgba(55,138,221,0.15);  color: #85B7EB; }
+  .r-epic    { background: rgba(83,74,183,0.15);   color: #AFA9EC; }
+  .r-legend  { background: rgba(239,159,39,0.15);  color: #FAC775; }
+
+  .gallery { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  .souvenir-card { background: var(--card-bg); border: 0.5px solid var(--border); border-radius: 10px; overflow: hidden; cursor: pointer; transition: transform .2s, border-color .2s; }
+  .souvenir-card:hover { transform: translateY(-4px); border-color: var(--pink); }
+  .souvenir-art { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 40px; position: relative; }
+  .souvenir-generating { position: absolute; inset: 0; background: rgba(15,8,0,0.7); display: flex; align-items: center; justify-content: center; font-size: 10px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--pink); }
+  .souvenir-info { padding: 8px 10px; border-top: 0.5px solid var(--border); }
+  .souvenir-hand { font-family: 'Black Ops One', sans-serif; font-size: 11px; color: rgba(255,245,224,0.4); letter-spacing: 1px; }
+  .souvenir-rarity { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 2px; }
+
+  .rules-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .rule-card { background: var(--card-bg); border: 0.5px solid var(--border); border-radius: 10px; padding: 20px 18px; }
+  .rule-icon { font-size: 24px; margin-bottom: 12px; display: block; }
+  .rule-title { font-family: 'Black Ops One', sans-serif; font-size: 14px; color: var(--pink); letter-spacing: 1px; margin-bottom: 8px; }
+  .rule-desc { font-size: 13px; color: rgba(255,245,224,0.5); line-height: 1.6; }
+  .rule-highlight { color: var(--yellow); font-weight: 500; }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 500; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--card-bg); border: 0.5px solid var(--border); border-radius: 16px; padding: 32px; width: 380px; position: relative; }
+  .modal-title { font-family: 'Black Ops One', sans-serif; font-size: 22px; color: var(--cream); letter-spacing: 1px; margin-bottom: 6px; }
+  .modal-sub { font-size: 13px; color: rgba(255,245,224,0.4); margin-bottom: 24px; line-height: 1.5; }
+  .modal-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 0.5px solid var(--border); font-size: 13px; }
+  .modal-row:last-of-type { border-bottom: none; }
+  .modal-key { color: rgba(255,245,224,0.4); }
+  .modal-val { font-weight: 500; color: var(--cream); }
+  .modal-val.yellow { color: var(--yellow); font-family: 'Black Ops One', sans-serif; }
+  .modal-input-label { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,245,224,0.4); margin-top: 20px; margin-bottom: 8px; }
+  .modal-input { width: 100%; background: rgba(255,245,224,0.05); border: 0.5px solid var(--border); border-radius: 6px; padding: 12px 14px; font-family: 'Black Ops One', sans-serif; font-size: 18px; color: var(--cream); outline: none; transition: border-color .2s; }
+  .modal-input:focus { border-color: var(--pink); }
+  .modal-input-note { font-size: 11px; color: rgba(255,245,224,0.25); margin-top: 6px; }
+  .modal-buy-btn { width: 100%; margin-top: 20px; font-family: 'Black Ops One', sans-serif; font-size: 16px; letter-spacing: 2px; background: var(--pink); color: #fff; border: none; padding: 16px; border-radius: 6px; cursor: pointer; transition: background .2s; }
+  .modal-buy-btn:hover { background: var(--pink-light); }
+  .modal-close { position: absolute; top: 16px; right: 16px; background: transparent; border: none; color: rgba(255,245,224,0.3); font-size: 20px; cursor: pointer; transition: color .2s; }
+  .modal-close:hover { color: var(--cream); }
+
+  footer { padding: 24px; display: flex; justify-content: space-between; align-items: center; }
+  .footer-logo { font-family: 'Black Ops One', sans-serif; font-size: 16px; color: rgba(255,245,224,0.2); letter-spacing: 2px; }
+  .footer-links { display: flex; gap: 20px; }
+  .footer-link { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,245,224,0.25); cursor: pointer; transition: color .2s; }
+  .footer-link:hover { color: var(--pink); }
+
+  @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .hero-left > * { animation: fadeInUp 0.5s ease both; }
+  .hero-eyebrow  { animation-delay: 0.05s; }
+  .hero-title    { animation-delay: 0.12s; }
+  .hero-tagline  { animation-delay: 0.18s; }
+  .hero-stats    { animation-delay: 0.24s; }
+  .buy-section   { animation-delay: 0.30s; }
+</style>
+</head>
+<body>
+
+<div class="ticker">
+  <div class="ticker-inner">
+    <span class="ticker-item">🔥 HOT POTATO</span><span class="ticker-sep">·</span>
+    <span class="ticker-item">ALWAYS FOR SALE</span><span class="ticker-sep">·</span>
+    <span class="ticker-item">ONLY FOR STRONG HANDS</span><span class="ticker-sep">·</span>
+    <span class="ticker-item">PRICE ONLY GOES UP</span><span class="ticker-sep">·</span>
+    <span class="ticker-item">BUILT ON BASE</span><span class="ticker-sep">·</span>
+    <span class="ticker-item">HOLD LONGER. GET RARER.</span><span class="ticker-sep">·</span>
+    <span class="ticker-item">🔥 HOT POTATO</span><span class="ticker-sep">·</span>
+    <span class="ticker-item">ALWAYS FOR SALE</span><span class="ticker-sep">·</span>
+    <span class="ticker-item">ONLY FOR STRONG HANDS</span><span class="ticker-sep">·</span>
+    <span class="ticker-item">PRICE ONLY GOES UP</span><span class="ticker-sep">·</span>
+    <span class="ticker-item">BUILT ON BASE</span><span class="ticker-sep">·</span>
+    <span class="ticker-item">HOLD LONGER. GET RARER.</span><span class="ticker-sep">·</span>
+  </div>
+</div>
+
+<nav>
+  <div class="nav-logo">HOT<span>🔥</span>POTATO</div>
+  <div class="nav-right">
+    <span class="nav-link">History</span>
+    <span class="nav-link">Souvenirs</span>
+    <span class="nav-link">Rules</span>
+    <button class="connect-btn" onclick="connectWallet()">Connect Wallet</button>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-left">
+    <div class="hero-eyebrow">
+      <div class="live-dot"></div>
+      Live on Base · Transfer #12
+    </div>
+    <div class="hero-title">
+      <div class="hot">HOT</div>
+      <div>POTATO <span class="fire">🔥</span></div>
+    </div>
+    <div class="hero-tagline">
+      <div class="tagline-main">Price only goes up. ↑</div>
+      <div class="tagline-sub">
+        The NFT that's always for sale. <span>Pass it on — or hold on tight.</span><br>
+        Every transfer mints a souvenir. <span>Only strong hands get Legendary.</span>
+      </div>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><div class="stat-val">0.42</div><div class="stat-lbl">ETH Price</div></div>
+      <div class="stat"><div class="stat-val">12</div><div class="stat-lbl">Transfers</div></div>
+      <div class="stat"><div class="stat-val">11</div><div class="stat-lbl">Souvenirs</div></div>
+    </div>
+    <div class="buy-section">
+      <div class="price-tag">
+        <div class="price-eth">0.42 ETH</div>
+        <div class="price-usd">≈ $1,260</div>
+        <div class="price-change">↑ MIN +15%</div>
+      </div>
+      <div class="hold-timer">
+        Current holder for <span class="timer-val" id="hold-display">2d 14h 33m</span>
+        <span>— rarity building 🔥</span>
+      </div>
+      <button class="buy-btn" onclick="openModal()">🥔 BUY THE POTATO</button>
+      <div class="buy-note">Minimum bid: 0.42 ETH · New price must be ≥ 0.483 ETH</div>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="heat-meter">
+      <div class="heat-bar"><div class="heat-fill"></div></div>
+      <div class="heat-label">Heat</div>
+    </div>
+    <div class="potato-card">
+      <div class="potato-badge">ONE OF ONE</div>
+      <img class="potato-img" src="hero-potato.jpg" alt="Hot Potato">
+      <div class="potato-owner">Owner: 0x4f2a...8c3e</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-header">
+    <div class="section-title">OWNERSHIP HISTORY</div>
+    <div class="section-count">12 transfers</div>
+  </div>
+  <table class="history-table">
+    <thead><tr><th>Hand</th><th>Address</th><th>Price Paid</th><th>Held For</th><th>Souvenir</th></tr></thead>
+    <tbody id="history-body"></tbody>
+  </table>
+</div>
+
+<div class="section">
+  <div class="section-header">
+    <div class="section-title">SOUVENIR GALLERY</div>
+    <div class="section-count">11 minted</div>
+  </div>
+  <div class="gallery" id="souvenir-gallery"></div>
+</div>
+
+<div class="section">
+  <div class="section-header"><div class="section-title">THE RULES</div></div>
+  <div class="rules-grid">
+    <div class="rule-card">
+      <span class="rule-icon">🔥</span>
+      <div class="rule-title">Always For Sale</div>
+      <div class="rule-desc">The Hot Potato is <span class="rule-highlight">always listed</span>. The owner cannot delist it. Anyone can buy at any time.</div>
+    </div>
+    <div class="rule-card">
+      <span class="rule-icon">📈</span>
+      <div class="rule-title">Price Only Goes Up</div>
+      <div class="rule-desc">Every new buyer must pay <span class="rule-highlight">at least 15% more</span> than the last sale. Enforced by the contract — no exceptions.</div>
+    </div>
+    <div class="rule-card">
+      <span class="rule-icon">👑</span>
+      <div class="rule-title">Hold Longer. Get Rarer.</div>
+      <div class="rule-desc">Every sale mints a <span class="rule-highlight">unique souvenir</span> for the outgoing owner. Hold for 3+ months for a <span class="rule-highlight">50% Legendary</span> chance.</div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-logo">HOT🔥POTATO</div>
+  <div class="footer-links">
+    <span class="footer-link">Contract</span>
+    <span class="footer-link">OpenSea</span>
+    <span class="footer-link">Twitter</span>
+    <span class="footer-link">Discord</span>
+  </div>
+</footer>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title">BUY THE POTATO</div>
+    <div class="modal-sub">You'll receive the Hot Potato NFT. The current holder gets their souvenir — rarity based on how long they've held.</div>
+    <div class="modal-row"><span class="modal-key">Current price</span><span class="modal-val yellow">0.42 ETH</span></div>
+    <div class="modal-row"><span class="modal-key">Current holder rarity odds</span><span class="modal-val"><span class="rarity-pill r-rare">🔥 Rare tier</span></span></div>
+    <div class="modal-input-label">Your new asking price (min. 0.483 ETH)</div>
+    <input class="modal-input" type="number" id="new-price-input" value="0.50" step="0.01" min="0.483">
+    <div class="modal-input-note">Set this higher to maximise your profit when the next buyer comes.</div>
+    <button class="modal-buy-btn" onclick="confirmBuy()">🔥 CONFIRM PURCHASE</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+<script>
+// ─── CONFIG ───────────────────────────────────────────────
+const API_BASE = 'http://localhost:3001/api';
+const CONTRACT_ADDRESS = '0x2E8eA15a54Db53375807A8F74ad6ff6eC4a4065e';
+const CHAIN_ID = 84532; // Base Sepolia
+const CONTRACT_ABI = [
+  'function buyPotato(uint256 newAskingPrice) external payable',
+  'function getGameState() external view returns (address currentOwner, uint256 price, uint256 timeHeld, uint256 totalTransfers)',
+];
+
+// ─── STATE ────────────────────────────────────────────────
+let gameState = null;
+let walletAddress = null;
+let holdSeconds = 0;
+
+const rarityLabel = { common: 'Common', rare: 'Rare', epic: 'Epic', legendary: 'Legendary' };
+const rarityClass  = { common: 'r-common', rare: 'r-rare', epic: 'r-epic', legendary: 'r-legend' };
+const rarityEmoji  = { common: '🥔', rare: '🔥', epic: '⚡', legendary: '👑' };
+const rarityColor  = { common: '#B4B2A9', rare: '#85B7EB', epic: '#AFA9EC', legendary: '#FAC775' };
+
+// ─── LOAD GAME STATE FROM BACKEND ─────────────────────────
+async function loadGameState() {
+  try {
+    const res = await fetch(`${API_BASE}/potato`);
+    gameState = await res.json();
+
+    const price = parseFloat(gameState.currentPrice).toFixed(3);
+    const minNext = (parseFloat(gameState.currentPrice) * 1.15).toFixed(3);
+    const holder = gameState.currentHolder;
+    const shortHolder = holder.slice(0, 6) + '...' + holder.slice(-4);
+    const transfers = gameState.totalTransfers;
+    const souvenirs = gameState.totalSouvenirs;
+    const rarity = gameState.rarity;
+
+    // Update hero stats
+    document.querySelector('.hero-eyebrow').innerHTML = `<div class="live-dot"></div> Live on Base · Transfer #${transfers}`;
+    document.querySelectorAll('.stat-val')[0].textContent = price;
+    document.querySelectorAll('.stat-val')[1].textContent = transfers;
+    document.querySelectorAll('.stat-val')[2].textContent = souvenirs;
+
+    // Update price display
+    document.querySelector('.price-eth').textContent = `${price} ETH`;
+    document.querySelector('.price-usd').textContent = `≈ $${(price * 3000).toFixed(0)}`;
+
+    // Update buy note
+    document.querySelector('.buy-note').textContent = `Minimum bid: ${price} ETH · New price must be ≥ ${minNext} ETH`;
+
+    // Update modal
+    document.querySelector('.modal-row .modal-val.yellow').textContent = `${price} ETH`;
+    document.querySelector('.modal-input').min = minNext;
+    document.querySelector('.modal-input').value = minNext;
+    document.querySelector('.modal-input-note').textContent = `Set this higher to maximise your profit when the next buyer comes.`;
+
+    // Update modal rarity pill
+    const tier = rarity?.tier || 'common';
+    document.querySelector('.modal-row:nth-child(3) .modal-val').innerHTML =
+      `<span class="rarity-pill ${rarityClass[tier]}">${rarityEmoji[tier]} ${rarityLabel[tier]} tier</span>`;
+
+    // Update holder display
+    document.querySelector('.potato-owner').textContent = `Owner: ${shortHolder}`;
+
+    // Start hold timer
+    holdSeconds = Math.floor(gameState.holdDurationSeconds);
+    updateTimer();
+
+    // Update section counts
+    document.querySelectorAll('.section-count')[0].textContent = `${transfers} transfers`;
+    document.querySelectorAll('.section-count')[1].textContent = `${souvenirs} minted`;
+
+  } catch (err) {
+    console.error('Failed to load game state:', err);
+  }
+}
+
+// ─── HOLD TIMER ───────────────────────────────────────────
+function formatDuration(secs) {
+  const d = Math.floor(secs / 86400);
+  const h = Math.floor((secs % 86400) / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  if (d > 0) return `${d}d ${h}h ${m}m`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
+
+function updateTimer() {
+  holdSeconds++;
+  document.getElementById('hold-display').textContent = formatDuration(holdSeconds);
+}
+setInterval(updateTimer, 1000);
+
+// ─── WALLET ───────────────────────────────────────────────
+async function connectWallet() {
+  if (!window.ethereum) {
+    alert('MetaMask not found. Please install MetaMask to buy the potato.');
+    return;
+  }
+  try {
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    walletAddress = accounts[0];
+    const btn = document.querySelector('.connect-btn');
+    btn.textContent = walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
+    btn.style.background = 'rgba(232,24,106,0.15)';
+    btn.style.border = '0.5px solid rgba(232,24,106,0.4)';
+    btn.style.color = 'var(--pink)';
+
+    // Switch to Base Sepolia if needed
+    try {
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: '0x' + CHAIN_ID.toString(16) }],
+      });
+    } catch (e) {
+      if (e.code === 4902) {
+        await window.ethereum.request({
+          method: 'wallet_addEthereumChain',
+          params: [{
+            chainId: '0x' + CHAIN_ID.toString(16),
+            chainName: 'Base Sepolia',
+            nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+            rpcUrls: ['https://sepolia.base.org'],
+            blockExplorerUrls: ['https://sepolia-explorer.base.org'],
+          }],
+        });
+      }
+    }
+  } catch (err) {
+    console.error('Wallet connection failed:', err);
+  }
+}
+
+// ─── BUY MODAL ────────────────────────────────────────────
+function openModal() {
+  if (!walletAddress) {
+    connectWallet().then(() => {
+      if (walletAddress) document.getElementById('modal').classList.add('open');
+    });
+    return;
+  }
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal')) closeModal();
+});
+
+// ─── BUY TRANSACTION ──────────────────────────────────────
+async function confirmBuy() {
+  if (!walletAddress || !gameState) return;
+
+  const newPriceEth = parseFloat(document.getElementById('new-price-input').value);
+  const minPrice = parseFloat(gameState.currentPrice) * 1.15;
+
+  if (newPriceEth < minPrice) {
+    document.getElementById('new-price-input').style.borderColor = '#FF4444';
+    return;
+  }
+
+  try {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+
+    const sendValue = ethers.parseEther(gameState.currentPrice);
+    const newAskingPrice = ethers.parseEther(newPriceEth.toString());
+
+    const btn = document.querySelector('.modal-buy-btn');
+    btn.textContent = '⏳ Waiting for wallet...';
+    btn.disabled = true;
+
+    const tx = await contract.buyPotato(newAskingPrice, { value: sendValue });
+
+    btn.textContent = '⏳ Transaction pending...';
+    await tx.wait();
+
+    closeModal();
+    btn.textContent = '🔥 CONFIRM PURCHASE';
+    btn.disabled = false;
+
+    alert('🥔 You now hold the Hot Potato! Your souvenir is being generated...');
+    loadGameState(); // Refresh data
+  } catch (err) {
+    console.error('Buy failed:', err);
+    alert('Transaction failed: ' + (err.reason || err.message));
+    const btn = document.querySelector('.modal-buy-btn');
+    btn.textContent = '🔥 CONFIRM PURCHASE';
+    btn.disabled = false;
+  }
+}
+
+// ─── INIT ─────────────────────────────────────────────────
+loadGameState();
+setInterval(loadGameState, 30000); // Refresh every 30s
+</script>
+</body>
+</html>

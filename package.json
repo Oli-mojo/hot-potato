@@ -1,0 +1,18 @@
+{
+  "name": "hot-potato",
+  "version": "1.0.0",
+  "description": "",
+  "main": "check-training.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@fal-ai/client": "^1.9.5",
+    "dotenv": "^17.4.2",
+    "form-data": "^4.0.5",
+    "node-fetch": "^3.3.2"
+  }
+}

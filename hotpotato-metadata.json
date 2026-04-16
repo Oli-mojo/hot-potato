@@ -1,0 +1,12 @@
+{
+  "name": "The Hot Potato",
+  "description": "The one and only Hot Potato. Always for sale. Always getting hotter. Price only goes up.",
+  "image": "ipfs://bafybeiaxzjeloyoxjycwrj7hdzjyldw2tt73yovzrkdt3eyrhv4b6yij2q",
+  "external_url": "https://hotpotato.xyz",
+  "attributes": [
+    { "trait_type": "Type", "value": "Hot Potato" },
+    { "trait_type": "Status", "value": "Always For Sale" },
+    { "trait_type": "Edition", "value": "One of One" },
+    { "trait_type": "Chain", "value": "Base" }
+  ]
+}

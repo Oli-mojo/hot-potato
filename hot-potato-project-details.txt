@@ -1,0 +1,65 @@
+HOT POTATO — PROJECT DETAILS
+=============================
+Last updated: April 12, 2026
+
+SMART CONTRACT
+--------------
+Contract Name:     HotPotato
+Network:           Base Sepolia Testnet (Chain ID: 84532)
+Contract Address:  0x2E8eA15a54Db53375807A8F74ad6ff6eC4a4065e
+Explorer:          https://sepolia-explorer.base.org/address/0x2E8eA15a54Db53375807A8F74ad6ff6eC4a4065e
+Deployed:          April 12, 2026
+
+GAME SETTINGS
+-------------
+Starting Price:    0.01 ETH (~$20)
+Min Price Inc:     15%
+Creator Royalty:   5% (on every potato trade + souvenir trade)
+Token Standard:    ERC721
+Ticker:            HOTP
+
+IPFS / PINATA
+-------------
+Hero Image CID:    bafybeiaxzjeloyoxjycwrj7hdzjyldw2tt73yovzrkdt3eyrhv4b6yij2q
+Hero Image URL:    ipfs://bafybeiaxzjeloyoxjycwrj7hdzjyldw2tt73yovzrkdt3eyrhv4b6yij2q
+Metadata CID:      bafkreidslwp5mls5bulfem3743z3vsmcvtvkk5vacyl73f2vdsla7jjijq
+Metadata URL:      ipfs://bafkreidslwp5mls5bulfem3743z3vsmcvtvkk5vacyl73f2vdsla7jjijq
+
+RARITY TIERS (hold time based)
+-------------------------------
+Under 24h:   Common 85% / Rare 12% / Epic 2%  / Legendary 1%
+1-7 days:    Common 60% / Rare 28% / Epic 9%  / Legendary 3%
+1-4 weeks:   Common 20% / Rare 40% / Epic 25% / Legendary 15%  ← Sweet spot
+1-3 months:  Common 5%  / Rare 20% / Epic 45% / Legendary 30%
+3+ months:   Common 1%  / Rare 9%  / Epic 40% / Legendary 50%
+
+REPLICATE (AI image generation)
+--------------------------------
+Account:       replicate.com
+Model:         hot-potato (private)
+Trigger word:  HOTPOTATO
+Status:        Training scheduled for Monday April 14
+
+TECH STACK
+----------
+Blockchain:    Base (mainnet target)
+AI Images:     Replicate + FLUX LoRA
+Storage:       Pinata / IPFS
+Backend:       Node.js (to be built)
+Frontend:      React / Vercel (to be built)
+RPC Provider:  Alchemy / QuickNode (free tier)
+
+TODO — MONDAY
+-------------
+[ ] Check Replicate training completed
+[ ] Test souvenir image generation
+[ ] Build Node.js backend
+[ ] Test full buy/souvenir flow on testnet
+[ ] Deploy to Base mainnet
+
+TODO — PENDING
+--------------
+[ ] Finalise hero potato artwork (Midjourney / Fiverr)
+[ ] Finalise tagline copy
+[ ] Set up Discord & Twitter
+[ ] Build production website
