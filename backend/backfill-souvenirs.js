@@ -7,7 +7,7 @@ const { generateSouvenirImage } = require('./services/imageGen');
 const { uploadImageToIPFS, uploadMetadataToIPFS, buildMetadata } = require('./services/ipfs');
 const { setSouvenirURI } = require('./services/contract');
 
-const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || '0x2E8eA15a54Db53375807A8F74ad6ff6eC4a4065e';
+const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || '0x0Ab53A236d0AFe4507187110Faa54183Aca31713';
 const RPC_URL = process.env.RPC_URL || 'https://base-sepolia.g.alchemy.com/v2/CCsT7yY4zuEqcoCPeivbS';
 
 const RARITY_MAP = ['common', 'rare', 'epic', 'legendary'];
