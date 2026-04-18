@@ -494,20 +494,20 @@
 <div class="section">
   <div class="section-header">
     <div class="section-title">OWNERSHIP HISTORY</div>
-    <div class="section-count" id="history-count">0 transfers</div>
+    <div class="section-count" id="history-count">loading…</div>
   </div>
   <table class="history-table">
     <thead><tr><th>Hand</th><th>Address</th><th>Price Paid</th><th>Held For</th><th>Souvenir</th></tr></thead>
-    <tbody id="history-body"></tbody>
+    <tbody id="history-body"><tr><td colspan="5" style="color:rgba(255,245,224,0.3);padding:24px 12px;">Loading ownership history…</td></tr></tbody>
   </table>
 </div>
 
 <div class="section">
   <div class="section-header">
     <div class="section-title">SOUVENIR GALLERY</div>
-    <div class="section-count">11 minted</div>
+    <div class="section-count" id="gallery-count">loading…</div>
   </div>
-  <div class="gallery" id="souvenir-gallery"></div>
+  <div class="gallery" id="souvenir-gallery"><div style="color:rgba(255,245,224,0.3);font-size:13px;grid-column:1/-1;padding:24px 0;">Loading souvenirs…</div></div>
 </div>
 
 <div class="section">
@@ -887,10 +887,13 @@ async function loadGallery() {
   try {
     const res = await fetch(`${API_BASE}/souvenir/gallery`);
     const data = await res.json();
+    const gCount = document.getElementById('gallery-count');
     if (data.error || !data.souvenirs || data.souvenirs.length === 0) {
+      if (gCount) gCount.textContent = '0 minted';
       gallery.innerHTML = '<div style="color:rgba(255,245,224,0.3);font-size:13px;grid-column:1/-1;padding:24px 0;">No souvenirs yet — buy the potato to mint the first one.</div>';
       return;
     }
+    if (gCount) gCount.textContent = `${data.total} minted`;
     gallery.innerHTML = data.souvenirs.map(s => {
       const art = s.imageUrl
         ? `<img src="${s.imageUrl}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px 8px 0 0;" onerror="this.outerHTML='<div style=\\'aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:40px;background:#1A0E05;\\'>${rarityBadge[s.rarityTier] || '🥔'}</div>'">`
@@ -905,7 +908,9 @@ async function loadGallery() {
     }).join('');
   } catch (err) {
     console.error('Gallery load failed:', err);
-    gallery.innerHTML = '<div style="color:rgba(255,245,224,0.3);font-size:13px;grid-column:1/-1;padding:24px 0;">Gallery loading…</div>';
+    const gCount = document.getElementById('gallery-count');
+    if (gCount) gCount.textContent = 'error';
+    gallery.innerHTML = '<div style="color:rgba(255,245,224,0.3);font-size:13px;grid-column:1/-1;padding:24px 0;">Failed to load gallery — will retry.</div>';
   }
 }
 
@@ -923,11 +928,12 @@ async function loadHistory() {
   try {
     const res = await fetch(`${API_BASE}/potato/history`);
     const data = await res.json();
+    const hCount = document.getElementById('history-count');
     if (data.error || !data.history || data.history.length === 0) {
+      if (hCount) hCount.textContent = '0 transfers';
       tbody.innerHTML = '<tr><td colspan="5" style="color:rgba(255,245,224,0.3);padding:24px 12px;">No transfers yet.</td></tr>';
       return;
     }
-    const hCount = document.getElementById('history-count');
     if (hCount) hCount.textContent = `${data.total} transfers`;
     tbody.innerHTML = data.history.map(h => {
       const souvenir = h.souvenirImage
@@ -943,6 +949,9 @@ async function loadHistory() {
     }).join('');
   } catch (err) {
     console.error('History load failed:', err);
+    const hCount = document.getElementById('history-count');
+    if (hCount) hCount.textContent = 'error';
+    tbody.innerHTML = '<tr><td colspan="5" style="color:rgba(255,245,224,0.3);padding:24px 12px;">Failed to load history — will retry.</td></tr>';
   }
 }
 
