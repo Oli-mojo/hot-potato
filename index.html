@@ -547,7 +547,7 @@
     <div class="modal-title">BUY THE POTATO</div>
     <div class="modal-sub">You'll receive the Hot Potato NFT. The current holder gets their souvenir — rarity based on how long they've held.</div>
     <div class="modal-row"><span class="modal-key">Current price</span><span class="modal-val yellow">0.42 ETH</span></div>
-    <div class="modal-row"><span class="modal-key">Seller earns souvenir</span><span class="modal-val"><span class="rarity-pill r-rare">🔥 Rare tier</span></span></div>
+    <div class="modal-row"><span class="modal-key">Seller earns souvenir</span><span class="modal-val"><span id="modal-rarity-pill" class="rarity-pill r-common">🥔 Common tier</span></span></div>
     <div class="modal-input-label" id="modal-input-label">Your new asking price (min. 0.012 ETH)</div>
     <input class="modal-input" type="text" inputmode="decimal" id="new-price-input" value="0.50">
     <div class="modal-input-note">Set this higher to maximise your profit when the next buyer comes.</div>
@@ -620,8 +620,11 @@ async function loadGameState() {
 
     // Update modal rarity pill
     const tier = rarity?.tier || 'common';
-    const rarityVal = document.querySelector('.modal-row:nth-child(3) .modal-val');
-    if (rarityVal) rarityVal.innerHTML = `<span class="rarity-pill ${rarityClass[tier]}">${rarityEmoji[tier]} ${rarityLabel[tier]} tier</span>`;
+    const modalPill = document.getElementById('modal-rarity-pill');
+    if (modalPill) {
+      modalPill.className = `rarity-pill ${rarityClass[tier]}`;
+      modalPill.textContent = `${rarityEmoji[tier]} ${rarityLabel[tier]} tier`;
+    }
 
     // Update holder display
     if (document.querySelector('.potato-owner')) document.querySelector('.potato-owner').textContent = `Owner: ${shortHolder}`;
