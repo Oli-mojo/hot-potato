@@ -643,10 +643,11 @@ async function loadGameState() {
     holdSeconds = Math.floor(gameState.holdDurationSeconds);
     updateTimer();
 
-    // Update section counts
-    const counts = document.querySelectorAll('.section-count');
-    if (counts[0]) counts[0].textContent = `${transfers} transfers`;
-    if (counts[1]) counts[1].textContent = `${souvenirs} minted`;
+    // Update section counts (use IDs — order changed after section reorder)
+    const hCount = document.getElementById('history-count');
+    const gCount = document.getElementById('gallery-count');
+    if (hCount && hCount.textContent === 'loading…') hCount.textContent = `${transfers} transfers`;
+    if (gCount && gCount.textContent === 'loading…') gCount.textContent = `${souvenirs} minted`;
 
   } catch (err) {
     console.error('Failed to load game state:', err);
