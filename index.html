@@ -583,8 +583,10 @@ async function loadGameState() {
     const res = await fetch(`${API_BASE}/potato`);
     gameState = await res.json();
 
-    const price = parseFloat(gameState.currentPrice).toFixed(3);
-    const minNext = (parseFloat(gameState.currentPrice) * 1.15).toFixed(3);
+    const price = parseFloat(gameState.currentPrice).toFixed(4);
+    // Calculate minimum using wei to avoid rounding shortfall
+    const minNextWei = BigInt(gameState.currentPriceWei) * 115n / 100n + 1n;
+    const minNext = (Number(minNextWei) / 1e18).toFixed(4);
     const holder = gameState.currentHolder;
     const shortHolder = holder.slice(0, 6) + '...' + holder.slice(-4);
     const transfers = gameState.totalTransfers;
@@ -809,8 +811,11 @@ async function confirmBuy() {
     const signer = await provider.getSigner();
     const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
 
-    const sendValue = ethers.parseEther(currentPriceEth.toString());
-    const newAskingPrice = ethers.parseEther(newPriceEth.toString());
+    // Use exact wei value to avoid rounding errors on send
+    const sendValue = gameState?.currentPriceWei
+      ? BigInt(gameState.currentPriceWei)
+      : ethers.parseEther(currentPriceEth.toString());
+    const newAskingPrice = ethers.parseEther(newPriceEth.toFixed(6));
 
     btn.textContent = '⏳ Waiting for wallet...';
     btn.disabled = true;
