@@ -440,9 +440,9 @@
 
 <div class="hero">
   <div class="hero-left">
-    <div class="hero-eyebrow">
+    <div class="hero-eyebrow" id="hero-eyebrow">
       <div class="live-dot"></div>
-      Live on Base · Transfer #12
+      Live on Base · Transfer #0
     </div>
     <div class="hero-title">
       <div class="hot">HOT</div>
@@ -587,48 +587,54 @@ async function loadGameState() {
     const rarity = gameState.rarity;
 
     // Update hero stats
-    document.querySelector('.hero-eyebrow').innerHTML = `<div class="live-dot"></div> Live on Base · Transfer #${transfers}`;
-    document.getElementById('stat-price').textContent = price;
-    document.getElementById('stat-transfers').textContent = transfers;
-    document.getElementById('stat-souvenirs').textContent = souvenirs;
+    const eyebrow = document.getElementById('hero-eyebrow') || document.querySelector('.hero-eyebrow');
+    if (eyebrow) eyebrow.innerHTML = `<div class="live-dot"></div> Live on Base · Transfer #${transfers}`;
+    if (document.getElementById('stat-price')) document.getElementById('stat-price').textContent = price;
+    if (document.getElementById('stat-transfers')) document.getElementById('stat-transfers').textContent = transfers;
+    if (document.getElementById('stat-souvenirs')) document.getElementById('stat-souvenirs').textContent = souvenirs;
 
     // Update price display
-    document.querySelector('.price-eth').textContent = `${price} ETH`;
-    document.querySelector('.price-usd').textContent = `≈ $${(price * 3000).toFixed(0)}`;
+    document.querySelector('.price-eth')?.setAttribute('data-val', price);
+    if (document.querySelector('.price-eth')) document.querySelector('.price-eth').textContent = `${price} ETH`;
+    if (document.querySelector('.price-usd')) document.querySelector('.price-usd').textContent = `≈ $${(price * 3000).toFixed(0)}`;
 
     // Update buy note
-    document.querySelector('.buy-note').textContent = `Minimum bid: ${price} ETH · New price must be ≥ ${minNext} ETH`;
+    if (document.querySelector('.buy-note')) document.querySelector('.buy-note').textContent = `Minimum bid: ${price} ETH · New price must be ≥ ${minNext} ETH`;
 
     // Update modal
-    document.querySelector('.modal-row .modal-val.yellow').textContent = `${price} ETH`;
-    document.querySelector('.modal-input').min = minNext;
-    document.querySelector('.modal-input').value = minNext;
-    document.getElementById('modal-input-label').textContent = `Your new asking price (min. ${minNext} ETH)`;
-    document.querySelector('.modal-input-note').textContent = `Set this higher to maximise your profit when the next buyer comes.`;
+    if (document.querySelector('.modal-row .modal-val.yellow')) document.querySelector('.modal-row .modal-val.yellow').textContent = `${price} ETH`;
+    if (document.querySelector('.modal-input')) {
+      document.querySelector('.modal-input').min = minNext;
+      document.querySelector('.modal-input').value = minNext;
+    }
+    if (document.getElementById('modal-input-label')) document.getElementById('modal-input-label').textContent = `Your new asking price (min. ${minNext} ETH)`;
+    if (document.querySelector('.modal-input-note')) document.querySelector('.modal-input-note').textContent = `Set this higher to maximise your profit when the next buyer comes.`;
 
     // Update modal rarity pill
     const tier = rarity?.tier || 'common';
-    document.querySelector('.modal-row:nth-child(3) .modal-val').innerHTML =
-      `<span class="rarity-pill ${rarityClass[tier]}">${rarityEmoji[tier]} ${rarityLabel[tier]} tier</span>`;
+    const rarityVal = document.querySelector('.modal-row:nth-child(3) .modal-val');
+    if (rarityVal) rarityVal.innerHTML = `<span class="rarity-pill ${rarityClass[tier]}">${rarityEmoji[tier]} ${rarityLabel[tier]} tier</span>`;
 
     // Update holder display
-    document.querySelector('.potato-owner').textContent = `Owner: ${shortHolder}`;
+    if (document.querySelector('.potato-owner')) document.querySelector('.potato-owner').textContent = `Owner: ${shortHolder}`;
 
     // Start hold timer
     holdSeconds = Math.floor(gameState.holdDurationSeconds);
     updateTimer();
 
     // Update section counts
-    document.querySelectorAll('.section-count')[0].textContent = `${transfers} transfers`;
-    document.querySelectorAll('.section-count')[1].textContent = `${souvenirs} minted`;
+    const counts = document.querySelectorAll('.section-count');
+    if (counts[0]) counts[0].textContent = `${transfers} transfers`;
+    if (counts[1]) counts[1].textContent = `${souvenirs} minted`;
 
   } catch (err) {
     console.error('Failed to load game state:', err);
     document.getElementById('stat-price').textContent = '—';
     document.getElementById('stat-transfers').textContent = '—';
     document.getElementById('stat-souvenirs').textContent = '—';
-    document.querySelector('.price-eth').textContent = '— ETH';
-    document.querySelector('.hero-eyebrow').innerHTML = `<div class="live-dot" style="background:#ff4444"></div> Error loading data — check console`;
+    if (document.querySelector('.price-eth')) document.querySelector('.price-eth').textContent = '— ETH';
+    const eb = document.getElementById('hero-eyebrow') || document.querySelector('.hero-eyebrow');
+    if (eb) eb.innerHTML = `<div class="live-dot" style="background:#ff4444"></div> API error — retrying…`;
   }
 }
 
