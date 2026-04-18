@@ -33,8 +33,8 @@ router.get('/', async (req, res) => {
 // GET /api/potato/history — all PotatoPassed events
 router.get('/history', async (req, res) => {
   try {
-    // Use Ankr public RPC for event queries — Alchemy free tier blocks broad getLogs
-    const PUBLIC_RPC = 'https://rpc.ankr.com/base_sepolia';
+    // Use PublicNode for event queries — Alchemy free tier blocks broad getLogs
+    const PUBLIC_RPC = 'https://base-sepolia-rpc.publicnode.com';
     const provider = new ethers.JsonRpcProvider(PUBLIC_RPC);
     const contract = new ethers.Contract(CONTRACT_ADDRESS, HISTORY_ABI, provider);
     const filter = contract.filters.PotatoPassed();
