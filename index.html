@@ -544,7 +544,7 @@
     <div class="modal-sub">You'll receive the Hot Potato NFT. The current holder gets their souvenir — rarity based on how long they've held.</div>
     <div class="modal-row"><span class="modal-key">Current price</span><span class="modal-val yellow">0.42 ETH</span></div>
     <div class="modal-row"><span class="modal-key">Current holder rarity odds</span><span class="modal-val"><span class="rarity-pill r-rare">🔥 Rare tier</span></span></div>
-    <div class="modal-input-label">Your new asking price (min. 0.483 ETH)</div>
+    <div class="modal-input-label" id="modal-input-label">Your new asking price (min. 0.012 ETH)</div>
     <input class="modal-input" type="number" id="new-price-input" value="0.50" step="0.01" min="0.483">
     <div class="modal-input-note">Set this higher to maximise your profit when the next buyer comes.</div>
     <button class="modal-buy-btn" onclick="confirmBuy()">🔥 CONFIRM PURCHASE</button>
@@ -603,6 +603,7 @@ async function loadGameState() {
     document.querySelector('.modal-row .modal-val.yellow').textContent = `${price} ETH`;
     document.querySelector('.modal-input').min = minNext;
     document.querySelector('.modal-input').value = minNext;
+    document.getElementById('modal-input-label').textContent = `Your new asking price (min. ${minNext} ETH)`;
     document.querySelector('.modal-input-note').textContent = `Set this higher to maximise your profit when the next buyer comes.`;
 
     // Update modal rarity pill
