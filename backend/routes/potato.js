@@ -33,13 +33,12 @@ router.get('/', async (req, res) => {
 // GET /api/potato/history — all PotatoPassed events
 router.get('/history', async (req, res) => {
   try {
-    const provider = new ethers.JsonRpcProvider(RPC_URL);
+    // Use public RPC for event queries — Alchemy free tier blocks broad getLogs
+    const PUBLIC_RPC = 'https://sepolia.base.org';
+    const provider = new ethers.JsonRpcProvider(PUBLIC_RPC);
     const contract = new ethers.Contract(CONTRACT_ADDRESS, HISTORY_ABI, provider);
-    // Query last 500k blocks (~3 months on Base Sepolia) to avoid RPC timeout
-    const latest = await provider.getBlockNumber();
-    const fromBlock = Math.max(0, latest - 500000);
     const filter = contract.filters.PotatoPassed();
-    const events = await contract.queryFilter(filter, fromBlock, 'latest');
+    const events = await contract.queryFilter(filter, 0, 'latest');
 
     const history = await Promise.all(events.map(async (e, idx) => {
       const rarityTier = RARITY_MAP[Number(e.args.rarityTier)] || 'common';
