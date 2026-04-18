@@ -34,7 +34,7 @@ router.get('/', async (req, res) => {
 router.get('/history', async (req, res) => {
   try {
     // Use public RPC for event queries — Alchemy free tier blocks broad getLogs
-    const PUBLIC_RPC = 'https://sepolia.base.org';
+    const PUBLIC_RPC = 'https://base-sepolia.blockpi.network/v1/rpc/public';
     const provider = new ethers.JsonRpcProvider(PUBLIC_RPC);
     const contract = new ethers.Contract(CONTRACT_ADDRESS, HISTORY_ABI, provider);
     const filter = contract.filters.PotatoPassed();

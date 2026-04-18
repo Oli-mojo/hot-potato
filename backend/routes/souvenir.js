@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { getPotatoState, getRarityTier, rollRarity } = require('../services/contract');
+const { getPotatoState, getRarityTier, rollRarity, setSouvenirURI } = require('../services/contract');
 const { generateSouvenirImage } = require('../services/imageGen');
 const { uploadImageToIPFS, uploadMetadataToIPFS, buildMetadata } = require('../services/ipfs');
 
