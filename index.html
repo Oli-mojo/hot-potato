@@ -474,7 +474,7 @@
         Current holder for <span class="timer-val" id="hold-display">2d 14h 33m</span>
         <span>— rarity building 🔥</span>
       </div>
-      <button class="buy-btn" onclick="openModal()">🥔 BUY THE POTATO</button>
+      <button class="buy-btn" id="buy-btn" onclick="openModal()">🥔 BUY THE POTATO</button>
       <div class="buy-note">Minimum bid: 0.42 ETH · New price must be ≥ 0.483 ETH</div>
     </div>
   </div>
@@ -624,6 +624,16 @@ async function loadGameState() {
 
     // Update holder display
     if (document.querySelector('.potato-owner')) document.querySelector('.potato-owner').textContent = `Owner: ${shortHolder}`;
+
+    // Disable buy button if connected wallet is the current owner
+    const buyBtn = document.getElementById('buy-btn');
+    if (buyBtn) {
+      const isOwner = walletAddress && holder.toLowerCase() === walletAddress.toLowerCase();
+      buyBtn.textContent = isOwner ? '🥔 YOU HOLD THE POTATO' : '🥔 BUY THE POTATO';
+      buyBtn.style.opacity = isOwner ? '0.5' : '1';
+      buyBtn.style.cursor = isOwner ? 'default' : 'pointer';
+      buyBtn.onclick = isOwner ? () => showToast('You already hold the potato — wait for someone to buy it!', '#FF6B00') : openModal;
+    }
 
     // Start hold timer
     holdSeconds = Math.floor(gameState.holdDurationSeconds);
