@@ -494,7 +494,7 @@
 <div class="section">
   <div class="section-header">
     <div class="section-title">OWNERSHIP HISTORY</div>
-    <div class="section-count">12 transfers</div>
+    <div class="section-count" id="history-count">0 transfers</div>
   </div>
   <table class="history-table">
     <thead><tr><th>Hand</th><th>Address</th><th>Price Paid</th><th>Held For</th><th>Souvenir</th></tr></thead>
@@ -864,41 +864,82 @@ async function confirmBuy() {
   }
 }
 
-// ─── GALLERY ──────────────────────────────────────────────
+// ─── GALLERY + HISTORY ────────────────────────────────────
 const rarityBadge = { common: '🥔', rare: '🔥', epic: '⚡', legendary: '👑' };
+const rarityColors = { common: '#D3D1C7', rare: '#85B7EB', epic: '#AFA9EC', legendary: '#FAC775' };
 
 async function loadGallery() {
+  const gallery = document.getElementById('souvenir-gallery');
+  if (!gallery) return;
   try {
     const res = await fetch(`${API_BASE}/souvenir/gallery`);
     const data = await res.json();
-    const gallery = document.getElementById('souvenir-gallery');
-    if (!gallery) return;
-    if (!data.souvenirs || data.souvenirs.length === 0) {
+    if (data.error || !data.souvenirs || data.souvenirs.length === 0) {
       gallery.innerHTML = '<div style="color:rgba(255,245,224,0.3);font-size:13px;grid-column:1/-1;padding:24px 0;">No souvenirs yet — buy the potato to mint the first one.</div>';
       return;
     }
     gallery.innerHTML = data.souvenirs.map(s => {
-      const img = s.tokenURI
-        ? `<img src="${s.tokenURI.replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/')}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px 8px 0 0;" onerror="this.style.display='none'">`
-        : `<div style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:40px;">${rarityBadge[s.rarityTier] || '🥔'}</div>`;
+      const art = s.tokenURI
+        ? `<img src="${s.tokenURI}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px 8px 0 0;" onerror="this.style.background='#1A0E05';this.style.display='flex'">`
+        : `<div style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:40px;background:#1A0E05;">${rarityBadge[s.rarityTier] || '🥔'}</div>`;
       return `<div class="souvenir-card">
-        ${img}
+        ${art}
         <div style="padding:8px 10px;">
-          <div style="font-size:11px;color:rgba(255,245,224,0.5);">#${s.tokenId} · ${s.rarityTier.toUpperCase()}</div>
-          <div style="font-size:11px;color:rgba(255,245,224,0.3);">${s.holdDurationHours}h hold</div>
+          <div style="font-size:11px;color:${rarityColors[s.rarityTier] || '#fff'};font-weight:700;">${(s.rarityTier || 'common').toUpperCase()}</div>
+          <div style="font-size:11px;color:rgba(255,245,224,0.3);">Hand #${s.transferNumber} · ${s.holdDurationHours}h</div>
         </div>
       </div>`;
     }).join('');
   } catch (err) {
     console.error('Gallery load failed:', err);
+    gallery.innerHTML = '<div style="color:rgba(255,245,224,0.3);font-size:13px;grid-column:1/-1;padding:24px 0;">Gallery loading…</div>';
+  }
+}
+
+function formatHoldTime(seconds) {
+  const s = Number(seconds);
+  if (s < 60) return `${s}s`;
+  if (s < 3600) return `${Math.floor(s/60)}m`;
+  if (s < 86400) return `${(s/3600).toFixed(1)}h`;
+  return `${Math.floor(s/86400)}d ${Math.floor((s%86400)/3600)}h`;
+}
+
+async function loadHistory() {
+  const tbody = document.getElementById('history-body');
+  if (!tbody) return;
+  try {
+    const res = await fetch(`${API_BASE}/potato/history`);
+    const data = await res.json();
+    if (data.error || !data.history || data.history.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" style="color:rgba(255,245,224,0.3);padding:24px 12px;">No transfers yet.</td></tr>';
+      return;
+    }
+    const hCount = document.getElementById('history-count');
+    if (hCount) hCount.textContent = `${data.total} transfers`;
+    tbody.innerHTML = data.history.map(h => {
+      const souvenir = h.souvenirImage
+        ? `<img src="${h.souvenirImage}" style="width:36px;height:36px;object-fit:cover;border-radius:4px;" onerror="this.outerHTML='<span>${rarityBadge[h.rarityTier]||'🥔'}</span>'">`
+        : `<span class="rarity-pill r-${h.rarityTier === 'legendary' ? 'legend' : h.rarityTier}">${rarityBadge[h.rarityTier] || '🥔'} ${h.rarityTier}</span>`;
+      return `<tr>
+        <td><span class="hand-num">HAND ${h.hand}</span></td>
+        <td><span class="addr">${h.from.slice(0,6)}…${h.from.slice(-4)}</span></td>
+        <td><span class="price-cell">${parseFloat(h.price).toFixed(4)} ETH</span></td>
+        <td>${formatHoldTime(h.holdDurationSeconds)}</td>
+        <td>${souvenir}</td>
+      </tr>`;
+    }).join('');
+  } catch (err) {
+    console.error('History load failed:', err);
   }
 }
 
 // ─── INIT ─────────────────────────────────────────────────
 loadGameState();
 loadGallery();
-setInterval(loadGameState, 30000); // Refresh every 30s
-setInterval(loadGallery, 120000);  // Refresh gallery every 2 min
+loadHistory();
+setInterval(loadGameState, 30000);  // Refresh every 30s
+setInterval(loadGallery, 120000);   // Refresh gallery every 2 min
+setInterval(loadHistory, 120000);   // Refresh history every 2 min
 </script>
 </body>
 </html>
