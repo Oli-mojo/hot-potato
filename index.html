@@ -584,14 +584,10 @@ async function loadGameState() {
     gameState = await res.json();
 
     const price = parseFloat(gameState.currentPrice).toFixed(4);
-    // Calculate minimum using wei for precision — fallback to float math
-    let minNext;
-    try {
-      const minNextWei = BigInt(gameState.currentPriceWei) * 115n / 100n + 1n;
-      minNext = (Number(minNextWei) / 1e18).toFixed(4);
-    } catch {
-      minNext = (parseFloat(gameState.currentPrice) * 1.15 + 0.0001).toFixed(4);
-    }
+    // Round UP to 4dp so pre-fill always passes contract validation
+    const rawMin = parseFloat(gameState.currentPrice) * 1.15;
+    const minNext = (Math.ceil(rawMin * 10000) / 10000).toFixed(4);
+    gameState._minNext = parseFloat(minNext); // store for confirmBuy validation
     const holder = gameState.currentHolder;
     const shortHolder = holder.slice(0, 6) + '...' + holder.slice(-4);
     const transfers = gameState.totalTransfers;
@@ -814,7 +810,7 @@ async function confirmBuy() {
     return;
   }
 
-  const minPrice = currentPriceEth * 1.15;
+  const minPrice = gameState?._minNext || Math.ceil(currentPriceEth * 1.15 * 10000) / 10000;
   if (isNaN(newPriceEth) || newPriceEth < minPrice) {
     document.getElementById('new-price-input').style.borderColor = '#FF4444';
     showToast(`⚠️ New price must be ≥ ${minPrice.toFixed(4)} ETH`, '#FF6B00');
