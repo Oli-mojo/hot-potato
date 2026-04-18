@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hot Potato 🥔</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥔</text></svg>">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Barlow+Condensed:wght@400;500;600;700&family=Barlow:wght@400;500&display=swap');
 
@@ -560,6 +564,7 @@ const CHAIN_ID = 84532; // Base Sepolia
 const CONTRACT_ABI = [
   'function buyPotato(uint256 newAskingPrice) external payable',
   'function getGameState() external view returns (address currentOwner, uint256 price, uint256 timeHeld, uint256 totalTransfers)',
+  'event PotatoPassed(address indexed from, address indexed to, uint256 price, uint256 holdDuration, uint256 souvenirTokenId, uint8 rarityTier)',
 ];
 
 // ─── STATE ────────────────────────────────────────────────
@@ -671,11 +676,23 @@ function showToast(msg, color) {
 }
 
 // ─── WALLET ───────────────────────────────────────────────
+function getMetaMaskProvider() {
+  if (!window.ethereum) return null;
+  // Multiple wallets installed — find MetaMask specifically
+  if (window.ethereum.providers?.length) {
+    return window.ethereum.providers.find(p => p.isMetaMask) || null;
+  }
+  // Single wallet — check if it's MetaMask
+  return window.ethereum.isMetaMask ? window.ethereum : window.ethereum;
+}
+
 async function connectWallet() {
-  if (!window.ethereum) {
+  const provider = getMetaMaskProvider();
+  if (!provider) {
     showToast('⚠️ MetaMask not found — please install the MetaMask extension', '#FF6B00');
     return;
   }
+  window._ethProvider = provider; // save for use in buy flow
   const btn = document.querySelector('.connect-btn');
   const orig = btn.textContent;
   btn.textContent = 'Connecting…';
@@ -685,7 +702,7 @@ async function connectWallet() {
     showToast('⚠️ MetaMask did not respond — check for a pending popup in the extension', '#FF6B00');
   }, 15000);
   try {
-    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    const accounts = await provider.request({ method: 'eth_requestAccounts' });
     clearTimeout(resetTimer);
     walletAddress = accounts[0];
     btn.textContent = walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
@@ -695,14 +712,14 @@ async function connectWallet() {
 
     // Switch to Base Sepolia if needed — don't let chain errors block wallet connection
     try {
-      await window.ethereum.request({
+      await provider.request({
         method: 'wallet_switchEthereumChain',
         params: [{ chainId: '0x' + CHAIN_ID.toString(16) }],
       });
     } catch (e) {
       if (e.code === 4902 || e.code === -32603) {
         try {
-          await window.ethereum.request({
+          await provider.request({
             method: 'wallet_addEthereumChain',
             params: [{
               chainId: '0x' + CHAIN_ID.toString(16),
@@ -766,8 +783,8 @@ async function confirmBuy() {
       // Fallback: read price directly from contract
       btn.textContent = '⏳ Reading contract...';
       btn.disabled = true;
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+      const ethProvider = new ethers.BrowserProvider(window._ethProvider || window.ethereum);
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, ethProvider);
       const state = await contract.getGameState();
       currentPriceEth = parseFloat(ethers.formatEther(state[1]));
     }
@@ -788,7 +805,7 @@ async function confirmBuy() {
   }
 
   try {
-    const provider = new ethers.BrowserProvider(window.ethereum);
+    const provider = new ethers.BrowserProvider(window._ethProvider || window.ethereum);
     const signer = await provider.getSigner();
     const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
 
@@ -806,8 +823,34 @@ async function confirmBuy() {
     btn.textContent = '🔥 CONFIRM PURCHASE';
     btn.disabled = false;
 
-    showToast('🥔 You now hold the Hot Potato! Your souvenir is being generated…');
+    showToast('🥔 You now hold the Hot Potato!');
     loadGameState();
+
+    // Parse PotatoPassed event and trigger souvenir generation
+    try {
+      const iface = new ethers.Interface(CONTRACT_ABI);
+      for (const log of receipt.logs) {
+        try {
+          const parsed = iface.parseLog(log);
+          if (parsed && parsed.name === 'PotatoPassed') {
+            const { from, holdDuration, souvenirTokenId, rarityTier } = parsed.args;
+            showToast('🎨 Generating souvenir for previous holder…');
+            fetch(`${API_BASE}/souvenir/generate`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                fromAddress: from,
+                holdDurationSeconds: holdDuration.toString(),
+                souvenirTokenId: souvenirTokenId.toString(),
+                rarityTier: rarityTier.toString(),
+              }),
+            }).then(() => {
+              setTimeout(loadGallery, 60000); // refresh gallery after ~1 min
+            });
+          }
+        } catch (e) {}
+      }
+    } catch (e) { console.warn('Event parse failed:', e); }
   } catch (err) {
     console.error('Buy failed:', err);
     showToast('❌ Transaction failed: ' + (err.reason || err.message || 'unknown'), '#FF4444');
@@ -816,9 +859,41 @@ async function confirmBuy() {
   }
 }
 
+// ─── GALLERY ──────────────────────────────────────────────
+const rarityBadge = { common: '🥔', rare: '🔥', epic: '⚡', legendary: '👑' };
+
+async function loadGallery() {
+  try {
+    const res = await fetch(`${API_BASE}/souvenir/gallery`);
+    const data = await res.json();
+    const gallery = document.getElementById('souvenir-gallery');
+    if (!gallery) return;
+    if (!data.souvenirs || data.souvenirs.length === 0) {
+      gallery.innerHTML = '<div style="color:rgba(255,245,224,0.3);font-size:13px;grid-column:1/-1;padding:24px 0;">No souvenirs yet — buy the potato to mint the first one.</div>';
+      return;
+    }
+    gallery.innerHTML = data.souvenirs.map(s => {
+      const img = s.tokenURI
+        ? `<img src="${s.tokenURI.replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/')}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px 8px 0 0;" onerror="this.style.display='none'">`
+        : `<div style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:40px;">${rarityBadge[s.rarityTier] || '🥔'}</div>`;
+      return `<div class="souvenir-card">
+        ${img}
+        <div style="padding:8px 10px;">
+          <div style="font-size:11px;color:rgba(255,245,224,0.5);">#${s.tokenId} · ${s.rarityTier.toUpperCase()}</div>
+          <div style="font-size:11px;color:rgba(255,245,224,0.3);">${s.holdDurationHours}h hold</div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch (err) {
+    console.error('Gallery load failed:', err);
+  }
+}
+
 // ─── INIT ─────────────────────────────────────────────────
 loadGameState();
+loadGallery();
 setInterval(loadGameState, 30000); // Refresh every 30s
+setInterval(loadGallery, 120000);  // Refresh gallery every 2 min
 </script>
 </body>
 </html>
