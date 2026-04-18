@@ -4,7 +4,7 @@ const router = express.Router();
 const { ethers } = require('ethers');
 const { getPotatoState, getRarityTier } = require('../services/contract');
 
-const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || '0xDe1b1e37B13ad10707DCbA1f5A3a88d470EA94c7';
+const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || '0xd04A4fA2B05874d268Ce8bB8E8EaEc252ef2AB22';
 const RPC_URL = process.env.RPC_URL;
 const HISTORY_ABI = [
   'event PotatoPassed(address indexed from, address indexed to, uint256 price, uint256 holdDuration, uint256 souvenirTokenId, uint8 rarityTier)',

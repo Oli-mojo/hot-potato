@@ -7,7 +7,7 @@ const { generateSouvenirImage } = require('./services/imageGen');
 const { uploadImageToIPFS, uploadMetadataToIPFS, buildMetadata } = require('./services/ipfs');
 const { setSouvenirURI } = require('./services/contract');
 
-const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || '0xDe1b1e37B13ad10707DCbA1f5A3a88d470EA94c7';
+const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || '0xd04A4fA2B05874d268Ce8bB8E8EaEc252ef2AB22';
 const RPC_URL = process.env.RPC_URL;
 
 const RARITY_MAP = ['common', 'rare', 'epic', 'legendary'];

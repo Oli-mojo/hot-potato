@@ -88,4 +88,4 @@ const CONTRACT_ADDRESS = '<new contract address>';
 | Version | Network | Address |
 |---------|---------|---------|
 | v1 | Base Sepolia | `0x2E8eA15a54Db53375807A8F74ad6ff6eC4a4065e` |
-| v2 | Base Sepolia | `0xDe1b1e37B13ad10707DCbA1f5A3a88d470EA94c7` |
+| v2 | Base Sepolia | `0xd04A4fA2B05874d268Ce8bB8E8EaEc252ef2AB22` |
