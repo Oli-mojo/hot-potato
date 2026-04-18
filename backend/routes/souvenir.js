@@ -1,6 +1,7 @@
 // Hot Potato — Souvenir Generation Routes
 const express = require('express');
 const router = express.Router();
+const axios = require('axios');
 
 const { getPotatoState, getRarityTier, rollRarity, setSouvenirURI } = require('../services/contract');
 const { generateSouvenirImage } = require('../services/imageGen');
@@ -92,6 +93,23 @@ const SOUVENIR_ABI = [
 const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || '0x2E8eA15a54Db53375807A8F74ad6ff6eC4a4065e';
 const RPC_URL = process.env.RPC_URL || 'https://base-sepolia.g.alchemy.com/v2/CCsT7yY4zuEqcoCPeivbS';
 
+const IPFS_GATEWAY = 'https://gateway.pinata.cloud/ipfs/';
+
+async function fetchImageFromMetadata(tokenURI) {
+  if (!tokenURI) return null;
+  try {
+    const url = tokenURI.startsWith('ipfs://')
+      ? IPFS_GATEWAY + tokenURI.slice(7)
+      : tokenURI;
+    const res = await axios.get(url, { timeout: 8000 });
+    const image = res.data?.image;
+    if (!image) return null;
+    return image.startsWith('ipfs://')
+      ? IPFS_GATEWAY + image.slice(7)
+      : image;
+  } catch { return null; }
+}
+
 router.get('/gallery', async (req, res) => {
   try {
     const provider = new ethers.JsonRpcProvider(RPC_URL);
@@ -104,6 +122,7 @@ router.get('/gallery', async (req, res) => {
           contract.souvenirs(i),
           contract.tokenURI(i).catch(() => null),
         ]);
+        const imageUrl = await fetchImageFromMetadata(uri);
         souvenirs.push({
           tokenId: i,
           transferNumber: Number(data.transferNumber),
@@ -112,6 +131,7 @@ router.get('/gallery', async (req, res) => {
           rarityTier: RARITY_MAP[Number(data.rarityTier)] || 'common',
           originalOwner: data.originalOwner,
           tokenURI: uri,
+          imageUrl,
         });
       } catch (e) { /* skip broken tokens */ }
     }
