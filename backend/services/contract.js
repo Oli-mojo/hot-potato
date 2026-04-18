@@ -1,7 +1,7 @@
 // Hot Potato — Smart Contract Service
 const { ethers } = require('ethers');
 
-const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || '0x0Ab53A236d0AFe4507187110Faa54183Aca31713';
+const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || '0xDe1b1e37B13ad10707DCbA1f5A3a88d470EA94c7';
 const RPC_URL = process.env.RPC_URL;
 const WALLET_PRIVATE_KEY = process.env.WALLET_PRIVATE_KEY;
 

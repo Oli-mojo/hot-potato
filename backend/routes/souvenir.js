@@ -90,7 +90,7 @@ const SOUVENIR_ABI = [
   'function tokenURI(uint256 tokenId) view returns (string)',
   'function souvenirs(uint256 tokenId) view returns (uint256 transferNumber, uint256 pricePaid, uint256 holdDuration, uint8 rarityTier, address originalOwner)',
 ];
-const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || '0x0Ab53A236d0AFe4507187110Faa54183Aca31713';
+const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || '0xDe1b1e37B13ad10707DCbA1f5A3a88d470EA94c7';
 const RPC_URL = process.env.RPC_URL;
 
 const IPFS_GATEWAY = 'https://gateway.pinata.cloud/ipfs/';

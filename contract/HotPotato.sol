@@ -115,15 +115,18 @@ contract HotPotato is ERC721, ERC2981, Ownable, ReentrancyGuard {
         require(msg.sender != seller, "You already hold the potato");
 
         // ── Validate payment ────────────────────────────────
-        uint256 minPayment = (currentPrice * MIN_INCREASE_BPS) / BPS_DENOMINATOR;
-        require(msg.value >= minPayment, "Payment too low: need >= 15% above current price");
+        // currentPrice is the asking price set by the current holder.
+        // Buyer must pay at least that amount. The 15% minimum increase
+        // is enforced by requiring the new asking price >= payment * 1.15.
+        require(msg.value >= currentPrice, "Payment too low: must meet the current asking price");
 
         // ── Validate new asking price ───────────────────────
         uint256 minNextAsk = (msg.value * MIN_INCREASE_BPS) / BPS_DENOMINATOR;
         require(newAskingPrice >= minNextAsk, "New asking price too low: must be >= 15% above what you paid");
 
         // ── Calculate buyer's stored boost ──────────────────
-        uint8 buyerBoost = _premiumBoostLevel(msg.value, minPayment);
+        // Boost is based on how much above the asking price they paid
+        uint8 buyerBoost = _premiumBoostLevel(msg.value, currentPrice);
 
         // ── Roll seller's souvenir rarity ───────────────────
         uint256 holdDuration = block.timestamp - holderInfo.purchaseTimestamp;
@@ -278,7 +281,7 @@ contract HotPotato is ERC721, ERC2981, Ownable, ReentrancyGuard {
             totalTransfers,
             souvenirCount - 1,
             holderInfo.premiumBoostLevel,
-            (currentPrice * MIN_INCREASE_BPS) / BPS_DENOMINATOR
+            currentPrice
         );
     }
 
