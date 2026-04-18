@@ -11,7 +11,10 @@ const souvenirRoutes = require('./routes/souvenir');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors());
+app.use(cors({
+  origin: true, // reflect the request origin — allows all
+  credentials: true,
+}));
 app.use(express.json());
 
 // Routes

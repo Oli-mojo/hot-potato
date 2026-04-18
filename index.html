@@ -456,9 +456,9 @@
       </div>
     </div>
     <div class="hero-stats">
-      <div class="stat"><div class="stat-val">0.42</div><div class="stat-lbl">ETH Price</div></div>
-      <div class="stat"><div class="stat-val">12</div><div class="stat-lbl">Transfers</div></div>
-      <div class="stat"><div class="stat-val">11</div><div class="stat-lbl">Souvenirs</div></div>
+      <div class="stat"><div class="stat-val" id="stat-price">…</div><div class="stat-lbl">ETH Price</div></div>
+      <div class="stat"><div class="stat-val" id="stat-transfers">…</div><div class="stat-lbl">Transfers</div></div>
+      <div class="stat"><div class="stat-val" id="stat-souvenirs">…</div><div class="stat-lbl">Souvenirs</div></div>
     </div>
     <div class="buy-section">
       <div class="price-tag">
@@ -588,9 +588,9 @@ async function loadGameState() {
 
     // Update hero stats
     document.querySelector('.hero-eyebrow').innerHTML = `<div class="live-dot"></div> Live on Base · Transfer #${transfers}`;
-    document.querySelectorAll('.stat-val')[0].textContent = price;
-    document.querySelectorAll('.stat-val')[1].textContent = transfers;
-    document.querySelectorAll('.stat-val')[2].textContent = souvenirs;
+    document.getElementById('stat-price').textContent = price;
+    document.getElementById('stat-transfers').textContent = transfers;
+    document.getElementById('stat-souvenirs').textContent = souvenirs;
 
     // Update price display
     document.querySelector('.price-eth').textContent = `${price} ETH`;
@@ -624,6 +624,11 @@ async function loadGameState() {
 
   } catch (err) {
     console.error('Failed to load game state:', err);
+    document.getElementById('stat-price').textContent = '—';
+    document.getElementById('stat-transfers').textContent = '—';
+    document.getElementById('stat-souvenirs').textContent = '—';
+    document.querySelector('.price-eth').textContent = '— ETH';
+    document.querySelector('.hero-eyebrow').innerHTML = `<div class="live-dot" style="background:#ff4444"></div> Error loading data — check console`;
   }
 }
 
