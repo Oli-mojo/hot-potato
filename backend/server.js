@@ -1,5 +1,6 @@
 // Hot Potato — Backend API Server
-require('dotenv').config({ path: '../.env' });
+require('dotenv').config({ path: '../.env' }); // local dev
+require('dotenv').config(); // Railway (reads from environment)
 
 const express = require('express');
 const cors = require('cors');
