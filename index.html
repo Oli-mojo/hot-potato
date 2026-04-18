@@ -648,16 +648,34 @@ function updateTimer() {
 }
 setInterval(updateTimer, 1000);
 
+// ─── TOAST ────────────────────────────────────────────────
+function showToast(msg, color) {
+  let t = document.getElementById('hp-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'hp-toast';
+    t.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1A0E05;border:1px solid rgba(232,24,106,0.4);color:#FFF5E0;font-family:Barlow Condensed,sans-serif;font-size:14px;font-weight:600;letter-spacing:.05em;padding:12px 22px;border-radius:6px;z-index:9999;transition:opacity .3s;pointer-events:none;';
+    document.body.appendChild(t);
+  }
+  t.style.borderColor = color || 'rgba(232,24,106,0.4)';
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._to);
+  t._to = setTimeout(() => { t.style.opacity = '0'; }, 3500);
+}
+
 // ─── WALLET ───────────────────────────────────────────────
 async function connectWallet() {
   if (!window.ethereum) {
-    alert('MetaMask not found. Please install MetaMask to buy the potato.');
+    showToast('⚠️ MetaMask not found — please install the MetaMask extension', '#FF6B00');
     return;
   }
+  const btn = document.querySelector('.connect-btn');
+  const orig = btn.textContent;
+  btn.textContent = 'Connecting…';
   try {
     const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
     walletAddress = accounts[0];
-    const btn = document.querySelector('.connect-btn');
     btn.textContent = walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
     btn.style.background = 'rgba(232,24,106,0.15)';
     btn.style.border = '0.5px solid rgba(232,24,106,0.4)';
@@ -683,8 +701,15 @@ async function connectWallet() {
         });
       }
     }
+    showToast('✅ Wallet connected — ' + walletAddress.slice(0,6) + '...' + walletAddress.slice(-4));
   } catch (err) {
     console.error('Wallet connection failed:', err);
+    btn.textContent = orig;
+    if (err.code === 4001) {
+      showToast('⚠️ Connection cancelled', '#FF6B00');
+    } else {
+      showToast('⚠️ Wallet error: ' + (err.message || 'unknown'), '#FF6B00');
+    }
   }
 }
 
@@ -705,13 +730,41 @@ document.getElementById('modal').addEventListener('click', e => {
 
 // ─── BUY TRANSACTION ──────────────────────────────────────
 async function confirmBuy() {
-  if (!walletAddress || !gameState) return;
+  if (!walletAddress) {
+    showToast('⚠️ Connect your wallet first', '#FF6B00');
+    return;
+  }
 
+  const btn = document.querySelector('.modal-buy-btn');
   const newPriceEth = parseFloat(document.getElementById('new-price-input').value);
-  const minPrice = parseFloat(gameState.currentPrice) * 1.15;
 
-  if (newPriceEth < minPrice) {
+  // Get current price — from gameState if available, else read from contract
+  let currentPriceEth;
+  try {
+    if (gameState && gameState.currentPrice) {
+      currentPriceEth = parseFloat(gameState.currentPrice);
+    } else {
+      // Fallback: read price directly from contract
+      btn.textContent = '⏳ Reading contract...';
+      btn.disabled = true;
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+      const state = await contract.getGameState();
+      currentPriceEth = parseFloat(ethers.formatEther(state[1]));
+    }
+  } catch (err) {
+    showToast('⚠️ Could not read contract price: ' + (err.message || 'unknown'), '#FF6B00');
+    btn.textContent = '🔥 CONFIRM PURCHASE';
+    btn.disabled = false;
+    return;
+  }
+
+  const minPrice = currentPriceEth * 1.15;
+  if (isNaN(newPriceEth) || newPriceEth < minPrice) {
     document.getElementById('new-price-input').style.borderColor = '#FF4444';
+    showToast(`⚠️ New price must be ≥ ${minPrice.toFixed(4)} ETH`, '#FF6B00');
+    btn.textContent = '🔥 CONFIRM PURCHASE';
+    btn.disabled = false;
     return;
   }
 
@@ -720,15 +773,13 @@ async function confirmBuy() {
     const signer = await provider.getSigner();
     const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
 
-    const sendValue = ethers.parseEther(gameState.currentPrice);
+    const sendValue = ethers.parseEther(currentPriceEth.toString());
     const newAskingPrice = ethers.parseEther(newPriceEth.toString());
 
-    const btn = document.querySelector('.modal-buy-btn');
     btn.textContent = '⏳ Waiting for wallet...';
     btn.disabled = true;
 
     const tx = await contract.buyPotato(newAskingPrice, { value: sendValue });
-
     btn.textContent = '⏳ Transaction pending...';
     await tx.wait();
 
@@ -736,12 +787,11 @@ async function confirmBuy() {
     btn.textContent = '🔥 CONFIRM PURCHASE';
     btn.disabled = false;
 
-    alert('🥔 You now hold the Hot Potato! Your souvenir is being generated...');
-    loadGameState(); // Refresh data
+    showToast('🥔 You now hold the Hot Potato! Your souvenir is being generated…');
+    loadGameState();
   } catch (err) {
     console.error('Buy failed:', err);
-    alert('Transaction failed: ' + (err.reason || err.message));
-    const btn = document.querySelector('.modal-buy-btn');
+    showToast('❌ Transaction failed: ' + (err.reason || err.message || 'unknown'), '#FF4444');
     btn.textContent = '🔥 CONFIRM PURCHASE';
     btn.disabled = false;
   }
