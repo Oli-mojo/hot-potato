@@ -6,58 +6,42 @@ const { getPotatoState, getRarityTier, rollRarity } = require('../services/contr
 const { generateSouvenirImage } = require('../services/imageGen');
 const { uploadImageToIPFS, uploadMetadataToIPFS, buildMetadata } = require('../services/ipfs');
 
+const RARITY_MAP = ['common', 'rare', 'epic', 'legendary'];
+
 // POST /api/souvenir/generate
-// Body: { holderAddress: "0x..." }
-// Generates image + metadata and returns tokenURI ready for minting
+// Body: { fromAddress, holdDurationSeconds, souvenirTokenId, rarityTier }
+// Called by the frontend immediately after a PotatoPassed event
 router.post('/generate', async (req, res) => {
-  try {
-    const { holderAddress } = req.body;
-    if (!holderAddress) {
-      return res.status(400).json({ error: 'holderAddress is required' });
-    }
-
-    // 1. Get current potato state
-    const state = await getPotatoState();
-    const rarityInfo = getRarityTier(state.holdDurationHours);
-    const rarity = rollRarity(rarityInfo.weights);
-    const edition = state.totalSouvenirs + 1;
-
-    console.log(`\n🥔 Generating souvenir for ${holderAddress}`);
-    console.log(`   Hold time: ${state.holdDurationHours}h → Rarity roll: ${rarity}`);
-
-    // 2. Generate image
-    const imageUrl = await generateSouvenirImage(rarity, state.holdDurationHours, holderAddress);
-
-    // 3. Upload image to IPFS
-    const { cid: imageCid } = await uploadImageToIPFS(
-      imageUrl,
-      `hot-potato-souvenir-${edition}.png`
-    );
-
-    // 4. Build and upload metadata
-    const metadata = buildMetadata({
-      rarity,
-      holdDurationHours: state.holdDurationHours,
-      holderAddress,
-      imageCid,
-      edition,
-    });
-    const { url: tokenURI } = await uploadMetadataToIPFS(metadata);
-
-    res.json({
-      success: true,
-      rarity,
-      holdDurationHours: state.holdDurationHours,
-      edition,
-      imageUrl,
-      imageCid,
-      tokenURI,
-      metadata,
-    });
-  } catch (err) {
-    console.error('Error generating souvenir:', err);
-    res.status(500).json({ error: err.message || 'Failed to generate souvenir' });
+  const { fromAddress, holdDurationSeconds, souvenirTokenId, rarityTier } = req.body;
+  if (!fromAddress || souvenirTokenId === undefined) {
+    return res.status(400).json({ error: 'fromAddress and souvenirTokenId are required' });
   }
+
+  // Respond immediately so the buyer's UI isn't blocked
+  res.json({ success: true, message: 'Souvenir generation started', souvenirTokenId });
+
+  // Generate in the background
+  (async () => {
+    try {
+      const holdDurationHours = (Number(holdDurationSeconds) || 0) / 3600;
+      const rarity = RARITY_MAP[Number(rarityTier)] || rollRarity(getRarityTier(holdDurationHours).weights);
+      const state = await getPotatoState();
+      const edition = state.totalSouvenirs;
+
+      console.log(`\n🥔 Generating souvenir #${souvenirTokenId} for ${fromAddress}`);
+      console.log(`   Hold time: ${holdDurationHours.toFixed(1)}h → Rarity: ${rarity}`);
+
+      const imageUrl = await generateSouvenirImage(rarity, holdDurationHours, fromAddress);
+      const { cid: imageCid } = await uploadImageToIPFS(imageUrl, `hot-potato-souvenir-${edition}.png`);
+      const metadata = buildMetadata({ rarity, holdDurationHours, holderAddress: fromAddress, imageCid, edition });
+      const { url: tokenURI } = await uploadMetadataToIPFS(metadata);
+
+      await setSouvenirURI(Number(souvenirTokenId), tokenURI);
+      console.log(`✅ Souvenir #${souvenirTokenId} complete — ${rarity} — ${tokenURI}`);
+    } catch (err) {
+      console.error('Background souvenir generation failed:', err.message);
+    }
+  })();
 });
 
 // POST /api/souvenir/demo — force a specific rarity for testing
@@ -94,6 +78,46 @@ router.get('/preview/:address', async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch preview' });
+  }
+});
+
+// GET /api/souvenir/gallery — all minted souvenirs with metadata
+const { ethers } = require('ethers');
+const SOUVENIR_ABI = [
+  'function souvenirCount() view returns (uint256)',
+  'function ownerOf(uint256 tokenId) view returns (address)',
+  'function tokenURI(uint256 tokenId) view returns (string)',
+  'function souvenirs(uint256 tokenId) view returns (uint256 transferNumber, uint256 pricePaid, uint256 holdDuration, uint8 rarityTier, address originalOwner)',
+];
+const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || '0x2E8eA15a54Db53375807A8F74ad6ff6eC4a4065e';
+const RPC_URL = process.env.RPC_URL || 'https://base-sepolia.g.alchemy.com/v2/CCsT7yY4zuEqcoCPeivbS';
+
+router.get('/gallery', async (req, res) => {
+  try {
+    const provider = new ethers.JsonRpcProvider(RPC_URL);
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, SOUVENIR_ABI, provider);
+    const count = Number(await contract.souvenirCount());
+    const souvenirs = [];
+    for (let i = 1; i < count; i++) {
+      try {
+        const [data, uri] = await Promise.all([
+          contract.souvenirs(i),
+          contract.tokenURI(i).catch(() => null),
+        ]);
+        souvenirs.push({
+          tokenId: i,
+          transferNumber: Number(data.transferNumber),
+          pricePaid: ethers.formatEther(data.pricePaid),
+          holdDurationHours: Math.round(Number(data.holdDuration) / 360) / 10,
+          rarityTier: RARITY_MAP[Number(data.rarityTier)] || 'common',
+          originalOwner: data.originalOwner,
+          tokenURI: uri,
+        });
+      } catch (e) { /* skip broken tokens */ }
+    }
+    res.json({ total: souvenirs.length, souvenirs: souvenirs.reverse() });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
