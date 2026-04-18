@@ -2,7 +2,7 @@
 const { ethers } = require('ethers');
 
 const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || '0x0Ab53A236d0AFe4507187110Faa54183Aca31713';
-const RPC_URL = process.env.RPC_URL || 'https://base-sepolia.g.alchemy.com/v2/CCsT7yY4zuEqcoCPeivbS';
+const RPC_URL = process.env.RPC_URL;
 const WALLET_PRIVATE_KEY = process.env.WALLET_PRIVATE_KEY;
 
 // ABI matching the actual deployed HotPotato contract

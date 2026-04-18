@@ -91,7 +91,7 @@ const SOUVENIR_ABI = [
   'function souvenirs(uint256 tokenId) view returns (uint256 transferNumber, uint256 pricePaid, uint256 holdDuration, uint8 rarityTier, address originalOwner)',
 ];
 const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || '0x0Ab53A236d0AFe4507187110Faa54183Aca31713';
-const RPC_URL = process.env.RPC_URL || 'https://base-sepolia.g.alchemy.com/v2/CCsT7yY4zuEqcoCPeivbS';
+const RPC_URL = process.env.RPC_URL;
 
 const IPFS_GATEWAY = 'https://gateway.pinata.cloud/ipfs/';
 
