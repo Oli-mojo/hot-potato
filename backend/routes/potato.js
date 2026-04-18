@@ -14,8 +14,10 @@ router.get('/', async (req, res) => {
       rarity: rarityInfo,
     });
   } catch (err) {
-    console.error('Error fetching potato state:', err);
-    res.status(500).json({ error: 'Failed to fetch potato state' });
+    console.error('Error fetching potato state:', err.message);
+    console.error('CONTRACT_ADDRESS:', process.env.CONTRACT_ADDRESS);
+    console.error('RPC_URL:', process.env.RPC_URL ? 'set' : 'MISSING');
+    res.status(500).json({ error: err.message });
   }
 });
 
