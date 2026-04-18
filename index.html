@@ -435,9 +435,9 @@
 <nav>
   <div class="nav-logo">HOT<span>🔥</span>POTATO</div>
   <div class="nav-right">
-    <span class="nav-link">History</span>
-    <span class="nav-link">Souvenirs</span>
     <span class="nav-link">Rules</span>
+    <span class="nav-link">Souvenirs</span>
+    <span class="nav-link">History</span>
     <button class="connect-btn" onclick="connectWallet()">Connect Wallet</button>
   </div>
 </nav>
@@ -492,25 +492,6 @@
 </div>
 
 <div class="section">
-  <div class="section-header">
-    <div class="section-title">OWNERSHIP HISTORY</div>
-    <div class="section-count" id="history-count">loading…</div>
-  </div>
-  <table class="history-table">
-    <thead><tr><th>Hand</th><th>Address</th><th>Price Paid</th><th>Held For</th><th>Souvenir</th></tr></thead>
-    <tbody id="history-body"><tr><td colspan="5" style="color:rgba(255,245,224,0.3);padding:24px 12px;">Loading ownership history…</td></tr></tbody>
-  </table>
-</div>
-
-<div class="section">
-  <div class="section-header">
-    <div class="section-title">SOUVENIR GALLERY</div>
-    <div class="section-count" id="gallery-count">loading…</div>
-  </div>
-  <div class="gallery" id="souvenir-gallery"><div style="color:rgba(255,245,224,0.3);font-size:13px;grid-column:1/-1;padding:24px 0;">Loading souvenirs…</div></div>
-</div>
-
-<div class="section">
   <div class="section-header"><div class="section-title">THE RULES</div></div>
   <div class="rules-grid">
     <div class="rule-card">
@@ -531,6 +512,25 @@
   </div>
 </div>
 
+<div class="section">
+  <div class="section-header">
+    <div class="section-title">SOUVENIR GALLERY</div>
+    <div class="section-count" id="gallery-count">loading…</div>
+  </div>
+  <div class="gallery" id="souvenir-gallery"><div style="color:rgba(255,245,224,0.3);font-size:13px;grid-column:1/-1;padding:24px 0;">Loading souvenirs…</div></div>
+</div>
+
+<div class="section">
+  <div class="section-header">
+    <div class="section-title">OWNERSHIP HISTORY</div>
+    <div class="section-count" id="history-count">loading…</div>
+  </div>
+  <table class="history-table">
+    <thead><tr><th>Hand</th><th>Address</th><th>Price Paid</th><th>Held For</th><th>Souvenir</th></tr></thead>
+    <tbody id="history-body"><tr><td colspan="5" style="color:rgba(255,245,224,0.3);padding:24px 12px;">Loading ownership history…</td></tr></tbody>
+  </table>
+</div>
+
 <footer>
   <div class="footer-logo">HOT🔥POTATO</div>
   <div class="footer-links">
@@ -547,7 +547,7 @@
     <div class="modal-title">BUY THE POTATO</div>
     <div class="modal-sub">You'll receive the Hot Potato NFT. The current holder gets their souvenir — rarity based on how long they've held.</div>
     <div class="modal-row"><span class="modal-key">Current price</span><span class="modal-val yellow">0.42 ETH</span></div>
-    <div class="modal-row"><span class="modal-key">Current holder rarity odds</span><span class="modal-val"><span class="rarity-pill r-rare">🔥 Rare tier</span></span></div>
+    <div class="modal-row"><span class="modal-key">Seller earns souvenir</span><span class="modal-val"><span class="rarity-pill r-rare">🔥 Rare tier</span></span></div>
     <div class="modal-input-label" id="modal-input-label">Your new asking price (min. 0.012 ETH)</div>
     <input class="modal-input" type="text" inputmode="decimal" id="new-price-input" value="0.50">
     <div class="modal-input-note">Set this higher to maximise your profit when the next buyer comes.</div>
