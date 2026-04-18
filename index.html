@@ -839,7 +839,7 @@ async function confirmBuy() {
 
     const tx = await contract.buyPotato(newAskingPrice, { value: sendValue });
     btn.textContent = '⏳ Transaction pending...';
-    await tx.wait();
+    const receipt = await tx.wait();
 
     closeModal();
     btn.textContent = '🔥 CONFIRM PURCHASE';

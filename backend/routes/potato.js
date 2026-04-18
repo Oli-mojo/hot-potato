@@ -43,7 +43,11 @@ router.get('/history', async (req, res) => {
       let souvenirImage = null;
       try {
         const uri = await contract.tokenURI(e.args.souvenirTokenId);
-        if (uri) souvenirImage = uri.replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/');
+        if (uri && uri.startsWith('ipfs://')) {
+          souvenirImage = 'https://gateway.pinata.cloud/ipfs/' + uri.slice(7);
+        } else if (uri && uri.startsWith('http')) {
+          souvenirImage = uri;
+        }
       } catch {}
       return {
         hand: idx + 1,
