@@ -174,6 +174,17 @@ router.get('/owned/:address', async (req, res) => {
   }
 });
 
+// GET /api/souvenir/debug-env — check which env vars are visible to the process
+router.get('/debug-env', (req, res) => {
+  res.json({
+    DISCORD_WEBHOOK_URL: process.env.DISCORD_WEBHOOK_URL ? `set (${process.env.DISCORD_WEBHOOK_URL.slice(0, 40)}...)` : 'NOT SET',
+    RPC_URL: process.env.RPC_URL ? 'set' : 'NOT SET',
+    PINATA_JWT: process.env.PINATA_JWT ? 'set' : 'NOT SET',
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY ? 'set' : 'NOT SET',
+    CONTRACT_ADDRESS: process.env.CONTRACT_ADDRESS || 'using default',
+  });
+});
+
 // POST /api/souvenir/test-discord — test Discord webhook without a real purchase
 router.post('/test-discord', async (req, res) => {
   try {
