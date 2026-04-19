@@ -63,6 +63,44 @@ async function postToDiscord({ hand, fromAddress, holdDurationHours, pricePaid, 
 }
 
 // ─── X (TWITTER) ──────────────────────────────────────────────────────────────
+// Uses raw OAuth 1.0a with Node's built-in crypto + axios — no extra package needed.
+const crypto = require('crypto');
+
+function oauthSign({ method, url, params, apiKey, apiSecret, accessToken, accessSecret }) {
+  const nonce     = crypto.randomBytes(16).toString('hex');
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+
+  const oauthParams = {
+    oauth_consumer_key:     apiKey,
+    oauth_nonce:            nonce,
+    oauth_signature_method: 'HMAC-SHA1',
+    oauth_timestamp:        timestamp,
+    oauth_token:            accessToken,
+    oauth_version:          '1.0',
+  };
+
+  const allParams = { ...params, ...oauthParams };
+  const paramStr  = Object.keys(allParams).sort()
+    .map(k => `${encodeURIComponent(k)}=${encodeURIComponent(allParams[k])}`)
+    .join('&');
+
+  const baseString = [
+    method.toUpperCase(),
+    encodeURIComponent(url),
+    encodeURIComponent(paramStr),
+  ].join('&');
+
+  const signingKey = `${encodeURIComponent(apiSecret)}&${encodeURIComponent(accessSecret)}`;
+  const signature  = crypto.createHmac('sha1', signingKey).update(baseString).digest('base64');
+
+  oauthParams.oauth_signature = signature;
+  const header = 'OAuth ' + Object.keys(oauthParams).sort()
+    .map(k => `${encodeURIComponent(k)}="${encodeURIComponent(oauthParams[k])}"`)
+    .join(', ');
+
+  return header;
+}
+
 async function postToX({ hand, fromAddress, holdDurationHours, pricePaid, rarity, newAskingPrice }) {
   const apiKey       = process.env.TWITTER_API_KEY;
   const apiSecret    = process.env.TWITTER_API_SECRET;
@@ -74,15 +112,12 @@ async function postToX({ hand, fromAddress, holdDurationHours, pricePaid, rarity
     return;
   }
 
-  const { TwitterApi } = require('twitter-api-v2');
-  const client = new TwitterApi({ appKey: apiKey, appSecret: apiSecret, accessToken, accessSecret });
-
   const siteUrl  = process.env.SITE_URL || 'https://hotpotato.xyz';
   const emoji    = RARITY_EMOJI[rarity]  || '🥔';
   const label    = RARITY_LABEL[rarity]  || 'Common';
   const duration = formatDuration(holdDurationHours);
 
-  const tweet =
+  const text =
 `🔥 THE POTATO HAS PASSED!
 
 Hand #${hand} — ${shortAddr(fromAddress)} held for ${duration}
@@ -93,7 +128,18 @@ Current asking price: ${newAskingPrice} ETH
 
 #HotPotato #NFT #Base #BaseChain`;
 
-  await client.v2.tweet(tweet);
+  const url   = 'https://api.twitter.com/2/tweets';
+  const body  = { text };
+  const authHeader = oauthSign({
+    method: 'POST', url,
+    params: {}, // body is JSON, not form-encoded, so not included in signature params
+    apiKey, apiSecret, accessToken, accessSecret,
+  });
+
+  await axios.post(url, body, {
+    headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
+    timeout: 10000,
+  });
   console.log('📣 X (Twitter) post sent');
 }
 
