@@ -277,8 +277,8 @@
   .potato-card {
     background: var(--pink);
     border-radius: 16px;
-    width: 220px;
-    height: 220px;
+    width: 280px;
+    height: 280px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1704,6 +1704,12 @@ async function loadGallery() {
     const rcClass = { common: 'rc-common', rare: 'rc-rare', epic: 'rc-epic', legendary: 'rc-legendary' };
     const myAddress = walletAddress ? walletAddress.toLowerCase() : null;
 
+    // Compute rank tokens for competitive badges
+    const nonBurned = data.souvenirs.filter(s => !s.burned);
+    const longestHoldId  = nonBurned.length ? nonBurned.reduce((a,b) => b.holdDurationHours > a.holdDurationHours ? b : a).tokenId : -1;
+    const highestPriceId = nonBurned.length ? nonBurned.reduce((a,b) => parseFloat(b.pricePaid) > parseFloat(a.pricePaid) ? b : a).tokenId : -1;
+    const latestId       = data.souvenirs[0]?.tokenId; // already sorted newest first
+
     gallery.innerHTML = data.souvenirs.map(s => {
       const tier       = s.rarityTier || 'common';
       const isOwned    = !s.burned && ownedIds.has(s.tokenId);
@@ -1717,7 +1723,6 @@ async function loadGallery() {
         ? `<div class="rarity-corner ${rcClass[tier] || 'rc-common'}">${rarityBadge[tier]} ${tier.toUpperCase()}</div>`
         : '';
 
-      // "YOURS" badge — top-left, only on owned cards
       const yoursBadge = isOwned
         ? `<div style="position:absolute;top:8px;left:8px;background:var(--yellow);color:#1a1200;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.08em;padding:3px 7px;border-radius:20px;">YOURS</div>`
         : '';
@@ -1731,18 +1736,37 @@ async function loadGallery() {
 
       const art = `<div style="position:relative;">${imgEl}${rarityBadgeEl}${yoursBadge}${burnedOverlay}</div>`;
 
-      // Card border highlight for owned
+      // Rank badges
+      const rankBadges = [];
+      if (!s.burned && s.tokenId === longestHoldId)  rankBadges.push(`<span style="background:rgba(255,107,0,0.15);color:#FF8C42;border:0.5px solid rgba(255,107,0,0.3);border-radius:20px;font-size:9px;font-weight:700;letter-spacing:0.08em;padding:2px 7px;font-family:'Barlow Condensed',sans-serif;">⏱ LONGEST HOLD</span>`);
+      if (!s.burned && s.tokenId === highestPriceId) rankBadges.push(`<span style="background:rgba(250,199,117,0.12);color:#FAC775;border:0.5px solid rgba(250,199,117,0.3);border-radius:20px;font-size:9px;font-weight:700;letter-spacing:0.08em;padding:2px 7px;font-family:'Barlow Condensed',sans-serif;">💰 TOP PRICE</span>`);
+      if (s.tokenId === latestId)                    rankBadges.push(`<span style="background:rgba(232,24,106,0.12);color:var(--pink);border:0.5px solid rgba(232,24,106,0.3);border-radius:20px;font-size:9px;font-weight:700;letter-spacing:0.08em;padding:2px 7px;font-family:'Barlow Condensed',sans-serif;">🔥 LATEST</span>`);
+      const rankRow = rankBadges.length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;">${rankBadges.join('')}</div>` : '';
+
+      // Stats row: hold time + price paid + short address
+      const holdStr  = s.holdDurationHours >= 24
+        ? `${(s.holdDurationHours / 24).toFixed(1)}d`
+        : `${s.holdDurationHours}h`;
+      const priceStr = parseFloat(s.pricePaid) > 0 ? `${parseFloat(s.pricePaid).toFixed(4)} ETH` : '—';
+      const addrStr  = s.originalOwner ? s.originalOwner.slice(0,6) + '…' + s.originalOwner.slice(-4) : '';
+      const statsRow = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;">
+          <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:rgba(255,245,224,0.3);">Hand #${s.transferNumber}</span>
+          <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:rgba(255,245,224,0.3);">⏱ ${holdStr}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:var(--yellow);">${priceStr}</span>
+          <span style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:rgba(255,245,224,0.2);">${addrStr}</span>
+        </div>`;
+
       const cardStyle = isOwned ? ' style="border-color:var(--yellow);"' : '';
 
-      // Bottom action buttons
       const metamaskBtn = isOwned
         ? `<button onclick="addSouvenirToMetaMask(${s.tokenId})" style="width:100%;background:rgba(255,245,224,0.06);border:0.5px solid rgba(255,245,224,0.15);border-radius:4px;color:rgba(255,245,224,0.4);font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:5px;cursor:pointer;">+ Add to MetaMask</button>`
         : '';
-
       const tradeInBtn = isOwned
         ? `<button onclick="tradeInSouvenir(${s.tokenId},'${tier}')" style="width:100%;margin-top:4px;background:rgba(255,107,0,0.12);border:0.5px solid rgba(255,107,0,0.3);border-radius:4px;color:#FF8C42;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:5px;cursor:pointer;">🔥 Trade In for Boost</button>`
         : '';
-
       const recoverBtn = isMyBurned
         ? `<button onclick="recoverTradeInCode('${s.tokenId}', this)" style="width:100%;margin-top:4px;background:rgba(180,120,60,0.1);border:0.5px solid rgba(180,120,60,0.3);border-radius:4px;color:rgba(180,120,60,0.8);font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:5px;cursor:pointer;">🔍 Check My Code</button>`
         : '';
@@ -1750,10 +1774,8 @@ async function loadGallery() {
       return `<div class="souvenir-card${s.burned ? ' burned' : ''}"${cardStyle}>
         ${art}
         <div style="padding:8px 10px 10px;">
-          <div style="font-size:11px;color:rgba(255,245,224,0.3);margin-bottom:8px;">Hand #${s.transferNumber} · ${s.holdDurationHours}h</div>
-          ${metamaskBtn}
-          ${tradeInBtn}
-          ${recoverBtn}
+          ${rankRow}${statsRow}
+          ${metamaskBtn}${tradeInBtn}${recoverBtn}
         </div>
       </div>`;
     }).join('');
