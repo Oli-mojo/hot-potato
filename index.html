@@ -1712,8 +1712,17 @@ async function loadGallery() {
       ? nonBurned.filter(s => s.holdDurationHours > 0).reduce((a,b) => b.holdDurationHours < a.holdDurationHours ? b : a).tokenId : -1;
     const highestPriceId = nonBurned.length ? nonBurned.reduce((a,b) => parseFloat(b.pricePaid) > parseFloat(a.pricePaid) ? b : a).tokenId : -1;
     const latestId       = allSouvenirs[0]?.tokenId; // already sorted newest first
-    const genesisId      = [...allSouvenirs].sort((a,b) => a.tokenId - b.tokenId)[0]?.tokenId;
+    const chronological = [...allSouvenirs].sort((a,b) => a.tokenId - b.tokenId);
+    const genesisId      = chronological[0]?.tokenId;
     const ogHolderId     = allSouvenirs.find(s => s.transferNumber === 1)?.tokenId;
+
+    // First of each rarity tier
+    const tierGenesisIds = {};
+    for (const tier of ['common','rare','epic','legendary']) {
+      const first = chronological.find(s => s.rarityTier === tier);
+      if (first) tierGenesisIds[tier] = first.tokenId;
+    }
+    // Sole legend badge (only if exactly one legendary exists)
     const legendaryCount = allSouvenirs.filter(s => s.rarityTier === 'legendary').length;
     const soleLegendId   = legendaryCount === 1 ? allSouvenirs.find(s => s.rarityTier === 'legendary')?.tokenId : -1;
 
@@ -1768,9 +1777,17 @@ async function loadGallery() {
       const b = (emoji, label, bg, color, border) =>
         `<span style="background:${bg};color:${color};border:0.5px solid ${border};border-radius:20px;font-size:9px;font-weight:700;letter-spacing:0.08em;padding:2px 7px;font-family:'Barlow Condensed',sans-serif;">${emoji} ${label}</span>`;
       const rankBadges = [];
-      if (s.tokenId === genesisId)                                rankBadges.push(b('🏁','GENESIS',        'rgba(250,199,117,0.18)','#FAC775','rgba(250,199,117,0.5)'));
-      if (s.tokenId === ogHolderId && s.tokenId !== genesisId)    rankBadges.push(b('🥔','OG HOLDER',       'rgba(255,245,224,0.08)','rgba(255,245,224,0.5)','rgba(255,245,224,0.2)'));
-      if (!s.burned && s.tokenId === soleLegendId)                rankBadges.push(b('👑','SOLE LEGEND',     'rgba(250,199,117,0.18)','#FAC775','rgba(250,199,117,0.5)'));
+      if (s.tokenId === genesisId)                                rankBadges.push(b('🏁','GENESIS',             'rgba(250,199,117,0.18)','#FAC775',              'rgba(250,199,117,0.5)'));
+      if (s.tokenId === ogHolderId && s.tokenId !== genesisId)    rankBadges.push(b('🥔','OG HOLDER',          'rgba(255,245,224,0.08)','rgba(255,245,224,0.5)','rgba(255,245,224,0.2)'));
+      // Tier genesis badges (skip if already has the overall genesis badge)
+      if (s.tokenId !== genesisId) {
+        if (s.tokenId === tierGenesisIds.legendary) rankBadges.push(b('👑','1ST LEGENDARY','rgba(250,199,117,0.18)','#FAC775',  'rgba(250,199,117,0.5)'));
+        if (s.tokenId === tierGenesisIds.epic)      rankBadges.push(b('⚡','1ST EPIC',     'rgba(150,100,220,0.18)','#C4B5F4',  'rgba(150,100,220,0.4)'));
+        if (s.tokenId === tierGenesisIds.rare)      rankBadges.push(b('💎','1ST RARE',     'rgba(55,138,221,0.18)', '#85B7EB',  'rgba(55,138,221,0.4)'));
+        if (s.tokenId === tierGenesisIds.common)    rankBadges.push(b('🥔','1ST COMMON',   'rgba(180,178,169,0.15)','#D3D1C7',  'rgba(180,178,169,0.3)'));
+      }
+      if (!s.burned && s.tokenId === soleLegendId && s.tokenId !== tierGenesisIds.legendary)
+                                                                  rankBadges.push(b('👑','SOLE LEGEND',        'rgba(250,199,117,0.18)','#FAC775','rgba(250,199,117,0.5)'));
       if (!s.burned && s.tokenId === longestHoldId)               rankBadges.push(b('⏱','IRON HANDS',      'rgba(255,107,0,0.15)', '#FF8C42','rgba(255,107,0,0.3)'));
       if (!s.burned && s.tokenId === shortestHoldId)              rankBadges.push(b('✋','PAPER HANDS',     'rgba(100,100,120,0.2)','rgba(200,200,220,0.5)','rgba(150,150,180,0.3)'));
       if (!s.burned && s.tokenId === highestPriceId)              rankBadges.push(b('💰','TOP PRICE',       'rgba(250,199,117,0.12)','#FAC775','rgba(250,199,117,0.3)'));
