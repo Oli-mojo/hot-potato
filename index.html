@@ -860,6 +860,7 @@ async function connectWallet() {
       // If user rejected switch (4001), just continue — wallet is still connected
     }
     showToast('✅ Wallet connected — ' + walletAddress.slice(0,6) + '...' + walletAddress.slice(-4));
+    checkAndPromptSouvenirs(walletAddress);
   } catch (err) {
     clearTimeout(resetTimer);
     console.error('Wallet connection failed:', err);
@@ -1009,6 +1010,27 @@ async function confirmBuy() {
     btn.textContent = '🔥 CONFIRM PURCHASE';
     btn.disabled = false;
   }
+}
+
+// ─── SOUVENIR WALLET CHECK ────────────────────────────────
+// After wallet connects, check if this address owns any souvenirs and prompt MetaMask
+async function checkAndPromptSouvenirs(address) {
+  try {
+    const res  = await fetch(`${API_BASE}/souvenir/owned/${address}`);
+    const data = await res.json();
+    if (!data.owned || data.owned.length === 0) return;
+    // Small delay so the connect toast clears first
+    setTimeout(async () => {
+      for (const { tokenId } of data.owned) {
+        try {
+          await window.ethereum.request({
+            method: 'wallet_watchAsset',
+            params: { type: 'ERC721', options: { address: CONTRACT_ADDRESS, tokenId: tokenId.toString() } },
+          });
+        } catch (e) {}
+      }
+    }, 1500);
+  } catch (e) {}
 }
 
 // ─── ADD NFT TO METAMASK ──────────────────────────────────

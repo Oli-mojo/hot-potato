@@ -152,4 +152,43 @@ router.get('/gallery', async (req, res) => {
   }
 });
 
+// GET /api/souvenir/owned/:address — souvenirs owned by a wallet (for MetaMask prompt)
+router.get('/owned/:address', async (req, res) => {
+  try {
+    const { address } = req.params;
+    const provider = new ethers.JsonRpcProvider(RPC_URL);
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, SOUVENIR_ABI, provider);
+    const count = Number(await contract.souvenirCount());
+    const owned = [];
+    for (let i = 1; i < count; i++) {
+      try {
+        const owner = await contract.ownerOf(i);
+        if (owner.toLowerCase() === address.toLowerCase()) {
+          owned.push({ tokenId: i });
+        }
+      } catch (e) {}
+    }
+    res.json({ owned });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/souvenir/test-discord — test Discord webhook without a real purchase
+router.post('/test-discord', async (req, res) => {
+  try {
+    await announcePotatoPassed({
+      hand: 99,
+      fromAddress: '0xTEST000000000000000000000000000000000000',
+      holdDurationHours: 72,
+      pricePaid: '0.042',
+      rarity: 'rare',
+      newAskingPrice: '0.050',
+    });
+    res.json({ success: true, message: 'Discord test fired — check #announcements' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
