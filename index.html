@@ -372,12 +372,39 @@
   .souvenir-hand { font-family: 'Black Ops One', sans-serif; font-size: 11px; color: rgba(255,245,224,0.4); letter-spacing: 1px; }
   .souvenir-rarity { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 2px; }
 
-  .rules-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .rules-tabs { display: flex; gap: 6px; margin-bottom: 16px; }
+  .rules-tab { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 7px 16px; border-radius: 20px; border: 0.5px solid var(--border); background: transparent; color: rgba(255,245,224,0.4); cursor: pointer; transition: all .2s; }
+  .rules-tab.active { background: var(--pink); border-color: var(--pink); color: #fff; }
+  .rules-tab:hover:not(.active) { color: var(--cream); border-color: rgba(255,245,224,0.3); }
+  .rules-panel { display: none; }
+  .rules-panel.active { display: block; }
+
+  .rules-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  @media (min-width: 700px) { .rules-grid { grid-template-columns: repeat(4, 1fr); } }
   .rule-card { background: var(--card-bg); border: 0.5px solid var(--border); border-radius: 10px; padding: 20px 18px; }
   .rule-icon { font-size: 24px; margin-bottom: 12px; display: block; }
   .rule-title { font-family: 'Black Ops One', sans-serif; font-size: 14px; color: var(--pink); letter-spacing: 1px; margin-bottom: 8px; }
   .rule-desc { font-size: 13px; color: rgba(255,245,224,0.5); line-height: 1.6; }
   .rule-highlight { color: var(--yellow); font-weight: 500; }
+
+  .boost-intro { font-size: 13px; color: rgba(255,245,224,0.5); line-height: 1.7; margin-bottom: 16px; }
+  .boost-intro b { color: var(--yellow); font-weight: 500; }
+  .boost-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .boost-table th { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,245,224,0.35); text-align: left; padding: 0 12px 10px; }
+  .boost-table td { padding: 10px 12px; border-top: 0.5px solid var(--border); color: rgba(255,245,224,0.65); }
+  .boost-table td:first-child { color: var(--yellow); font-weight: 500; }
+  .boost-tiers { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 14px; }
+  @media (min-width: 700px) { .boost-tiers { grid-template-columns: repeat(4, 1fr); } }
+  .boost-tier-card { background: var(--card-bg); border: 0.5px solid var(--border); border-radius: 8px; padding: 14px 14px; }
+  .boost-tier-label { font-family: 'Black Ops One', sans-serif; font-size: 12px; letter-spacing: 1px; margin-bottom: 4px; }
+  .boost-tier-over { font-size: 12px; color: rgba(255,245,224,0.4); margin-bottom: 2px; }
+  .boost-tier-effect { font-size: 12px; color: var(--yellow); font-weight: 500; }
+
+  .terms-body { font-size: 13px; color: rgba(255,245,224,0.5); line-height: 1.8; }
+  .terms-body h3 { font-family: 'Black Ops One', sans-serif; font-size: 13px; color: var(--pink); letter-spacing: 1px; margin: 20px 0 6px; }
+  .terms-body h3:first-child { margin-top: 0; }
+  .terms-body p { margin-bottom: 8px; }
+  .terms-body b { color: rgba(255,245,224,0.8); font-weight: 600; }
 
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 500; align-items: center; justify-content: center; }
   .modal-overlay.open { display: flex; }
@@ -435,9 +462,9 @@
 <nav>
   <div class="nav-logo">HOT<span>🔥</span>POTATO</div>
   <div class="nav-right">
-    <span class="nav-link">Rules</span>
-    <span class="nav-link">Souvenirs</span>
-    <span class="nav-link">History</span>
+    <span class="nav-link" onclick="document.getElementById('rules').scrollIntoView({behavior:'smooth'})">Rules</span>
+    <span class="nav-link" onclick="document.getElementById('souvenirs').scrollIntoView({behavior:'smooth'})">Souvenirs</span>
+    <span class="nav-link" onclick="document.getElementById('history').scrollIntoView({behavior:'smooth'})">History</span>
     <button class="connect-btn" onclick="connectWallet()">Connect Wallet</button>
   </div>
 </nav>
@@ -491,28 +518,106 @@
   </div>
 </div>
 
-<div class="section">
+<div class="section" id="rules">
   <div class="section-header"><div class="section-title">THE RULES</div></div>
-  <div class="rules-grid">
-    <div class="rule-card">
-      <span class="rule-icon">🔥</span>
-      <div class="rule-title">Always For Sale</div>
-      <div class="rule-desc">The Hot Potato is <span class="rule-highlight">always listed</span>. The owner cannot delist it. Anyone can buy at any time.</div>
-    </div>
-    <div class="rule-card">
-      <span class="rule-icon">📈</span>
-      <div class="rule-title">Price Only Goes Up</div>
-      <div class="rule-desc">Every new buyer must pay <span class="rule-highlight">at least 15% more</span> than the last sale. Enforced by the contract — no exceptions.</div>
-    </div>
-    <div class="rule-card">
-      <span class="rule-icon">👑</span>
-      <div class="rule-title">Hold Longer. Get Rarer.</div>
-      <div class="rule-desc">Every sale mints a <span class="rule-highlight">unique souvenir</span> for the outgoing owner. Hold for 3+ months for a <span class="rule-highlight">50% Legendary</span> chance.</div>
+
+  <div class="rules-tabs">
+    <button class="rules-tab active" onclick="showRulesTab('how-it-works', this)">How It Works</button>
+    <button class="rules-tab" onclick="showRulesTab('rarity-boost', this)">Rarity Boost</button>
+    <button class="rules-tab" onclick="showRulesTab('terms', this)">Terms of Use</button>
+  </div>
+
+  <!-- Panel 1: How It Works -->
+  <div class="rules-panel active" id="panel-how-it-works">
+    <div class="rules-grid">
+      <div class="rule-card">
+        <span class="rule-icon">🔥</span>
+        <div class="rule-title">Always For Sale</div>
+        <div class="rule-desc">The Hot Potato is <span class="rule-highlight">always listed</span>. The current owner cannot delist or refuse a sale. Anyone can buy at any time.</div>
+      </div>
+      <div class="rule-card">
+        <span class="rule-icon">📈</span>
+        <div class="rule-title">Price Only Goes Up</div>
+        <div class="rule-desc">Every buyer must set a new asking price at least <span class="rule-highlight">15% above</span> what they paid. Enforced on-chain — no exceptions, no negotiation.</div>
+      </div>
+      <div class="rule-card">
+        <span class="rule-icon">🎁</span>
+        <div class="rule-title">You Can't Sell</div>
+        <div class="rule-desc">You don't choose when to exit. When someone buys from you, the contract <span class="rule-highlight">automatically sends your ETH</span> and mints your souvenir. You just wait.</div>
+      </div>
+      <div class="rule-card">
+        <span class="rule-icon">👑</span>
+        <div class="rule-title">Hold Longer. Get Rarer.</div>
+        <div class="rule-desc">Your souvenir rarity depends on <span class="rule-highlight">how long you held</span>. Under 24h = Common. 3+ months = 50% chance of Legendary.</div>
+      </div>
     </div>
   </div>
+
+  <!-- Panel 2: Rarity Boost -->
+  <div class="rules-panel" id="panel-rarity-boost">
+    <p class="boost-intro">
+      When you buy the potato, you set the new asking price — but you can also <b>overpay above the minimum</b>.
+      Paying more than the minimum earns you a <b>rarity boost</b>: when you eventually get bought out,
+      your hold-duration tier is bumped up, giving you better souvenir odds. It's the only strategic
+      lever in the game — hold time is luck, overpay is skill.
+    </p>
+    <table class="boost-table">
+      <thead><tr><th>Overpay above minimum</th><th>Boost</th><th>Effect on souvenir</th></tr></thead>
+      <tbody>
+        <tr><td>0%</td><td>None</td><td>Standard rarity based on hold time</td></tr>
+        <tr><td>10 – 24%</td><td>+1 tier</td><td>e.g. Common → Rare odds</td></tr>
+        <tr><td>25 – 49%</td><td>+2 tiers</td><td>e.g. Common → Epic odds</td></tr>
+        <tr><td>50 – 99%</td><td>+3 tiers</td><td>e.g. Common → Legendary odds</td></tr>
+        <tr><td>100%+</td><td>+4 tiers (max)</td><td>Maximum Legendary odds regardless of hold time</td></tr>
+      </tbody>
+    </table>
+    <div class="boost-tiers">
+      <div class="boost-tier-card">
+        <div class="boost-tier-label" style="color:#aaa;">🥔 Common</div>
+        <div class="boost-tier-over">Under 24h held</div>
+        <div class="boost-tier-effect">85% Common · 12% Rare</div>
+      </div>
+      <div class="boost-tier-card">
+        <div class="boost-tier-label" style="color:#4FC3F7;">💎 Rare</div>
+        <div class="boost-tier-over">1 – 7 days held</div>
+        <div class="boost-tier-effect">28% Rare · 9% Epic</div>
+      </div>
+      <div class="boost-tier-card">
+        <div class="boost-tier-label" style="color:#CE93D8;">⚡ Epic</div>
+        <div class="boost-tier-over">1 – 4 weeks held</div>
+        <div class="boost-tier-effect">40% Rare · 25% Epic · 15% Legendary</div>
+      </div>
+      <div class="boost-tier-card">
+        <div class="boost-tier-label" style="color:#FFD600;">🌟 Legendary</div>
+        <div class="boost-tier-over">3+ months held</div>
+        <div class="boost-tier-effect">50% Legendary · 40% Epic</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel 3: Terms of Use -->
+  <div class="rules-panel" id="panel-terms">
+    <div class="terms-body">
+      <h3>Decentralized & Autonomous</h3>
+      <p>Hot Potato is a fully on-chain game deployed on the Base blockchain. The smart contract is the sole arbiter of all game rules. No individual, company, or entity controls or can alter the outcome of any transaction once submitted.</p>
+
+      <h3>Transactions Are Irreversible</h3>
+      <p><b>All purchases are final.</b> Blockchain transactions cannot be reversed, cancelled, or refunded. Once you send a transaction and it is confirmed on-chain, your ETH is transferred and the contract executes automatically. There are no exceptions.</p>
+
+      <h3>No Guarantees</h3>
+      <p>Participation in Hot Potato involves real financial risk. The price of ETH fluctuates. You may hold the potato for an extended period before being bought out. <b>You may lose money.</b> Souvenir NFTs have no guaranteed monetary value. Only participate with funds you can afford to lose.</p>
+
+      <h3>No Operator Liability</h3>
+      <p>The creators of Hot Potato provide this interface as-is, with no warranties. We are not responsible for losses arising from smart contract interactions, network conditions, wallet errors, or market movements. Use at your own risk.</p>
+
+      <h3>By Buying, You Agree</h3>
+      <p>Submitting a buy transaction constitutes your acceptance of these terms. You confirm you are legally permitted to interact with blockchain-based applications in your jurisdiction and that you understand the mechanics of the game.</p>
+    </div>
+  </div>
+
 </div>
 
-<div class="section">
+<div class="section" id="souvenirs">
   <div class="section-header">
     <div class="section-title">SOUVENIR GALLERY</div>
     <div class="section-count" id="gallery-count">loading…</div>
@@ -520,7 +625,7 @@
   <div class="gallery" id="souvenir-gallery"><div style="color:rgba(255,245,224,0.3);font-size:13px;grid-column:1/-1;padding:24px 0;">Loading souvenirs…</div></div>
 </div>
 
-<div class="section">
+<div class="section" id="history">
   <div class="section-header">
     <div class="section-title">OWNERSHIP HISTORY</div>
     <div class="section-count" id="history-count">loading…</div>
@@ -538,6 +643,7 @@
     <span class="footer-link">OpenSea</span>
     <span class="footer-link">Twitter</span>
     <span class="footer-link">Discord</span>
+    <span class="footer-link" onclick="document.getElementById('rules').scrollIntoView({behavior:'smooth'}); setTimeout(()=>{ document.querySelectorAll('.rules-tab')[2].click(); }, 400);">Terms</span>
   </div>
 </footer>
 
@@ -764,6 +870,14 @@ async function connectWallet() {
       showToast('⚠️ Wallet error: ' + (err.message || 'unknown'), '#FF6B00');
     }
   }
+}
+
+// ─── RULES TABS ───────────────────────────────────────────
+function showRulesTab(panelId, btn) {
+  document.querySelectorAll('.rules-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.rules-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + panelId).classList.add('active');
+  btn.classList.add('active');
 }
 
 // ─── BUY MODAL ────────────────────────────────────────────
