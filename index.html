@@ -260,33 +260,67 @@
 
   .hero-right {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 24px;
     padding: 40px;
     background: radial-gradient(ellipse at center, rgba(232,24,106,0.12) 0%, transparent 70%);
     position: relative;
   }
+  .potato-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
   .potato-card {
     background: var(--pink);
     border-radius: 16px;
-    width: 260px;
-    height: 260px;
+    width: 220px;
+    height: 220px;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
     box-shadow: 0 0 60px rgba(232,24,106,0.4), 0 0 120px rgba(232,24,106,0.15);
     animation: float 4s ease-in-out infinite;
+    transition: box-shadow 1.5s ease, border-color 1.5s ease;
+    border: 2px solid rgba(232,24,106,0.4);
+    z-index: 2;
   }
+  /* Tier-based glow rings */
+  .potato-card.tier-common  { box-shadow: 0 0 40px rgba(180,178,169,0.35), 0 0 80px rgba(180,178,169,0.1);  border-color: rgba(180,178,169,0.4); }
+  .potato-card.tier-rare    { box-shadow: 0 0 50px rgba(55,138,221,0.5),   0 0 100px rgba(55,138,221,0.2);   border-color: rgba(55,138,221,0.6); }
+  .potato-card.tier-epic    { box-shadow: 0 0 55px rgba(150,100,220,0.55), 0 0 110px rgba(150,100,220,0.25); border-color: rgba(150,100,220,0.7); }
+  .potato-card.tier-legendary { box-shadow: 0 0 65px rgba(250,199,117,0.7), 0 0 130px rgba(250,199,117,0.35); border-color: rgba(250,199,117,0.9); animation: float 4s ease-in-out infinite, legendary-pulse 2.5s ease-in-out infinite; }
+  @keyframes legendary-pulse {
+    0%, 100% { box-shadow: 0 0 65px rgba(250,199,117,0.7), 0 0 130px rgba(250,199,117,0.35); }
+    50%       { box-shadow: 0 0 90px rgba(250,199,117,0.9), 0 0 180px rgba(250,199,117,0.5); }
+  }
+  /* Outer glow ring behind the card */
+  .potato-aura {
+    position: absolute;
+    inset: -16px;
+    border-radius: 24px;
+    opacity: 0;
+    transition: opacity 1.5s ease, background 1.5s ease;
+    z-index: 1;
+    pointer-events: none;
+    animation: float 4s ease-in-out infinite;
+  }
+  .potato-aura.tier-rare     { opacity: 0.25; background: radial-gradient(ellipse at center, rgba(55,138,221,0.6) 0%, transparent 70%); }
+  .potato-aura.tier-epic     { opacity: 0.35; background: radial-gradient(ellipse at center, rgba(150,100,220,0.7) 0%, transparent 70%); }
+  .potato-aura.tier-legendary { opacity: 0.55; background: radial-gradient(ellipse at center, rgba(250,199,117,0.8) 0%, transparent 65%); }
   .potato-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 16px;
+    border-radius: 14px;
   }
   @keyframes float {
     0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-12px); }
+    50% { transform: translateY(-10px); }
   }
   .potato-emoji { font-size: 120px; line-height: 1; }
   .potato-badge {
@@ -299,10 +333,11 @@
     padding: 5px 10px;
     border-radius: 20px;
     letter-spacing: 1px;
+    z-index: 3;
   }
   .potato-owner {
     position: absolute;
-    bottom: -36px;
+    bottom: -28px;
     left: 50%;
     transform: translateX(-50%);
     font-family: 'Barlow Condensed', sans-serif;
@@ -312,6 +347,7 @@
     text-transform: uppercase;
     color: rgba(255,245,224,0.4);
     white-space: nowrap;
+    z-index: 3;
   }
   .heat-meter {
     position: absolute;
@@ -322,6 +358,7 @@
     flex-direction: column;
     align-items: center;
     gap: 6px;
+    z-index: 3;
   }
   .heat-label {
     font-family: 'Barlow Condensed', sans-serif;
@@ -338,11 +375,57 @@
     width: 100%;
     background: linear-gradient(to top, var(--orange), var(--pink), var(--yellow));
     border-radius: 4px;
-    animation: heatrise 6s ease-in-out infinite;
+    transition: height 2s ease;
   }
-  @keyframes heatrise {
-    0%, 100% { height: 45%; }
-    50% { height: 65%; }
+
+  /* Brewing panel */
+  .brewing-panel {
+    width: 260px;
+    background: rgba(255,245,224,0.04);
+    border: 0.5px solid rgba(255,245,224,0.1);
+    border-radius: 10px;
+    padding: 12px 14px;
+    transition: border-color 1.5s ease;
+  }
+  .brewing-panel.tier-rare     { border-color: rgba(55,138,221,0.3); }
+  .brewing-panel.tier-epic     { border-color: rgba(150,100,220,0.35); }
+  .brewing-panel.tier-legendary { border-color: rgba(250,199,117,0.45); }
+  .brewing-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;
+  }
+  .brewing-label {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 9px; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,245,224,0.3);
+  }
+  .brewing-tier-badge {
+    font-family: 'Black Ops One', sans-serif; font-size: 10px; letter-spacing: 1px;
+    padding: 3px 8px; border-radius: 20px; transition: all 1.5s ease;
+  }
+  .brewing-tier-badge.tier-common   { background: rgba(180,178,169,0.15); color: #D3D1C7; }
+  .brewing-tier-badge.tier-rare     { background: rgba(55,138,221,0.2);   color: #85B7EB; }
+  .brewing-tier-badge.tier-epic     { background: rgba(150,100,220,0.2);  color: #C4B5F4; }
+  .brewing-tier-badge.tier-legendary { background: rgba(250,199,117,0.2); color: #FAC775; }
+  .brewing-odds {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; margin-bottom: 10px;
+  }
+  .brewing-odd {
+    display: flex; align-items: center; justify-content: space-between;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 11px;
+  }
+  .brewing-odd-label { color: rgba(255,245,224,0.4); }
+  .brewing-odd-val   { font-weight: 700; }
+  .brewing-odd-val.hi { color: var(--yellow); }
+  .brewing-progress {
+    height: 4px; background: rgba(255,245,224,0.08); border-radius: 2px; overflow: hidden; margin-top: 2px;
+  }
+  .brewing-progress-fill {
+    height: 100%; border-radius: 2px;
+    background: linear-gradient(to right, var(--orange), var(--yellow));
+    transition: width 2s ease;
+  }
+  .brewing-next {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 10px;
+    color: rgba(255,245,224,0.25); margin-top: 6px; text-align: right;
   }
 
   .section { padding: 48px 24px; border-bottom: 0.5px solid var(--border); }
@@ -600,14 +683,32 @@
     </div>
   </div>
   <div class="hero-right">
-    <div class="heat-meter">
-      <div class="heat-bar"><div class="heat-fill"></div></div>
-      <div class="heat-label">Heat</div>
+    <div class="potato-wrap">
+      <div class="heat-meter">
+        <div class="heat-bar"><div class="heat-fill" id="heat-fill"></div></div>
+        <div class="heat-label">Heat</div>
+      </div>
+      <div class="potato-aura" id="potato-aura"></div>
+      <div class="potato-card" id="potato-card">
+        <div class="potato-badge">ONE OF ONE</div>
+        <img class="potato-img" src="hero-potato.jpg" alt="Hot Potato">
+        <div class="potato-owner" id="potato-owner">Owner: 0x4f2a…8c3e</div>
+      </div>
     </div>
-    <div class="potato-card">
-      <div class="potato-badge">ONE OF ONE</div>
-      <img class="potato-img" src="hero-potato.jpg" alt="Hot Potato">
-      <div class="potato-owner">Owner: 0x4f2a...8c3e</div>
+    <!-- Souvenir brewing panel -->
+    <div class="brewing-panel" id="brewing-panel">
+      <div class="brewing-header">
+        <span class="brewing-label">🎁 Souvenir brewing…</span>
+        <span class="brewing-tier-badge tier-common" id="brewing-tier-badge">COMMON</span>
+      </div>
+      <div class="brewing-odds" id="brewing-odds">
+        <div class="brewing-odd"><span class="brewing-odd-label">🥔 Common</span><span class="brewing-odd-val" id="bo-common">85%</span></div>
+        <div class="brewing-odd"><span class="brewing-odd-label">🔥 Rare</span>  <span class="brewing-odd-val" id="bo-rare">12%</span></div>
+        <div class="brewing-odd"><span class="brewing-odd-label">⚡ Epic</span>   <span class="brewing-odd-val" id="bo-epic">2%</span></div>
+        <div class="brewing-odd"><span class="brewing-odd-label">👑 Legendary</span><span class="brewing-odd-val hi" id="bo-legendary">1%</span></div>
+      </div>
+      <div class="brewing-progress"><div class="brewing-progress-fill" id="brewing-progress-fill" style="width:5%"></div></div>
+      <div class="brewing-next" id="brewing-next">Hold 24h for Rare odds</div>
     </div>
   </div>
 </div>
@@ -950,6 +1051,11 @@ async function loadGameState() {
     holdSeconds = Math.floor(gameState.holdDurationSeconds);
     updateTimer();
 
+    // Wire heat bar to actual hold time (max heat = 3 months = 2160h)
+    const heatPct = Math.min(95, Math.max(4, (gameState.holdDurationHours / 2160) * 100));
+    const heatEl = document.getElementById('heat-fill');
+    if (heatEl) heatEl.style.height = heatPct + '%';
+
     // Update section counts (use IDs — order changed after section reorder)
     const hCount = document.getElementById('history-count');
     const gCount = document.getElementById('gallery-count');
@@ -1006,8 +1112,69 @@ function updateTimer() {
   el.style.color = color;
   el.className   = legendaryClass ? 'timer-val timer-legendary' : 'timer-val';
   if (status) status.textContent = statusText;
+
+  // Update brewing panel every tick (cheap DOM ops, skips if no change)
+  updateBrewingPanel(holdSeconds / 3600);
 }
 setInterval(updateTimer, 1000);
+
+// ─── BREWING PANEL + POTATO AURA ──────────────────────────
+const RARITY_TIERS = [
+  { maxHours: 24,   tier: 'common',    label: 'COMMON',    weights: { common:85, rare:12, epic:2,  legendary:1  }, color: '#B4B2A9', nextLabel: 'Hold 24h for Rare odds',    nextHours: 24   },
+  { maxHours: 168,  tier: 'rare',      label: 'RARE',      weights: { common:60, rare:28, epic:9,  legendary:3  }, color: '#85B7EB', nextLabel: 'Hold 1 week for Epic odds',  nextHours: 168  },
+  { maxHours: 672,  tier: 'epic',      label: 'EPIC',      weights: { common:20, rare:40, epic:25, legendary:15 }, color: '#C4B5F4', nextLabel: 'Hold 4 weeks for Legendary', nextHours: 672  },
+  { maxHours: 2160, tier: 'legendary', label: 'LEGENDARY', weights: { common:5,  rare:20, epic:45, legendary:30 }, color: '#FAC775', nextLabel: 'Hold 3 months for max odds', nextHours: 2160 },
+  { maxHours: Infinity, tier: 'legendary', label: 'LEGENDARY', weights: { common:1, rare:9, epic:40, legendary:50 }, color: '#FAC775', nextLabel: 'Max odds reached 👑',      nextHours: null },
+];
+
+let _lastBrewingTier = null;
+function updateBrewingPanel(holdHours) {
+  const tierData = RARITY_TIERS.find(t => holdHours < t.maxHours) || RARITY_TIERS[RARITY_TIERS.length - 1];
+  const tier = tierData.tier;
+
+  // Update odds text
+  const w = tierData.weights;
+  const boCommon = document.getElementById('bo-common');
+  const boRare   = document.getElementById('bo-rare');
+  const boEpic   = document.getElementById('bo-epic');
+  const boLeg    = document.getElementById('bo-legendary');
+  if (boCommon) boCommon.textContent = w.common + '%';
+  if (boRare)   boRare.textContent   = w.rare + '%';
+  if (boEpic)   boEpic.textContent   = w.epic + '%';
+  if (boLeg)    boLeg.textContent    = w.legendary + '%';
+
+  // Progress bar: % through current tier
+  const prevHours = RARITY_TIERS[RARITY_TIERS.indexOf(tierData) - 1]?.maxHours || 0;
+  const span = tierData.maxHours === Infinity ? 2160 : tierData.maxHours - prevHours;
+  const progress = Math.min(100, Math.max(3, ((holdHours - prevHours) / span) * 100));
+  const fill = document.getElementById('brewing-progress-fill');
+  if (fill) fill.style.width = progress + '%';
+
+  // Next threshold label
+  const nextEl = document.getElementById('brewing-next');
+  if (nextEl) nextEl.textContent = tierData.nextLabel;
+
+  // Only update classes if tier changed (avoid jank)
+  if (tier === _lastBrewingTier) return;
+  _lastBrewingTier = tier;
+
+  const badge = document.getElementById('brewing-tier-badge');
+  const panel = document.getElementById('brewing-panel');
+  const card  = document.getElementById('potato-card');
+  const aura  = document.getElementById('potato-aura');
+
+  ['tier-common','tier-rare','tier-epic','tier-legendary'].forEach(c => {
+    badge?.classList.remove(c);
+    panel?.classList.remove(c);
+    card?.classList.remove(c);
+    aura?.classList.remove(c);
+  });
+  badge?.classList.add('tier-' + tier);
+  panel?.classList.add('tier-' + tier);
+  card?.classList.add('tier-' + tier);
+  aura?.classList.add('tier-' + tier);
+  if (badge) badge.textContent = tierData.label;
+}
 
 // ─── TOAST ────────────────────────────────────────────────
 function showToast(msg, color) {
