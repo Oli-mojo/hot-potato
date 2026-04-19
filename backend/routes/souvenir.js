@@ -6,6 +6,7 @@ const axios = require('axios');
 const { getPotatoState, getRarityTier, rollRarity, setSouvenirURI } = require('../services/contract');
 const { generateSouvenirImage } = require('../services/imageGen');
 const { uploadImageToIPFS, uploadMetadataToIPFS, buildMetadata } = require('../services/ipfs');
+const { announcePotatoPassed } = require('../services/social');
 
 const RARITY_MAP = ['common', 'rare', 'epic', 'legendary'];
 
@@ -39,6 +40,16 @@ router.post('/generate', async (req, res) => {
 
       await setSouvenirURI(Number(souvenirTokenId), tokenURI);
       console.log(`✅ Souvenir #${souvenirTokenId} complete — ${rarity} — ${tokenURI}`);
+
+      // Announce on Discord and X
+      await announcePotatoPassed({
+        hand: edition,
+        fromAddress,
+        holdDurationHours,
+        pricePaid: req.body.pricePaid || '?',
+        rarity,
+        newAskingPrice: req.body.newAskingPrice || '?',
+      });
     } catch (err) {
       console.error('Background souvenir generation failed:', err.message);
     }

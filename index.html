@@ -969,7 +969,7 @@ async function confirmBuy() {
         try {
           const parsed = iface.parseLog(log);
           if (parsed && parsed.name === 'PotatoPassed') {
-            const { from, holdDuration, souvenirTokenId, rarityTier } = parsed.args;
+            const { from, price, holdDuration, souvenirTokenId, rarityTier } = parsed.args;
             showToast('🎨 Generating souvenir for previous holder…');
             fetch(`${API_BASE}/souvenir/generate`, {
               method: 'POST',
@@ -979,6 +979,8 @@ async function confirmBuy() {
                 holdDurationSeconds: holdDuration.toString(),
                 souvenirTokenId: souvenirTokenId.toString(),
                 rarityTier: rarityTier.toString(),
+                pricePaid: ethers.formatEther(price),
+                newAskingPrice: document.getElementById('new-price-input')?.value || '?',
               }),
             }).then(() => {
               setTimeout(loadGallery, 60000); // refresh gallery after ~1 min
