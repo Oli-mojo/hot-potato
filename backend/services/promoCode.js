@@ -100,4 +100,46 @@ function applyBoost(rarity, boost) {
   return RARITY_ORDER[newIdx];
 }
 
-module.exports = { createTradeInCode, validateCode, storePendingBoost, consumePendingBoost, applyBoost, RARITY_BOOST };
+// ─── LOYALTY BOOST ────────────────────────────────────────
+// Returns boost level based on how many times a wallet has previously held the potato
+// Looks up on-chain souvenir history to count prior holdings
+const { ethers } = require('ethers');
+
+const LOYALTY_ABI = [
+  'function souvenirCount() view returns (uint256)',
+  'function souvenirs(uint256 tokenId) view returns (uint256 transferNumber, uint256 pricePaid, uint256 holdDuration, uint8 rarityTier, address originalOwner)',
+];
+
+async function getLoyaltyBoost(walletAddress) {
+  try {
+    const rpcUrl   = process.env.RPC_URL;
+    const contract_address = process.env.CONTRACT_ADDRESS || '0xd04A4fA2B05874d268Ce8bB8E8EaEc252ef2AB22';
+    if (!rpcUrl) return { boost: 0, timesHeld: 0 };
+
+    const provider = new ethers.JsonRpcProvider(rpcUrl);
+    const contract = new ethers.Contract(contract_address, LOYALTY_ABI, provider);
+    const count    = Number(await contract.souvenirCount());
+
+    let timesHeld = 0;
+    for (let i = 1; i < count; i++) {
+      try {
+        const data = await contract.souvenirs(i);
+        if (data.originalOwner.toLowerCase() === walletAddress.toLowerCase()) timesHeld++;
+      } catch (e) {}
+    }
+
+    // Boost kicks in from 2nd hold onwards
+    let boost = 0;
+    if (timesHeld >= 3) boost = 3;
+    else if (timesHeld >= 2) boost = 2;
+    else if (timesHeld >= 1) boost = 1;
+
+    if (boost > 0) console.log(`🏆 Loyalty boost +${boost} for ${walletAddress} (held ${timesHeld} times before)`);
+    return { boost, timesHeld };
+  } catch (e) {
+    console.error('Loyalty boost lookup failed:', e.message);
+    return { boost: 0, timesHeld: 0 };
+  }
+}
+
+module.exports = { createTradeInCode, validateCode, storePendingBoost, consumePendingBoost, applyBoost, RARITY_BOOST, getLoyaltyBoost };

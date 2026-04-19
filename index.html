@@ -676,6 +676,7 @@
     <input class="modal-input" type="text" inputmode="decimal" id="new-price-input" value="0.50">
     <div class="modal-input-note">Set this higher to maximise your profit when the next buyer comes.</div>
 
+    <div id="loyalty-status" style="display:none;font-size:12px;color:rgba(255,245,224,0.4);margin-top:14px;padding:8px 10px;background:rgba(255,245,224,0.04);border-radius:6px;border:0.5px solid rgba(255,245,224,0.08);"></div>
     <div class="promo-toggle" onclick="togglePromo()">🎟️ Have a promo code?</div>
     <div id="promo-section" style="display:none;">
       <div class="promo-row">
@@ -926,11 +927,33 @@ function showRulesTab(panelId, btn) {
 function openModal() {
   if (!walletAddress) {
     connectWallet().then(() => {
-      if (walletAddress) document.getElementById('modal').classList.add('open');
+      if (walletAddress) { document.getElementById('modal').classList.add('open'); showLoyaltyStatus(); }
     });
     return;
   }
   document.getElementById('modal').classList.add('open');
+  showLoyaltyStatus();
+}
+
+async function showLoyaltyStatus() {
+  if (!walletAddress) return;
+  const el = document.getElementById('loyalty-status');
+  if (!el) return;
+  try {
+    const res  = await fetch(`${API_BASE}/souvenir/loyalty/${walletAddress}`);
+    const data = await res.json();
+    if (data.timesHeld === 0) {
+      el.style.display = 'none';
+    } else {
+      el.style.display = 'block';
+      const boostLabels = ['', '+1 tier', '+2 tiers', '+3 tiers (max)'];
+      if (data.maxed) {
+        el.innerHTML = `🏆 <b style="color:var(--yellow)">Loyal holder</b> — ${data.timesHeld}x veteran · Max loyalty boost active (+3 tiers)`;
+      } else {
+        el.innerHTML = `🏆 <b style="color:var(--yellow)">${data.timesHeld}x holder</b> · Loyalty boost: <b style="color:var(--yellow)">${boostLabels[data.boost]}</b> active on your next souvenir`;
+      }
+    }
+  } catch (e) { el.style.display = 'none'; }
 }
 function closeModal() { document.getElementById('modal').classList.remove('open'); }
 document.getElementById('modal').addEventListener('click', e => {

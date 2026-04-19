@@ -7,7 +7,7 @@ const { getPotatoState, getRarityTier, rollRarity, setSouvenirURI } = require('.
 const { generateSouvenirImage } = require('../services/imageGen');
 const { uploadImageToIPFS, uploadMetadataToIPFS, buildMetadata } = require('../services/ipfs');
 const { announcePotatoPassed } = require('../services/social');
-const { createTradeInCode, validateCode, storePendingBoost, consumePendingBoost, applyBoost } = require('../services/promoCode');
+const { createTradeInCode, validateCode, storePendingBoost, consumePendingBoost, applyBoost, getLoyaltyBoost } = require('../services/promoCode');
 
 const { ethers } = require('ethers');
 const SOUVENIR_ABI = [
@@ -39,12 +39,14 @@ router.post('/generate', async (req, res) => {
       const state = await getPotatoState();
       const edition = state.totalSouvenirs;
 
-      // Apply any pending boost stored for this holder
+      // Apply pending promo boost + loyalty boost (stacked, capped at legendary)
       const pendingBoost = consumePendingBoost(fromAddress);
-      const finalRarity = applyBoost(baseRarity, pendingBoost);
+      const { boost: loyaltyBoost, timesHeld } = await getLoyaltyBoost(fromAddress);
+      const totalBoost  = Math.min(pendingBoost + loyaltyBoost, 4);
+      const finalRarity = applyBoost(baseRarity, totalBoost);
 
       console.log(`\n🥔 Generating souvenir #${souvenirTokenId} for ${fromAddress}`);
-      console.log(`   Hold time: ${holdDurationHours.toFixed(1)}h → Base: ${baseRarity}${pendingBoost ? ` → Boosted: ${finalRarity} (+${pendingBoost})` : ''}`);
+      console.log(`   Hold time: ${holdDurationHours.toFixed(1)}h → Base: ${baseRarity} | Promo: +${pendingBoost} | Loyalty: +${loyaltyBoost} (${timesHeld}x holder) → Final: ${finalRarity}`);
 
       const imageUrl = await generateSouvenirImage(finalRarity, holdDurationHours, fromAddress);
       const { cid: imageCid } = await uploadImageToIPFS(imageUrl, `hot-potato-souvenir-${edition}.png`);
@@ -90,6 +92,18 @@ router.post('/apply-promo', (req, res) => {
 router.get('/validate-promo/:code', (req, res) => {
   const result = validateCode(req.params.code);
   res.json(result);
+});
+
+// GET /api/souvenir/loyalty/:address — loyalty boost status for a wallet
+router.get('/loyalty/:address', async (req, res) => {
+  try {
+    const { boost, timesHeld } = await getLoyaltyBoost(req.params.address);
+    const nextBoost = timesHeld === 0 ? 1 : timesHeld === 1 ? 2 : 3;
+    const nextAt    = timesHeld === 0 ? 1 : timesHeld === 1 ? 2 : 3;
+    res.json({ timesHeld, boost, nextBoostAt: nextAt, maxed: boost >= 3 });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // POST /api/souvenir/trade-in
