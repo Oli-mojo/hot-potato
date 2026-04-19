@@ -29,7 +29,7 @@ function formatDuration(hours) {
 }
 
 // ─── DISCORD ──────────────────────────────────────────────────────────────────
-async function postToDiscord({ hand, fromAddress, holdDurationHours, pricePaid, rarity, newAskingPrice }) {
+async function postToDiscord({ hand, fromAddress, holdDurationHours, pricePaid, rarity, newAskingPrice, imageUrl }) {
   const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
   if (!webhookUrl) {
     console.log('ℹ️  No DISCORD_WEBHOOK_URL set — skipping Discord post');
@@ -54,6 +54,7 @@ async function postToDiscord({ hand, fromAddress, holdDurationHours, pricePaid, 
       { name: 'New ask',       value: `${newAskingPrice} ETH`,       inline: true },
     ],
     description: `The hot potato is back on the market.\n[**Buy now →**](${siteUrl})`,
+    image: imageUrl ? { url: imageUrl } : undefined,
     footer: { text: 'Hot Potato · Built on Base' },
     timestamp: new Date().toISOString(),
   };

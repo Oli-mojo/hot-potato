@@ -41,7 +41,8 @@ router.post('/generate', async (req, res) => {
       await setSouvenirURI(Number(souvenirTokenId), tokenURI);
       console.log(`✅ Souvenir #${souvenirTokenId} complete — ${rarity} — ${tokenURI}`);
 
-      // Announce on Discord and X
+      // Announce on Discord and X (include souvenir image)
+      const ipfsImageUrl = `https://gateway.pinata.cloud/ipfs/${imageCid}`;
       await announcePotatoPassed({
         hand: edition,
         fromAddress,
@@ -49,6 +50,7 @@ router.post('/generate', async (req, res) => {
         pricePaid: req.body.pricePaid || '?',
         rarity,
         newAskingPrice: req.body.newAskingPrice || '?',
+        imageUrl: ipfsImageUrl,
       });
     } catch (err) {
       console.error('Background souvenir generation failed:', err.message);
@@ -195,6 +197,7 @@ router.post('/test-discord', async (req, res) => {
       pricePaid: '0.042',
       rarity: 'rare',
       newAskingPrice: '0.050',
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Sweet_potato_Ipomoea_batatas.jpg/320px-Sweet_potato_Ipomoea_batatas.jpg',
     });
     res.json({ success: true, message: 'Discord test fired — check #announcements' });
   } catch (err) {
