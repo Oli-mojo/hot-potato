@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hot Potato — Full Rules & Boost System Analysis</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Georgia', serif; background: #0f0800; color: #ffe8c0; line-height: 1.7; padding: 40px 24px; }
+  .page { max-width: 880px; margin: 0 auto; }
+  h1 { font-family: 'Arial Black', sans-serif; font-size: 28px; letter-spacing: 2px; color: #FAC775; margin-bottom: 6px; }
+  h2 { font-family: 'Arial Black', sans-serif; font-size: 16px; letter-spacing: 1px; color: #FF6B00; margin: 44px 0 12px; text-transform: uppercase; border-bottom: 1px solid rgba(255,107,0,0.3); padding-bottom: 8px; }
+  h3 { font-family: 'Arial Black', sans-serif; font-size: 13px; color: #FAC775; margin: 22px 0 8px; letter-spacing: 0.5px; }
+  p { font-size: 14px; color: rgba(255,232,192,0.8); margin-bottom: 12px; }
+  ul { margin: 0 0 14px 20px; }
+  li { font-size: 14px; color: rgba(255,232,192,0.75); margin-bottom: 5px; line-height: 1.6; }
+  .meta { font-size: 12px; color: rgba(255,232,192,0.35); margin-bottom: 36px; border-top: 1px solid rgba(255,232,192,0.08); padding-top: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 14px 0 22px; }
+  th { background: rgba(255,107,0,0.15); color: #FF8C42; font-family: 'Arial', sans-serif; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; padding: 8px 12px; text-align: left; border-bottom: 1px solid rgba(255,107,0,0.3); }
+  td { padding: 9px 12px; border-bottom: 1px solid rgba(255,232,192,0.06); color: rgba(255,232,192,0.75); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .hi  { color: #FAC775; font-weight: bold; }
+  .ok  { color: #90EE90; }
+  .warn{ color: #FF8C42; }
+  .bad { color: #FF5555; }
+  .tag { display: inline-block; font-size: 10px; font-family: 'Arial', sans-serif; font-weight: bold; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 8px; border-radius: 20px; margin-right: 3px; }
+  .tag-common    { background: rgba(180,178,169,0.2); color: #D3D1C7; }
+  .tag-rare      { background: rgba(55,138,221,0.2);  color: #85B7EB; }
+  .tag-epic      { background: rgba(150,100,220,0.2); color: #C4B5F4; }
+  .tag-legendary { background: rgba(250,199,117,0.2); color: #FAC775; }
+  .tag-new       { background: rgba(100,220,100,0.2); color: #90EE90; }
+  .tag-issue     { background: rgba(255,85,85,0.15);  color: #FF8888; }
+  .tag-ok        { background: rgba(100,220,100,0.15);color: #90EE90; }
+  .callout       { background: rgba(255,107,0,0.07);  border-left: 3px solid #FF6B00; padding: 13px 16px; margin: 16px 0 20px; border-radius: 0 8px 8px 0; }
+  .callout.gold  { background: rgba(250,199,117,0.07); border-color: #FAC775; }
+  .callout.blue  { background: rgba(55,138,221,0.07);  border-color: #85B7EB; }
+  .callout.red   { background: rgba(255,85,85,0.07);   border-color: #FF5555; }
+  .callout.green { background: rgba(100,220,100,0.07); border-color: #90EE90; }
+  .callout p { margin: 0; font-size: 13px; }
+  .score { display: inline-block; font-family: 'Arial Black', sans-serif; font-size: 17px; margin-right: 6px; }
+  .score.a { color: #90EE90; } .score.b { color: #FAC775; } .score.c { color: #FF8C42; } .score.d { color: #FF5555; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0; }
+  .card { background: rgba(255,232,192,0.04); border: 1px solid rgba(255,232,192,0.09); border-radius: 8px; padding: 15px; }
+  .card h3 { margin-top: 0; font-size: 12px; }
+  .qs { counter-reset: q; }
+  .q  { counter-increment: q; padding: 10px 14px; margin: 7px 0; background: rgba(255,232,192,0.04); border-radius: 6px; font-size: 13px; color: rgba(255,232,192,0.7); border-left: 2px solid rgba(250,199,117,0.3); }
+  .q::before { content: "Q" counter(q) ". "; color: #FAC775; font-weight: bold; font-family: 'Arial', sans-serif; }
+  .rule-block { background: rgba(255,232,192,0.03); border: 1px solid rgba(255,232,192,0.08); border-radius: 8px; padding: 16px 18px; margin: 12px 0; }
+  .rule-block h3 { margin-top: 0; color: #FF8C42; }
+  hr { border: none; border-top: 1px solid rgba(255,232,192,0.07); margin: 40px 0; }
+  .toc { background: rgba(255,232,192,0.03); border: 1px solid rgba(255,232,192,0.08); border-radius: 8px; padding: 18px 22px; margin: 24px 0 36px; }
+  .toc a { color: rgba(255,232,192,0.5); text-decoration: none; font-size: 13px; display: block; padding: 3px 0; }
+  .toc a:hover { color: #FAC775; }
+  .toc-section { font-family: 'Arial Black', sans-serif; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,107,0,0.6); margin: 10px 0 4px; }
+  code { background: rgba(255,232,192,0.08); padding: 1px 5px; border-radius: 3px; font-size: 12px; font-family: 'Courier New', monospace; color: #FAC775; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>🥔 HOT POTATO</h1>
+  <h1 style="font-size:20px;color:#FF6B00;margin-bottom:4px;">Complete Rules, Mechanics & Boost System Analysis</h1>
+  <div class="meta">Prepared for Opus review · April 2026 · Base Sepolia testnet · Contract v3 · <strong style="color:#90EE90">Updated: compressed tier timings now live</strong></div>
+
+  <div class="toc">
+    <div class="toc-section">Overview</div>
+    <a href="#concept">1. Game Concept</a>
+    <a href="#rules">2. Complete Rules</a>
+    <a href="#contract">3. Smart Contract Architecture</a>
+    <div class="toc-section">Rarity System</div>
+    <a href="#tiers">4. Hold Duration Tiers (Updated)</a>
+    <a href="#boosts">5. Full Boost Inventory</a>
+    <a href="#stacking">6. Boost Stacking & Interactions</a>
+    <a href="#overpay">7. Overpay Mechanism Deep-Dive</a>
+    <div class="toc-section">Analysis</div>
+    <a href="#distribution">8. Expected Souvenir Distribution</a>
+    <a href="#economy">9. Token Economy & Burn Mechanic</a>
+    <a href="#persistence">10. On-Chain vs Off-Chain Architecture</a>
+    <a href="#scorecard">11. Mechanics Scorecard</a>
+    <a href="#questions">12. Open Questions for Opus</a>
+    <a href="#priorities">13. Pre-Mainnet Priority List</a>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2 id="concept">1. Game Concept</h2>
+
+  <p>Hot Potato is a single-NFT perpetual auction game deployed on Base. One NFT — The Hot Potato — is always for sale. Whoever holds it cannot refuse a sale. When bought, the previous holder automatically receives their ETH proceeds plus a freshly minted Souvenir NFT.</p>
+
+  <p>The game has two intertwined economies: the <strong>primary game</strong> (the potato itself, always escalating in price) and the <strong>souvenir economy</strong> (collectible NFTs whose rarity is earned by how you played).</p>
+
+  <div class="callout gold">
+    <p><strong>Core insight:</strong> The potato is a hot seat, not an investment. You can't time your exit — someone buys you out. The psychological tension between "hold longer for a better souvenir" and "I might get stuck holding forever" is the game's engine.</p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2 id="rules">2. Complete Rules</h2>
+
+  <div class="rule-block">
+    <h3>🔥 Rule 1 — The Potato is Always For Sale</h3>
+    <p>The Hot Potato NFT (Token ID 0) is always listed for sale. The current owner cannot delist, refuse, or block a purchase. Any wallet can call <code>buyPotato(newAskingPrice)</code> at any time as long as they pay the current asking price.</p>
+  </div>
+
+  <div class="rule-block">
+    <h3>📈 Rule 2 — Price Only Goes Up (Tiered Minimum)</h3>
+    <p>Every buyer must set a new asking price above what they paid, enforced on-chain. The minimum increase scales down as the price rises to keep the game accessible at high valuations:</p>
+    <table>
+      <thead><tr><th>Price Paid</th><th>Min Increase</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>&lt; 0.1 ETH</td><td>+25%</td><td>Pay 0.05 ETH → must ask ≥ 0.0625 ETH</td></tr>
+        <tr><td>0.1 – 1 ETH</td><td>+15%</td><td>Pay 0.5 ETH → must ask ≥ 0.575 ETH</td></tr>
+        <tr><td>1 – 10 ETH</td><td>+10%</td><td>Pay 3 ETH → must ask ≥ 3.3 ETH</td></tr>
+        <tr><td>10 – 100 ETH</td><td>+7%</td><td>Pay 50 ETH → must ask ≥ 53.5 ETH</td></tr>
+        <tr><td>100+ ETH</td><td>+5%</td><td>Pay 200 ETH → must ask ≥ 210 ETH</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="rule-block">
+    <h3>💸 Rule 3 — Fee Split on Every Sale</h3>
+    <p>Every purchase is automatically split at the smart contract level: <strong>95% goes to the previous holder</strong> (automatic, instant), <strong>5% goes to the creator wallet</strong>. This is enforced on-chain and cannot be bypassed. The creator also earns ERC-2981 royalties on secondary souvenir sales on compliant marketplaces (e.g. OpenSea).</p>
+  </div>
+
+  <div class="rule-block">
+    <h3>🎁 Rule 4 — Souvenir Minted on Every Sale</h3>
+    <p>When the potato changes hands, a new Souvenir NFT is minted to the outgoing holder. The souvenir's rarity is determined by a pseudo-random roll weighted by hold duration and any active boosts. The souvenir is the primary collectible and the game's long-term social proof layer.</p>
+  </div>
+
+  <div class="rule-block">
+    <h3>⏱ Rule 5 — Hold Longer, Get Rarer (Updated Tiers)</h3>
+    <p>The longer you hold before being bought out, the better your rarity odds. Tiers are now compressed to match crypto-native attention horizons:</p>
+    <table>
+      <thead><tr><th>Hold Duration</th><th>Tier</th><th>Common</th><th>Rare</th><th>Epic</th><th>Legendary</th></tr></thead>
+      <tbody>
+        <tr><td>&lt; 6 hours</td><td><span class="tag tag-common">Common</span></td><td>85%</td><td>12%</td><td>2%</td><td>1%</td></tr>
+        <tr><td>6h – 48h</td><td><span class="tag tag-rare">Rare</span></td><td>60%</td><td>28%</td><td>9%</td><td>3%</td></tr>
+        <tr><td>2 – 7 days</td><td><span class="tag tag-epic">Epic</span></td><td>20%</td><td>40%</td><td>25%</td><td>15%</td></tr>
+        <tr><td>7 – 30 days</td><td><span class="tag tag-legendary">Legendary</span></td><td>5%</td><td>20%</td><td>45%</td><td>30%</td></tr>
+        <tr><td>30+ days</td><td><span class="tag tag-legendary">Max</span></td><td>1%</td><td>9%</td><td>40%</td><td class="hi">50%</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="rule-block">
+    <h3>📊 Rule 6 — Overpay Bonus (On-Chain)</h3>
+    <p>Buyers who pay significantly above the current asking price earn a premium boost stored on-chain, applied when they eventually get bought out. This creates a trade-off: paying more gives better souvenir odds but also raises your new asking floor.</p>
+    <table>
+      <thead><tr><th>Overpayment Above Asking</th><th>Boost</th><th>Effect</th></tr></thead>
+      <tbody>
+        <tr><td>&lt; 10%</td><td>None</td><td>Standard hold-time odds</td></tr>
+        <tr><td>10 – 24%</td><td>+1 tier</td><td>e.g. Common → Rare weights</td></tr>
+        <tr><td>25 – 49%</td><td>+2 tiers</td><td>e.g. Common → Epic weights</td></tr>
+        <tr><td>50 – 99%</td><td>+3 tiers</td><td>e.g. Common → Legendary weights</td></tr>
+        <tr><td>100%+</td><td>+4 tiers</td><td>Max tier (50% legendary odds)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="rule-block">
+    <h3>🔥 Rule 7 — Trade-In: Burn a Souvenir for a Boost</h3>
+    <p>Holders can burn (send to dead address) any souvenir they own to receive a single-use trade-in code. The boost scales with the rarity of the burned souvenir. This code is applied before buying and counts toward the next souvenir's rarity roll.</p>
+    <table>
+      <thead><tr><th>Burned Rarity</th><th>Code Boost</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag tag-common">Common</span></td><td>+1 tier</td></tr>
+        <tr><td><span class="tag tag-rare">Rare</span></td><td>+2 tiers</td></tr>
+        <tr><td><span class="tag tag-epic">Epic</span></td><td>+3 tiers</td></tr>
+        <tr><td><span class="tag tag-legendary">Legendary</span></td><td>+4 tiers</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="rule-block">
+    <h3>🏆 Rule 8 — Loyalty Boost (Claim-Based)</h3>
+    <p>Wallets that have previously held the potato accumulate loyalty holds. Before buying, they can actively claim their loyalty boost — this stores a pending boost and resets the counter. If not claimed, the boost is not applied. After claiming and being bought out, the player must earn new holds to claim again.</p>
+    <table>
+      <thead><tr><th>Unclaimed Holds Since Last Reset</th><th>Loyalty Boost</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>+1 tier</td></tr>
+        <tr><td>2</td><td>+2 tiers</td></tr>
+        <tr><td>3+</td><td>+3 tiers (max loyalty)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="rule-block">
+    <h3>🤝 Rule 9 — Referral System</h3>
+    <p>Every wallet has a deterministic referral code (<code>REF-XXXXXXXX</code>). When a new buyer applies your referral code before purchasing, both you and the buyer receive a +1 pending boost applied to the next souvenir. Referral codes are reusable — you can share them widely. Self-referral is blocked.</p>
+  </div>
+
+  <div class="rule-block">
+    <h3>🎟 Rule 10 — Promo / Community Codes</h3>
+    <p>The game operator can set community promo codes via environment variables (e.g. <code>DISCORD</code>, <code>XFOLLOW</code>, <code>LAUNCH</code>). These are reusable, give +1 or +2 tier boosts, and are distributed through social channels to reward community participation.</p>
+  </div>
+
+  <div class="rule-block">
+    <h3>⚙️ Rule 11 — Boost Stacking & Cap</h3>
+    <p>All boosts stack additively, but the effective tier is capped at Tier 4 (maximum: 50% legendary odds). There is no scenario where legendary is guaranteed. A player with multiple boosts active can reach Tier 4 odds even with a short hold time.</p>
+  </div>
+
+  <div class="rule-block">
+    <h3>🎨 Rule 12 — Souvenir Personality</h3>
+    <p>Souvenir images are AI-generated (fal.ai / FLUX with LoRA fine-tune). Each souvenir has a 25% chance of a happy/smiling expression and a 5% chance of being a female variant — both are entirely random and cut across all rarity tiers. A female legendary souvenir is exceptionally rare (~0.25% of all mints).</p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2 id="contract">3. Smart Contract Architecture</h2>
+
+  <table>
+    <thead><tr><th>Property</th><th>Value</th></tr></thead>
+    <tbody>
+      <tr><td>Contract</td><td>HotPotato v3 (ERC-721 + ERC-2981 + Ownable + ReentrancyGuard)</td></tr>
+      <tr><td>Network</td><td>Base Sepolia (testnet) — mainnet deployment pending</td></tr>
+      <tr><td>Address</td><td><code>0x90Bfcf98282445B35e3ce48b9Eb21E532E603473</code></td></tr>
+      <tr><td>Starting price</td><td>0.001 ETH</td></tr>
+      <tr><td>Creator fee</td><td>5% (hardcoded, on-chain enforced)</td></tr>
+      <tr><td>Creator wallet</td><td><code>0x995a13322683cf42463Cd1bDE6412020Ce685008</code></td></tr>
+      <tr><td>Token ID 0</td><td>The Hot Potato (always transferred, never re-minted)</td></tr>
+      <tr><td>Token IDs 1+</td><td>Souvenir NFTs (minted fresh on each sale)</td></tr>
+      <tr><td>Rarity roll</td><td>On-chain pseudo-random: keccak256(prevrandao, timestamp, sender, totalTransfers)</td></tr>
+      <tr><td>Backend wallet</td><td><code>0x23F4abE8FF4661A47e53a474368D5683eEb4B0d2</code> (calls setSouvenirURI)</td></tr>
+      <tr><td>Secondary royalty</td><td>5% via ERC-2981 (marketplace-dependent enforcement)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout red">
+    <p><strong>Note on on-chain rarity vs off-chain image rarity:</strong> The contract rolls rarity on-chain using hold duration + overpay boost only. The backend independently rolls rarity for image generation using hold duration + ALL boosts (promo, loyalty, referral, trade-in). The on-chain tier is the "base" stored in the souvenir struct; the metadata (IPFS) tier reflects all boosts and is used as the display rarity. These can diverge — the metadata tier is always ≥ the on-chain tier.</p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2 id="tiers">4. Hold Duration Tiers — Updated <span class="tag tag-new">NEW</span></h2>
+
+  <p>Tiers have been compressed from a 3-month max to a 30-day max. This change is reflected in both the smart contract (<code>_holdTier()</code>) and the backend (<code>getRarityTier()</code>).</p>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>❌ Old Tiers (Too Long)</h3>
+      <ul>
+        <li>&lt; 24h → Common</li>
+        <li>1–7 days → Rare</li>
+        <li>1–4 weeks → Epic</li>
+        <li>1–3 months → Legendary</li>
+        <li>3+ months → Max</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>✅ New Tiers (Compressed)</h3>
+      <ul>
+        <li>&lt; 6h → Common</li>
+        <li>6h – 48h → Rare</li>
+        <li>2–7 days → Epic</li>
+        <li>7–30 days → Legendary</li>
+        <li>30+ days → Max</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout green">
+    <p><strong>Impact:</strong> A player who holds for 10 days now reaches Legendary tier (30% legendary chance). Under the old system they'd only be in Rare territory. This makes the aspiration gap achievable within a single focused week of play — more compatible with crypto attention cycles.</p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2 id="boosts">5. Full Boost Inventory</h2>
+
+  <table>
+    <thead><tr><th>#</th><th>Source</th><th>Max</th><th>How Earned</th><th>Use</th><th>Stored</th><th>Tamper-Proof</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><strong>Hold Duration</strong></td><td>Tier 4</td><td>Automatically by holding</td><td>Auto</td><td>On-chain</td><td class="ok">Yes</td></tr>
+      <tr><td>2</td><td><strong>Overpay Premium</strong></td><td>+4 tiers</td><td>Pay above minimum when buying</td><td>Per-buy</td><td>On-chain</td><td class="ok">Yes</td></tr>
+      <tr><td>3</td><td><strong>Promo Codes</strong></td><td>+1 or +2</td><td>Social codes (Discord, X)</td><td>Reusable</td><td>In-memory</td><td class="bad">No</td></tr>
+      <tr><td>4</td><td><strong>Trade-In Code</strong></td><td>+4 tiers</td><td>Burn an owned souvenir</td><td>Single-use</td><td>In-memory</td><td class="bad">No</td></tr>
+      <tr><td>5</td><td><strong>Loyalty Boost</strong></td><td>+3 tiers</td><td>Return player, manually claimed</td><td>Claim then reset</td><td>In-memory</td><td class="bad">No</td></tr>
+      <tr><td>6</td><td><strong>Referral</strong></td><td>+1 tier</td><td>Someone uses your code</td><td>Per-referral</td><td>In-memory</td><td class="bad">No</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout red">
+    <p><strong>Critical gap:</strong> 4 of 6 boost sources are stored in Node.js in-memory Maps that reset on every Railway deploy or server restart. Any player with a pending boost loses it silently on the next push. This must be persisted to a database before mainnet.</p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2 id="stacking">6. Boost Stacking & Interactions</h2>
+
+  <table>
+    <thead><tr><th>Scenario</th><th>Hold Tier</th><th>Boosts</th><th>Effective Tier</th><th>Legendary Odds</th></tr></thead>
+    <tbody>
+      <tr><td>Quick flip, no boosts</td><td>0 (&lt;6h)</td><td>—</td><td>0</td><td>1%</td></tr>
+      <tr><td>Quick flip + promo code</td><td>0</td><td>+1</td><td>1</td><td>3%</td></tr>
+      <tr><td>Held 2 days, no boosts</td><td>2</td><td>—</td><td>2</td><td>15%</td></tr>
+      <tr><td>Held 7 days, no boosts</td><td>3</td><td>—</td><td>3</td><td>30%</td></tr>
+      <tr><td>Held 7 days + loyalty +3</td><td>3</td><td>+3</td><td>4 (cap)</td><td class="hi">50%</td></tr>
+      <tr><td>Quick flip + burn legendary</td><td>0</td><td>+4</td><td>4 (cap)</td><td class="hi">50%</td></tr>
+      <tr><td>Quick flip + overpay 100%</td><td>0</td><td>+4</td><td>4 (cap)</td><td class="hi">50%</td></tr>
+      <tr><td>All boosts max (7d hold)</td><td>3</td><td>+3+4+1+1=9→cap 4</td><td>4</td><td class="hi">50%</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout blue">
+    <p><strong>Design tension:</strong> The boost cap at Tier 4 (50% legendary) is sound — legendary is never guaranteed. However, a well-equipped player can reach max odds from a 0-hour hold. This raises the question of whether hold duration still feels meaningful as a primary mechanic, or whether boosts have displaced it.</p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2 id="overpay">7. Overpay Mechanism — Deep Dive</h2>
+
+  <p>The overpay boost is the most elegant mechanic in the system because it's entirely on-chain, creates a real financial commitment, and is self-regulating. Paying more gets you better souvenir odds but also raises the floor the next buyer has to pay — meaning aggressive overpayers are also pricing themselves harder to sell.</p>
+
+  <div class="callout">
+    <p><strong>Hidden nuance:</strong> A player who pays double the asking price (100%+ overpay, +4 boost) must also set a new asking price ≥ 125% of what they paid. So a 2× overpay creates a 2.5× price floor for the next buyer. This is a powerful self-regulating mechanism that hasn't been prominently communicated to players.</p>
+  </div>
+
+  <h3>Boost Level vs Financial Risk</h3>
+  <table>
+    <thead><tr><th>Boost</th><th>Min Overpay</th><th>Min New Ask Floor</th><th>Net Cost vs No Boost</th></tr></thead>
+    <tbody>
+      <tr><td>+1</td><td>10% above asking</td><td>+26.5% above asking</td><td>Low risk</td></tr>
+      <tr><td>+2</td><td>25% above asking</td><td>+56% above asking</td><td>Moderate</td></tr>
+      <tr><td>+3</td><td>50% above asking</td><td>+88% above asking</td><td>High — harder to sell</td></tr>
+      <tr><td>+4</td><td>100% above asking</td><td>+150% above asking</td><td class="warn">Very high — sets aggressive floor</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2 id="distribution">8. Expected Souvenir Distribution</h2>
+
+  <p>Assuming an average hold time of ~18h (realistic for a game with moderate activity — most buys happen within hours, a few persist for days):</p>
+
+  <table>
+    <thead><tr><th>Tier at 18h avg hold</th><th>~% of all souvenirs</th><th>Common</th><th>Rare</th><th>Epic</th><th>Legendary</th></tr></thead>
+    <tbody>
+      <tr><td>Tier 1 (Rare weights)</td><td class="ok">~100% at 18h</td><td>60%</td><td>28%</td><td>9%</td><td>3%</td></tr>
+    </tbody>
+  </table>
+
+  <p>If 20% of holders hold 2–7 days (Epic tier) and 10% hold 7–30 days (Legendary tier), the overall distribution across 100 mints approaches:</p>
+
+  <table>
+    <thead><tr><th>Rarity</th><th>Approx. % of gallery</th><th>Feel</th></tr></thead>
+    <tbody>
+      <tr><td><span class="tag tag-common">Common</span></td><td>~52%</td><td>Majority — the "normal" souvenir</td></tr>
+      <tr><td><span class="tag tag-rare">Rare</span></td><td>~28%</td><td>Fairly common — noticeable in gallery</td></tr>
+      <tr><td><span class="tag tag-epic">Epic</span></td><td>~13%</td><td>Meaningful — roughly 1 in 8</td></tr>
+      <tr><td><span class="tag tag-legendary">Legendary</span></td><td>~7%</td><td class="hi">Trophy — roughly 1 in 15</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2 id="economy">9. Token Economy & Burn Mechanic</h2>
+
+  <p>The trade-in system creates a deflationary loop within the souvenir economy:</p>
+
+  <ul>
+    <li>Souvenir minted → held in wallet or sold on OpenSea</li>
+    <li>If burned: common/rare souvenirs are sacrificed for a better chance at the next</li>
+    <li>Burn address: <code>0x000000000000000000000000000000000000dEaD</code></li>
+    <li>Burned souvenirs are marked "CHARRED" in the gallery and their code is recoverable by the burner's wallet</li>
+  </ul>
+
+  <div class="callout">
+    <p><strong>Potential legendary loop:</strong> A player who mints a legendary souvenir could burn it for +4 boost → reach 50% legendary odds again → repeat. This creates a power-user loop that concentrates legendary supply among active burners. Consider capping trade-in from legendary at +3.</p>
+  </div>
+
+  <h3>Secondary Market (OpenSea)</h3>
+  <p>All souvenirs appear automatically on OpenSea as an ERC-721 collection on Base. The site links directly to each token's OpenSea page with "View" and "Sell on OpenSea" buttons. OpenSea honours the ERC-2981 royalty (5% to creator). Blur and most aggregators do not.</p>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2 id="persistence">10. On-Chain vs Off-Chain Architecture Risk</h2>
+
+  <table>
+    <thead><tr><th>Data</th><th>Location</th><th>Lost on Restart?</th><th>Risk Level</th></tr></thead>
+    <tbody>
+      <tr><td>Souvenir ownership, rarity</td><td>On-chain</td><td class="ok">Never</td><td class="ok">None</td></tr>
+      <tr><td>Game price, hold time</td><td>On-chain</td><td class="ok">Never</td><td class="ok">None</td></tr>
+      <tr><td>Overpay boost level</td><td>On-chain</td><td class="ok">Never</td><td class="ok">None</td></tr>
+      <tr><td>Promo codes (social)</td><td>Env vars (Railway)</td><td>Persists across restarts</td><td class="ok">Low</td></tr>
+      <tr><td>Trade-in codes</td><td>Node.js Map (RAM)</td><td class="bad">Yes — lost on restart/deploy</td><td class="bad">High</td></tr>
+      <tr><td>Pending boosts</td><td>Node.js Map (RAM)</td><td class="bad">Yes — lost on restart/deploy</td><td class="bad">High</td></tr>
+      <tr><td>Loyalty reset counter</td><td>Node.js Map (RAM)</td><td class="bad">Yes — lost on restart/deploy</td><td class="bad">High</td></tr>
+      <tr><td>Referral codes</td><td>Node.js Map (RAM)</td><td class="bad">Yes — lost on restart/deploy</td><td class="warn">Medium (deterministic, re-registerable)</td></tr>
+      <tr><td>Souvenir metadata (images)</td><td>IPFS via Pinata</td><td class="ok">Permanent</td><td class="ok">None</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2 id="scorecard">11. Mechanics Scorecard</h2>
+
+  <table>
+    <thead><tr><th>Mechanic</th><th>Score</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Core buy/hold/sell loop</td><td><span class="score a">A</span></td><td>Compulsive, on-chain enforced, clear rules</td></tr>
+      <tr><td>Tier timings (updated)</td><td><span class="score b">B+</span></td><td>30-day max is achievable and aspirational — an improvement from the original 3 months</td></tr>
+      <tr><td>Rarity probability weights</td><td><span class="score b">B</span></td><td>Tiers 2–4 are well-balanced; Tier 1 (60% common) may still be slightly conservative</td></tr>
+      <tr><td>Overpay mechanism</td><td><span class="score a">A</span></td><td>Elegant, self-regulating, fully on-chain — the best-designed boost</td></tr>
+      <tr><td>Trade-in / burn mechanic</td><td><span class="score a">A-</span></td><td>Creates souvenir utility and burn pressure; legendary loop is a potential issue</td></tr>
+      <tr><td>Loyalty system</td><td><span class="score b">B</span></td><td>Claim-gating is right design; discoverability and UX still need work</td></tr>
+      <tr><td>Referral system</td><td><span class="score b">B+</span></td><td>Clean viral loop; edge cases with high-volume referrers</td></tr>
+      <tr><td>Boost persistence</td><td><span class="score d">D</span></td><td>In-memory state is a pre-mainnet blocker</td></tr>
+      <tr><td>Rarity variety (personality)</td><td><span class="score b">B+</span></td><td>Smiling + female variants add life; consider whether female should be rare-tier only</td></tr>
+      <tr><td>Gallery competitive badges</td><td><span class="score a">A-</span></td><td>Genesis, tier-genesis, iron hands, paper hands, overpay — creates social status layer</td></tr>
+      <tr><td>On-chain/off-chain split</td><td><span class="score c">C</span></td><td>Two independent rarity rolls can diverge; no database persistence pre-mainnet</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2 id="questions">12. Open Questions for Opus</h2>
+
+  <div class="qs">
+    <div class="q">The hold-duration tier system and the boost system are somewhat in tension: a player with stacked boosts can reach 50% legendary odds from a 0-hour hold, which undermines the primary hold-time incentive. Should boosts be capped more aggressively (e.g. max effective Tier 3, not Tier 4) to preserve hold time as the dominant variable?</div>
+    <div class="q">Should burning a legendary souvenir grant +4 boost (enabling a legendary factory loop) or be capped at +3? What is the right trade-off between rewarding sacrifice and preventing inflation?</div>
+    <div class="q">Is 50% the right ceiling for legendary odds? Would 35% or 40% preserve more scarcity while still feeling aspirational?</div>
+    <div class="q">The loyalty system resets after each claim — you must earn new holds to claim again. An alternative: permanent accumulation where each hold permanently adds +0.5 to a capped loyalty multiplier. Which creates better long-term retention?</div>
+    <div class="q">Rarity probability weights are transparent in the UI (players can see exact percentages). Does full transparency improve or reduce engagement? There's an argument for mystery: "you might get legendary" vs "you have a 1% chance."</div>
+    <div class="q">Should the female potato variant (5%) be restricted to Rare+ tiers only, making female commons impossible and female legendaries the true unicorn? Or does cross-tier availability create more surprise?</div>
+    <div class="q">Boost state is in-memory. The three options are: (a) persist to Postgres/Supabase, (b) move boosts fully on-chain, (c) make boosts stateless (derive from on-chain data only). Which architecture is best for a game of this size?</div>
+    <div class="q">The 5% creator fee is permanent and on-chain. Is 5% the right number for long-term sustainability? Too high disincentivises buyers at scale; too low undersells the creator's value. Most Harberger-style games use 1-3%.</div>
+    <div class="q">Should there be a hard legendary supply cap (e.g. max 50 legendaries ever minted)? A cap creates scarcity and secondary market value but could also feel arbitrary and creates a cliff where legendary minting stops entirely.</div>
+    <div class="q">The game currently has no time pressure or deadline. Would a "season" structure (e.g. 90-day rounds, leaderboard resets, a legendary guaranteed at season end) create better engagement cycles? Or does the open-ended nature serve the game better?</div>
+    <div class="q">There are currently two separate rarity rolls: one on-chain (hold + overpay only) and one off-chain (all boosts). The displayed rarity comes from the IPFS metadata (off-chain roll). Is this acceptable complexity, or should the system converge to a single authoritative source of truth?</div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2 id="priorities">13. Pre-Mainnet Priority List</h2>
+
+  <table>
+    <thead><tr><th>Priority</th><th>Task</th><th>Why It Matters</th><th>Effort</th></tr></thead>
+    <tbody>
+      <tr><td class="bad"><strong>P0</strong></td><td>Redeploy contract with compressed tiers</td><td>On-chain tier thresholds must match backend — currently diverged</td><td>Low (Remix redeploy)</td></tr>
+      <tr><td class="bad"><strong>P0</strong></td><td>Persist boost state to a database</td><td>Players lose pending boosts on every Railway deploy</td><td>Medium</td></tr>
+      <tr><td class="bad"><strong>P0</strong></td><td>New wallets — deployer, backend, creator</td><td>Old Alchemy key was in git history; security hygiene before real money</td><td>Low</td></tr>
+      <tr><td class="warn"><strong>P1</strong></td><td>Cap legendary trade-in boost at +3</td><td>Prevents legendary factory loop</td><td>Low (one line)</td></tr>
+      <tr><td class="warn"><strong>P1</strong></td><td>Verify contract on Basescan</td><td>Trust and transparency for buyers</td><td>Low</td></tr>
+      <tr><td class="warn"><strong>P1</strong></td><td>Update OpenSea collection slug to mainnet URL</td><td>Testnet links break on mainnet launch</td><td>Low</td></tr>
+      <tr><td class="ok"><strong>P2</strong></td><td>Prominent loyalty claim notification</td><td>Players miss boosts they're owed</td><td>Low</td></tr>
+      <tr><td class="ok"><strong>P2</strong></td><td>Real footer links (contract, OpenSea, Discord, X)</td><td>Legitimacy signals</td><td>Low</td></tr>
+      <tr><td class="ok"><strong>P3</strong></td><td>Consider Tier 1 weight softening (Common 60%→50%)</td><td>Better experience for overnight holders</td><td>Low (contract redeploy)</td></tr>
+      <tr><td class="ok"><strong>P3</strong></td><td>Season structure consideration</td><td>Engagement rhythm and retention</td><td>High</td></tr>
+    </tbody>
+  </table>
+
+  <hr>
+  <p style="font-size:11px;color:rgba(255,232,192,0.2);text-align:center;">Hot Potato — Internal Game Design Analysis · April 2026 · For Opus review</p>
+
+</div>
+</body>
+</html>

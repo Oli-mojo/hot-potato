@@ -247,12 +247,14 @@ contract HotPotato is ERC721, ERC2981, Ownable, ReentrancyGuard {
     }
 
     // ─── Hold Duration → Tier ─────────────────────────────────
+    // Compressed tiers — calibrated for a crypto-native audience
+    // where a month of holding is impressive, not a baseline.
     function _holdTier(uint256 holdDuration) internal pure returns (uint8) {
-        if (holdDuration <  1 days)  return 0; // < 24h
-        if (holdDuration <  7 days)  return 1; // 1–7 days
-        if (holdDuration < 28 days)  return 2; // 1–4 weeks
-        if (holdDuration < 90 days)  return 3; // 1–3 months
-        return 4;                               // 3+ months
+        if (holdDuration <   6 hours)  return 0; // < 6h     — Common
+        if (holdDuration <  48 hours)  return 1; // 6h–48h   — Rare
+        if (holdDuration <   7 days)   return 2; // 2–7 days — Epic
+        if (holdDuration <  30 days)   return 3; // 7–30 days — Legendary
+        return 4;                                 // 30+ days  — Max
     }
 
     // ─── Tier → Rarity Weights ────────────────────────────────

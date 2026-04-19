@@ -82,16 +82,16 @@ async function setSouvenirURI(tokenId, uri) {
 }
 
 function getRarityTier(holdDurationHours) {
-  if (holdDurationHours < 24) {
-    return { tier: 'common', label: 'Under 24h', weights: { common: 85, rare: 12, epic: 2, legendary: 1 } };
+  if (holdDurationHours < 6) {
+    return { tier: 'common',    label: 'Under 6h',   weights: { common: 85, rare: 12, epic:  2, legendary:  1 } };
+  } else if (holdDurationHours < 48) {
+    return { tier: 'rare',      label: '6h–48h',     weights: { common: 60, rare: 28, epic:  9, legendary:  3 } };
   } else if (holdDurationHours < 168) {
-    return { tier: 'rare', label: '1–7 days', weights: { common: 60, rare: 28, epic: 9, legendary: 3 } };
-  } else if (holdDurationHours < 672) {
-    return { tier: 'epic', label: '1–4 weeks', weights: { common: 20, rare: 40, epic: 25, legendary: 15 } };
-  } else if (holdDurationHours < 2160) {
-    return { tier: 'legendary', label: '1–3 months', weights: { common: 5, rare: 20, epic: 45, legendary: 30 } };
+    return { tier: 'epic',      label: '2–7 days',   weights: { common: 20, rare: 40, epic: 25, legendary: 15 } };
+  } else if (holdDurationHours < 720) {
+    return { tier: 'legendary', label: '7–30 days',  weights: { common:  5, rare: 20, epic: 45, legendary: 30 } };
   } else {
-    return { tier: 'legendary', label: '3+ months', weights: { common: 1, rare: 9, epic: 40, legendary: 50 } };
+    return { tier: 'legendary', label: '30+ days',   weights: { common:  1, rare:  9, epic: 40, legendary: 50 } };
   }
 }
 
