@@ -7,7 +7,7 @@ const { getPotatoState, getRarityTier, rollRarity, setSouvenirURI } = require('.
 const { generateSouvenirImage } = require('../services/imageGen');
 const { uploadImageToIPFS, uploadMetadataToIPFS, buildMetadata } = require('../services/ipfs');
 const { announcePotatoPassed } = require('../services/social');
-const { createTradeInCode, validateCode, storePendingBoost, consumePendingBoost, applyBoost, getLoyaltyBoost, registerReferral, applyReferral } = require('../services/promoCode');
+const { createTradeInCode, getTradeInCodeForWallet, validateCode, storePendingBoost, consumePendingBoost, applyBoost, getLoyaltyStatus, claimLoyaltyBoost, registerReferral, applyReferral } = require('../services/promoCode');
 
 const { ethers } = require('ethers');
 const SOUVENIR_ABI = [
@@ -35,18 +35,18 @@ router.post('/generate', async (req, res) => {
   (async () => {
     try {
       const holdDurationHours = (Number(holdDurationSeconds) || 0) / 3600;
-      const baseRarity = RARITY_MAP[Number(rarityTier)] || rollRarity(getRarityTier(holdDurationHours).weights);
+      // Always roll — hold duration determines probability weights, not outcome directly
+      const baseRarity = rollRarity(getRarityTier(holdDurationHours).weights);
       const state = await getPotatoState();
       const edition = state.totalSouvenirs;
 
-      // Apply pending promo boost + loyalty boost (stacked, capped at legendary)
+      // Apply pending promo/loyalty/referral boost (loyalty must be claimed explicitly)
       const pendingBoost = consumePendingBoost(fromAddress);
-      const { boost: loyaltyBoost, timesHeld } = await getLoyaltyBoost(fromAddress);
-      const totalBoost  = Math.min(pendingBoost + loyaltyBoost, 4);
-      const finalRarity = applyBoost(baseRarity, totalBoost);
+      const totalBoost   = Math.min(pendingBoost, 4);
+      const finalRarity  = applyBoost(baseRarity, totalBoost);
 
       console.log(`\n🥔 Generating souvenir #${souvenirTokenId} for ${fromAddress}`);
-      console.log(`   Hold time: ${holdDurationHours.toFixed(1)}h → Base: ${baseRarity} | Promo: +${pendingBoost} | Loyalty: +${loyaltyBoost} (${timesHeld}x holder) → Final: ${finalRarity}`);
+      console.log(`   Hold time: ${holdDurationHours.toFixed(1)}h → Base: ${baseRarity} | Pending boost: +${pendingBoost} → Final: ${finalRarity}`);
 
       const imageUrl = await generateSouvenirImage(finalRarity, holdDurationHours, fromAddress);
       const { cid: imageCid } = await uploadImageToIPFS(imageUrl, `hot-potato-souvenir-${edition}.png`);
@@ -88,21 +88,58 @@ router.post('/apply-promo', (req, res) => {
   res.json({ success: true, boost: result.boost, type: result.type, code: result.code });
 });
 
-// GET /api/souvenir/validate-promo/:code
+// GET /api/souvenir/validate-promo/:code?wallet=0x...
 router.get('/validate-promo/:code', (req, res) => {
   const result = validateCode(req.params.code);
+  // Block self-referral — check if this REF- code belongs to the requester
+  if (result.valid && result.type === 'referral' && req.query.wallet) {
+    if (result.referrer === req.query.wallet.toLowerCase()) {
+      return res.json({ valid: false, reason: "That's your own referral code — share it with someone else!" });
+    }
+  }
   res.json(result);
 });
 
-// GET /api/souvenir/loyalty/:address — loyalty boost status for a wallet
+// GET /api/souvenir/loyalty/:address — loyalty status (unclaimed holds + available boost)
 router.get('/loyalty/:address', async (req, res) => {
   try {
-    const { boost, timesHeld } = await getLoyaltyBoost(req.params.address);
-    const nextAt = timesHeld === 0 ? 1 : timesHeld === 1 ? 2 : 3;
-    res.json({ timesHeld, boost, nextBoostAt: nextAt, maxed: boost >= 3 });
+    const status = await getLoyaltyStatus(req.params.address);
+    const { boost, totalHolds, unclaimedHolds } = status;
+    const holdsNeededForNext = boost >= 3 ? null : boost >= 2 ? 1 : boost >= 1 ? 2 : 1;
+    res.json({
+      totalHolds,
+      unclaimedHolds,
+      boost,
+      maxed: boost >= 3,
+      holdsNeededForNext,
+      claimable: boost > 0,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// POST /api/souvenir/claim-loyalty — player claims their loyalty boost before buying
+// Body: { walletAddress }
+router.post('/claim-loyalty', async (req, res) => {
+  const { walletAddress } = req.body;
+  if (!walletAddress) return res.status(400).json({ error: 'walletAddress required' });
+  try {
+    const result = await claimLoyaltyBoost(walletAddress);
+    if (!result.success) return res.status(400).json({ error: result.reason });
+    res.json({ success: true, boost: result.boost, unclaimedHolds: result.unclaimedHolds, message: `Loyalty boost +${result.boost} locked in! It'll apply to your next souvenir.` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/souvenir/recover-trade-in/:address — retrieve unused trade-in code for this wallet
+router.get('/recover-trade-in/:address', (req, res) => {
+  const entry = getTradeInCodeForWallet(req.params.address);
+  if (!entry) {
+    return res.status(404).json({ error: 'No unused trade-in code found for this wallet' });
+  }
+  res.json({ found: true, ...entry });
 });
 
 // GET /api/souvenir/referral/:address — register + return referral code for this wallet
@@ -162,7 +199,7 @@ router.post('/trade-in', async (req, res) => {
     const data = await contract.souvenirs(tokenId);
     const rarity = RARITY_MAP[Number(data.rarityTier)] || 'common';
 
-    const { code, boost } = createTradeInCode(Number(tokenId), rarity);
+    const { code, boost } = createTradeInCode(Number(tokenId), rarity, walletAddress);
     console.log(`🔥 Trade-in complete: token #${tokenId} [${rarity}] → code ${code}`);
 
     res.json({ success: true, code, boost, rarity, tokenId });

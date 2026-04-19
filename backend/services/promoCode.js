@@ -11,8 +11,12 @@
 const crypto = require('crypto');
 
 // In-memory store for trade-in codes — persists until server restart
-// { code => { boost, usedBy, createdAt, fromTokenId, fromRarity } }
+// { code => { boost, usedBy, createdAt, fromTokenId, fromRarity, walletAddress } }
 const tradeInCodes = new Map();
+
+// Index from wallet address to trade-in code — for recovery lookups
+// { walletAddress.toLowerCase() => code }
+const tradeInByWallet = new Map();
 
 // Pending boosts for buyers — applied when they eventually get bought out
 // { walletAddress.toLowerCase() => { boost, fromCode, appliedAt } }
@@ -32,18 +36,31 @@ function generateCode(rarity) {
 }
 
 // Called when a souvenir is transferred to the burn address
-function createTradeInCode(tokenId, rarity) {
+function createTradeInCode(tokenId, rarity, walletAddress) {
   const code  = generateCode(rarity);
   const boost = RARITY_BOOST[rarity] || 1;
+  const addr  = walletAddress ? walletAddress.toLowerCase() : null;
   tradeInCodes.set(code, {
     boost,
-    usedBy:     null,
-    createdAt:  Date.now(),
+    usedBy:      null,
+    createdAt:   Date.now(),
     fromTokenId: tokenId,
     fromRarity:  rarity,
+    walletAddress: addr,
   });
+  if (addr) tradeInByWallet.set(addr, code);
   console.log(`🎟️  Trade-in code ${code} created (boost +${boost}) for token #${tokenId} [${rarity}]`);
   return { code, boost };
+}
+
+// Look up an unused trade-in code by the wallet that burned a souvenir
+function getTradeInCodeForWallet(walletAddress) {
+  const addr = walletAddress.toLowerCase();
+  const code = tradeInByWallet.get(addr);
+  if (!code) return null;
+  const entry = tradeInCodes.get(code);
+  if (!entry || entry.usedBy) return null; // already used
+  return { code, boost: entry.boost, fromRarity: entry.fromRarity, fromTokenId: entry.fromTokenId };
 }
 
 // ─── REFERRAL CODES ───────────────────────────────────────
@@ -153,9 +170,18 @@ function applyBoost(rarity, boost) {
   return RARITY_ORDER[newIdx];
 }
 
-// ─── LOYALTY BOOST ────────────────────────────────────────
-// Returns boost level based on how many times a wallet has previously held the potato
-// Looks up on-chain souvenir history to count prior holdings
+// ─── LOYALTY BOOST (CLAIM-BASED) ──────────────────────────
+// Loyalty is earned by holding the potato multiple times, but must be actively claimed.
+// After claiming, the counter resets — you need to hold again to rebuild it.
+//
+// Boost table (unclaimed holds since last reset):
+//   1 hold  → +1
+//   2 holds → +2
+//   3+      → +3 (max)
+//
+// { walletAddress.toLowerCase() => { claimedHoldCount: N } }
+const loyaltyResets = new Map();
+
 const { ethers } = require('ethers');
 
 const LOYALTY_ABI = [
@@ -163,40 +189,70 @@ const LOYALTY_ABI = [
   'function souvenirs(uint256 tokenId) view returns (uint256 transferNumber, uint256 pricePaid, uint256 holdDuration, uint8 rarityTier, address originalOwner)',
 ];
 
-async function getLoyaltyBoost(walletAddress) {
+// Count how many times this wallet has previously held on-chain
+async function countOnChainHolds(walletAddress) {
+  const rpcUrl = process.env.RPC_URL;
+  const contractAddress = process.env.CONTRACT_ADDRESS || '0x90Bfcf98282445B35e3ce48b9Eb21E532E603473';
+  if (!rpcUrl) return 0;
+  const provider = new ethers.JsonRpcProvider(rpcUrl);
+  const contract = new ethers.Contract(contractAddress, LOYALTY_ABI, provider);
+  const count = Number(await contract.souvenirCount());
+  let timesHeld = 0;
+  for (let i = 1; i < count; i++) {
+    try {
+      const data = await contract.souvenirs(i);
+      if (data.originalOwner.toLowerCase() === walletAddress.toLowerCase()) timesHeld++;
+    } catch (e) {}
+  }
+  return timesHeld;
+}
+
+// Check available (unclaimed) loyalty boost — shown in UI before claiming
+async function getLoyaltyStatus(walletAddress) {
   try {
-    const rpcUrl   = process.env.RPC_URL;
-    const contract_address = process.env.CONTRACT_ADDRESS || '0x90Bfcf98282445B35e3ce48b9Eb21E532E603473';
-    if (!rpcUrl) return { boost: 0, timesHeld: 0 };
-
-    const provider = new ethers.JsonRpcProvider(rpcUrl);
-    const contract = new ethers.Contract(contract_address, LOYALTY_ABI, provider);
-    const count    = Number(await contract.souvenirCount());
-
-    let timesHeld = 0;
-    for (let i = 1; i < count; i++) {
-      try {
-        const data = await contract.souvenirs(i);
-        if (data.originalOwner.toLowerCase() === walletAddress.toLowerCase()) timesHeld++;
-      } catch (e) {}
-    }
-
-    // Boost kicks in from 2nd hold onwards
+    const addr = walletAddress.toLowerCase();
+    const totalHolds = await countOnChainHolds(addr);
+    const claimedAt = loyaltyResets.get(addr) || 0;
+    const unclaimedHolds = Math.max(0, totalHolds - claimedAt);
     let boost = 0;
-    if (timesHeld >= 3) boost = 3;
-    else if (timesHeld >= 2) boost = 2;
-    else if (timesHeld >= 1) boost = 1;
-
-    if (boost > 0) console.log(`🏆 Loyalty boost +${boost} for ${walletAddress} (held ${timesHeld} times before)`);
-    return { boost, timesHeld };
+    if (unclaimedHolds >= 3) boost = 3;
+    else if (unclaimedHolds >= 2) boost = 2;
+    else if (unclaimedHolds >= 1) boost = 1;
+    return { boost, totalHolds, unclaimedHolds, claimedAt };
   } catch (e) {
-    console.error('Loyalty boost lookup failed:', e.message);
-    return { boost: 0, timesHeld: 0 };
+    console.error('Loyalty status lookup failed:', e.message);
+    return { boost: 0, totalHolds: 0, unclaimedHolds: 0, claimedAt: 0 };
   }
 }
 
+// Claim loyalty boost — stores pending boost and resets the counter
+async function claimLoyaltyBoost(walletAddress) {
+  const addr = walletAddress.toLowerCase();
+  const { boost, totalHolds, unclaimedHolds } = await getLoyaltyStatus(addr);
+  if (boost <= 0) return { success: false, reason: 'No loyalty boost available — hold the potato first!', boost: 0 };
+
+  // Store pending boost (stacks with promo codes, capped at legendary in generate route)
+  const existing = pendingBoosts.get(addr);
+  if (!existing || boost > existing.boost) {
+    pendingBoosts.set(addr, { boost, fromCode: 'loyalty', appliedAt: Date.now() });
+  }
+
+  // Reset counter to current hold count — new holds start accumulating from here
+  loyaltyResets.set(addr, totalHolds);
+  console.log(`🏆 Loyalty claimed: +${boost} for ${addr} (${unclaimedHolds} unclaimed holds → reset to ${totalHolds})`);
+  return { success: true, boost, unclaimedHolds, newBaseline: totalHolds };
+}
+
+// Legacy: used internally during generate — kept for backwards compat but returns 0
+// Loyalty must now be claimed explicitly via claimLoyaltyBoost()
+async function getLoyaltyBoost(walletAddress) {
+  return { boost: 0, timesHeld: 0 };
+}
+
 module.exports = {
-  createTradeInCode, validateCode, storePendingBoost, consumePendingBoost,
-  applyBoost, RARITY_BOOST, getLoyaltyBoost,
+  createTradeInCode, getTradeInCodeForWallet, validateCode,
+  storePendingBoost, consumePendingBoost,
+  applyBoost, RARITY_BOOST,
+  getLoyaltyBoost, getLoyaltyStatus, claimLoyaltyBoost,
   getReferralCode, registerReferral, applyReferral,
 };

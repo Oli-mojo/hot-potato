@@ -1132,20 +1132,58 @@ async function showLoyaltyStatus() {
   try {
     const res  = await fetch(`${API_BASE}/souvenir/loyalty/${walletAddress}`);
     const data = await res.json();
-    if (data.timesHeld === 0) {
+    if (data.totalHolds === 0) {
       el.style.display = 'none';
+      return;
+    }
+    el.style.display = 'block';
+    const boostLabels = ['', '+1 tier', '+2 tiers', '+3 tiers (max)'];
+    if (data.claimable) {
+      el.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <div>
+            🏆 <b style="color:var(--yellow)">Loyalty Boost Available!</b><br>
+            <span style="font-size:11px;color:rgba(255,245,224,0.5);">
+              You've held ${data.unclaimedHolds} time${data.unclaimedHolds>1?'s':''} — claim your
+              <b style="color:var(--yellow)">${boostLabels[data.boost]}</b> souvenir boost before buying.
+            </span>
+          </div>
+          <button id="claim-loyalty-btn" onclick="claimLoyalty()" style="
+            background:var(--yellow);color:#1a1200;border:none;border-radius:8px;
+            padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">
+            Claim Boost
+          </button>
+        </div>`;
     } else {
-      el.style.display = 'block';
-      const boostLabels = ['', '+1 tier', '+2 tiers', '+3 tiers (max)'];
-      if (data.maxed) {
-        el.innerHTML = `🏆 <b style="color:var(--yellow)">Loyal Holder — ${data.timesHeld}x veteran</b><br>
-          <span style="font-size:11px;color:rgba(255,245,224,0.35);">You've held the potato before. Your souvenir rarity is automatically boosted — max loyalty bonus active (+3 tiers).</span>`;
-      } else {
-        el.innerHTML = `🏆 <b style="color:var(--yellow)">Loyal Holder — ${data.timesHeld}x holder</b><br>
-          <span style="font-size:11px;color:rgba(255,245,224,0.35);">You've held the potato before. When you get bought out, your souvenir rarity is automatically boosted <b style="color:var(--yellow)">${boostLabels[data.boost]}</b> — no code needed.</span>`;
-      }
+      el.innerHTML = `🏆 <b style="color:var(--yellow)">Loyal Holder — ${data.totalHolds}x veteran</b><br>
+        <span style="font-size:11px;color:rgba(255,245,224,0.35);">
+          Boost claimed ✓ — it'll apply to your next souvenir. Hold again to earn more.
+        </span>`;
     }
   } catch (e) { el.style.display = 'none'; }
+}
+
+async function claimLoyalty() {
+  const btn = document.getElementById('claim-loyalty-btn');
+  if (btn) { btn.textContent = 'Claiming…'; btn.disabled = true; }
+  try {
+    const res  = await fetch(`${API_BASE}/souvenir/claim-loyalty`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ walletAddress }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast('⚠️ ' + (data.error || 'Claim failed'));
+      if (btn) { btn.textContent = 'Claim Boost'; btn.disabled = false; }
+      return;
+    }
+    showToast(`🏆 Loyalty boost +${data.boost} locked in!`);
+    showLoyaltyStatus(); // refresh to show claimed state
+  } catch (e) {
+    showToast('⚠️ Network error — try again');
+    if (btn) { btn.textContent = 'Claim Boost'; btn.disabled = false; }
+  }
 }
 function closeModal() { document.getElementById('modal').classList.remove('open'); }
 
@@ -1325,7 +1363,8 @@ async function applyPromoCode() {
   status.textContent = 'Checking…';
   status.style.color = 'rgba(255,245,224,0.4)';
   try {
-    const res  = await fetch(`${API_BASE}/souvenir/validate-promo/${encodeURIComponent(code)}`);
+    const walletParam = walletAddress ? `?wallet=${encodeURIComponent(walletAddress)}` : '';
+    const res  = await fetch(`${API_BASE}/souvenir/validate-promo/${encodeURIComponent(code)}${walletParam}`);
     const data = await res.json();
     if (data.valid) {
       activePromoCode = data.code;
@@ -1416,6 +1455,35 @@ async function checkAndPromptSouvenirs(address) {
   } catch (e) {}
 }
 
+// ─── RECOVER TRADE-IN CODE ────────────────────────────────
+async function recoverTradeInCode(tokenId, btn) {
+  if (!walletAddress) { showToast('Connect wallet first'); return; }
+  btn.textContent = 'Checking…';
+  btn.disabled = true;
+  try {
+    const res  = await fetch(`${API_BASE}/souvenir/recover-trade-in/${walletAddress}`);
+    const data = await res.json();
+    if (!res.ok || !data.found) {
+      btn.closest('div').insertAdjacentHTML('beforeend',
+        `<div style="margin-top:6px;font-size:10px;color:rgba(180,120,60,0.6);font-family:'Barlow Condensed',sans-serif;text-align:center;">Code already used or server restarted</div>`);
+      btn.style.display = 'none';
+      return;
+    }
+    // Show the code inline
+    btn.closest('div').insertAdjacentHTML('beforeend', `
+      <div style="margin-top:6px;background:rgba(180,120,60,0.1);border:0.5px solid rgba(180,120,60,0.3);border-radius:4px;padding:6px 8px;text-align:center;">
+        <div style="font-size:9px;color:rgba(255,245,224,0.3);font-family:'Barlow Condensed',sans-serif;letter-spacing:0.08em;margin-bottom:3px;">YOUR TRADE-IN CODE</div>
+        <div style="font-size:13px;font-weight:700;color:#FAC775;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.05em;cursor:pointer;" onclick="navigator.clipboard.writeText('${data.code}').then(()=>showToast('📋 Code copied!'))">${data.code}</div>
+        <div style="font-size:9px;color:rgba(255,245,224,0.3);font-family:'Barlow Condensed',sans-serif;margin-top:2px;">+${data.boost} boost · tap to copy</div>
+      </div>`);
+    btn.style.display = 'none';
+  } catch (e) {
+    btn.textContent = 'Check My Code';
+    btn.disabled = false;
+    showToast('⚠️ Network error');
+  }
+}
+
 // ─── ADD NFT TO METAMASK ──────────────────────────────────
 async function addSouvenirToMetaMask(tokenId) {
   if (!window.ethereum) {
@@ -1467,32 +1535,58 @@ async function loadGallery() {
     }
 
     const rcClass = { common: 'rc-common', rare: 'rc-rare', epic: 'rc-epic', legendary: 'rc-legendary' };
+    const myAddress = walletAddress ? walletAddress.toLowerCase() : null;
 
     gallery.innerHTML = data.souvenirs.map(s => {
-      const tier = s.rarityTier || 'common';
+      const tier       = s.rarityTier || 'common';
+      const isOwned    = !s.burned && ownedIds.has(s.tokenId);
+      const isMyBurned = s.burned && myAddress && s.originalOwner && s.originalOwner.toLowerCase() === myAddress;
+
       const imgEl = s.imageUrl
         ? `<img src="${s.imageUrl}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px 8px 0 0;${s.burned ? 'filter:grayscale(0.55) sepia(0.35) brightness(0.65);' : ''}" onerror="this.outerHTML='<div style=\\'aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:40px;background:#1A0E05;\\'>${rarityBadge[tier] || '🥔'}</div>'">`
         : `<div style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:40px;background:#1A0E05;">${rarityBadge[tier] || '🥔'}</div>`;
+
       const rarityBadgeEl = !s.burned
         ? `<div class="rarity-corner ${rcClass[tier] || 'rc-common'}">${rarityBadge[tier]} ${tier.toUpperCase()}</div>`
         : '';
+
+      // "YOURS" badge — top-left, only on owned cards
+      const yoursBadge = isOwned
+        ? `<div style="position:absolute;top:8px;left:8px;background:var(--yellow);color:#1a1200;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:800;letter-spacing:0.08em;padding:3px 7px;border-radius:20px;">YOURS</div>`
+        : '';
+
       const burnedOverlay = s.burned ? `
         <div class="burned-overlay">
           <div style="font-size:22px;">🔥</div>
           <div class="burned-banner">CHARRED</div>
-          <div style="font-size:10px;color:rgba(180,120,60,0.6);font-family:'Barlow Condensed',sans-serif;letter-spacing:0.08em;">TRADED IN</div>
+          <div style="font-size:10px;color:rgba(180,120,60,0.6);font-family:'Barlow Condensed',sans-serif;letter-spacing:0.08em;">${isMyBurned ? 'YOU TRADED IN' : 'TRADED IN'}</div>
         </div>` : '';
-      const art = `<div style="position:relative;">${imgEl}${rarityBadgeEl}${burnedOverlay}</div>`;
-      const isOwned   = !s.burned && ownedIds.has(s.tokenId);
+
+      const art = `<div style="position:relative;">${imgEl}${rarityBadgeEl}${yoursBadge}${burnedOverlay}</div>`;
+
+      // Card border highlight for owned
+      const cardStyle = isOwned ? ' style="border-color:var(--yellow);"' : '';
+
+      // Bottom action buttons
+      const metamaskBtn = isOwned
+        ? `<button onclick="addSouvenirToMetaMask(${s.tokenId})" style="width:100%;background:rgba(255,245,224,0.06);border:0.5px solid rgba(255,245,224,0.15);border-radius:4px;color:rgba(255,245,224,0.4);font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:5px;cursor:pointer;">+ Add to MetaMask</button>`
+        : '';
+
       const tradeInBtn = isOwned
         ? `<button onclick="tradeInSouvenir(${s.tokenId},'${tier}')" style="width:100%;margin-top:4px;background:rgba(255,107,0,0.12);border:0.5px solid rgba(255,107,0,0.3);border-radius:4px;color:#FF8C42;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:5px;cursor:pointer;">🔥 Trade In for Boost</button>`
         : '';
-      return `<div class="souvenir-card${s.burned ? ' burned' : ''}">
+
+      const recoverBtn = isMyBurned
+        ? `<button onclick="recoverTradeInCode('${s.tokenId}', this)" style="width:100%;margin-top:4px;background:rgba(180,120,60,0.1);border:0.5px solid rgba(180,120,60,0.3);border-radius:4px;color:rgba(180,120,60,0.8);font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:5px;cursor:pointer;">🔍 Check My Code</button>`
+        : '';
+
+      return `<div class="souvenir-card${s.burned ? ' burned' : ''}"${cardStyle}>
         ${art}
         <div style="padding:8px 10px 10px;">
           <div style="font-size:11px;color:rgba(255,245,224,0.3);margin-bottom:8px;">Hand #${s.transferNumber} · ${s.holdDurationHours}h</div>
-          <button onclick="addSouvenirToMetaMask(${s.tokenId})" style="width:100%;background:rgba(255,245,224,0.06);border:0.5px solid rgba(255,245,224,0.15);border-radius:4px;color:rgba(255,245,224,0.4);font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:5px;cursor:pointer;">+ Add to MetaMask</button>
+          ${metamaskBtn}
           ${tradeInBtn}
+          ${recoverBtn}
         </div>
       </div>`;
     }).join('');
