@@ -482,6 +482,27 @@
   }
   .timer-legendary { animation: legendary-pulse 2s ease-in-out infinite; }
 
+  /* Souvenir rarity corner badge */
+  .rarity-corner {
+    position: absolute;
+    top: 8px; right: 8px;
+    font-family: 'Black Ops One', sans-serif;
+    font-size: 10px;
+    letter-spacing: 1px;
+    padding: 4px 9px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    z-index: 2;
+  }
+  .rc-common    { background: rgba(60,55,50,0.92);  color: #C8C5BB; border: 0.5px solid rgba(200,197,187,0.3); }
+  .rc-rare      { background: rgba(20,50,90,0.92);  color: #85B7EB; border: 0.5px solid rgba(133,183,235,0.4); }
+  .rc-epic      { background: rgba(55,30,90,0.92);  color: #CE93D8; border: 0.5px solid rgba(206,147,216,0.4); }
+  .rc-legendary { background: rgba(80,55,0,0.95);   color: #FFD600; border: 0.5px solid rgba(255,214,0,0.5);
+                  box-shadow: 0 2px 12px rgba(255,214,0,0.3); }
+
   /* Leaderboard */
   .lb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   @media (max-width: 700px) { .lb-grid { grid-template-columns: 1fr; } }
@@ -1445,25 +1466,30 @@ async function loadGallery() {
       } catch (e) {}
     }
 
+    const rcClass = { common: 'rc-common', rare: 'rc-rare', epic: 'rc-epic', legendary: 'rc-legendary' };
+
     gallery.innerHTML = data.souvenirs.map(s => {
+      const tier = s.rarityTier || 'common';
       const imgEl = s.imageUrl
-        ? `<img src="${s.imageUrl}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px 8px 0 0;${s.burned ? 'filter:grayscale(0.55) sepia(0.35) brightness(0.65);' : ''}" onerror="this.outerHTML='<div style=\\'aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:40px;background:#1A0E05;\\'>${rarityBadge[s.rarityTier] || '🥔'}</div>'">`
-        : `<div style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:40px;background:#1A0E05;${s.burned ? 'filter:grayscale(0.55) sepia(0.35) brightness(0.65);' : ''}">${rarityBadge[s.rarityTier] || '🥔'}</div>`;
+        ? `<img src="${s.imageUrl}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px 8px 0 0;${s.burned ? 'filter:grayscale(0.55) sepia(0.35) brightness(0.65);' : ''}" onerror="this.outerHTML='<div style=\\'aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:40px;background:#1A0E05;\\'>${rarityBadge[tier] || '🥔'}</div>'">`
+        : `<div style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:40px;background:#1A0E05;">${rarityBadge[tier] || '🥔'}</div>`;
+      const rarityBadgeEl = !s.burned
+        ? `<div class="rarity-corner ${rcClass[tier] || 'rc-common'}">${rarityBadge[tier]} ${tier.toUpperCase()}</div>`
+        : '';
       const burnedOverlay = s.burned ? `
         <div class="burned-overlay">
           <div style="font-size:22px;">🔥</div>
           <div class="burned-banner">CHARRED</div>
           <div style="font-size:10px;color:rgba(180,120,60,0.6);font-family:'Barlow Condensed',sans-serif;letter-spacing:0.08em;">TRADED IN</div>
         </div>` : '';
-      const art = `<div style="position:relative;">${imgEl}${burnedOverlay}</div>`;
+      const art = `<div style="position:relative;">${imgEl}${rarityBadgeEl}${burnedOverlay}</div>`;
       const isOwned   = !s.burned && ownedIds.has(s.tokenId);
       const tradeInBtn = isOwned
-        ? `<button onclick="tradeInSouvenir(${s.tokenId},'${s.rarityTier}')" style="width:100%;margin-top:4px;background:rgba(255,107,0,0.12);border:0.5px solid rgba(255,107,0,0.3);border-radius:4px;color:#FF8C42;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:5px;cursor:pointer;">🔥 Trade In for Boost</button>`
+        ? `<button onclick="tradeInSouvenir(${s.tokenId},'${tier}')" style="width:100%;margin-top:4px;background:rgba(255,107,0,0.12);border:0.5px solid rgba(255,107,0,0.3);border-radius:4px;color:#FF8C42;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:5px;cursor:pointer;">🔥 Trade In for Boost</button>`
         : '';
       return `<div class="souvenir-card${s.burned ? ' burned' : ''}">
         ${art}
         <div style="padding:8px 10px 10px;">
-          <div style="font-size:11px;color:${rarityColors[s.rarityTier] || '#fff'};font-weight:700;">${(s.rarityTier || 'common').toUpperCase()}</div>
           <div style="font-size:11px;color:rgba(255,245,224,0.3);margin-bottom:8px;">Hand #${s.transferNumber} · ${s.holdDurationHours}h</div>
           <button onclick="addSouvenirToMetaMask(${s.tokenId})" style="width:100%;background:rgba(255,245,224,0.06);border:0.5px solid rgba(255,245,224,0.15);border-radius:4px;color:rgba(255,245,224,0.4);font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:5px;cursor:pointer;">+ Add to MetaMask</button>
           ${tradeInBtn}

@@ -174,15 +174,22 @@ router.post('/trade-in', async (req, res) => {
 
 // ─── GALLERY + UTILITY ROUTES ──────────────────────────────────────────────
 
-async function fetchImageFromMetadata(tokenURI) {
-  if (!tokenURI) return null;
+// Fetches full metadata from IPFS — returns { imageUrl, metadataRarity }
+async function fetchMetadata(tokenURI) {
+  if (!tokenURI) return { imageUrl: null, metadataRarity: null };
   try {
     const url = tokenURI.startsWith('ipfs://') ? IPFS_GATEWAY + tokenURI.slice(7) : tokenURI;
     const res = await axios.get(url, { timeout: 8000 });
-    const image = res.data?.image;
-    if (!image) return null;
-    return image.startsWith('ipfs://') ? IPFS_GATEWAY + image.slice(7) : image;
-  } catch { return null; }
+    const meta = res.data;
+    const image = meta?.image;
+    const imageUrl = image
+      ? (image.startsWith('ipfs://') ? IPFS_GATEWAY + image.slice(7) : image)
+      : null;
+    // Rarity is stored as attributes[0].value e.g. "Legendary"
+    const rarityRaw = meta?.attributes?.find(a => a.trait_type === 'Rarity')?.value;
+    const metadataRarity = rarityRaw ? rarityRaw.toLowerCase() : null;
+    return { imageUrl, metadataRarity };
+  } catch { return { imageUrl: null, metadataRarity: null }; }
 }
 
 router.get('/gallery', async (req, res) => {
@@ -198,14 +205,15 @@ router.get('/gallery', async (req, res) => {
           contract.tokenURI(i).catch(() => null),
           contract.ownerOf(i).catch(() => null),
         ]);
-        const imageUrl = await fetchImageFromMetadata(uri);
+        const { imageUrl, metadataRarity } = await fetchMetadata(uri);
         const burned = owner ? owner.toLowerCase() === BURN_ADDRESS.toLowerCase() : false;
+        const onChainRarity = RARITY_MAP[Number(data.rarityTier)] || 'common';
         souvenirs.push({
           tokenId: i,
           transferNumber: Number(data.transferNumber),
           pricePaid: ethers.formatEther(data.pricePaid),
           holdDurationHours: Math.round(Number(data.holdDuration) / 360) / 10,
-          rarityTier: RARITY_MAP[Number(data.rarityTier)] || 'common',
+          rarityTier: metadataRarity || onChainRarity, // prefer metadata (includes boosts)
           originalOwner: data.originalOwner,
           tokenURI: uri,
           imageUrl,
