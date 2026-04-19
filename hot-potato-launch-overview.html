@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hot Potato — Launch Overview</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap');
+
+  :root {
+    --pink: #E8186A;
+    --yellow: #FFD600;
+    --orange: #FF6B00;
+    --green: #22C55E;
+    --red: #EF4444;
+    --amber: #F59E0B;
+    --blue: #3B82F6;
+    --cream: #FFF5E0;
+    --dark: #0F0800;
+    --card: #1A0E05;
+    --border: rgba(232,24,106,0.2);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--dark); color: var(--cream); font-family: 'Barlow', sans-serif; padding: 32px 24px; max-width: 1100px; margin: 0 auto; }
+
+  h1 { font-family: 'Black Ops One', sans-serif; font-size: 28px; color: var(--pink); letter-spacing: 2px; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: rgba(255,245,224,0.4); margin-bottom: 36px; }
+
+  .section-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase;
+    color: rgba(255,245,224,0.35); margin-bottom: 12px; margin-top: 32px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 0.5px; background: var(--border); }
+
+  /* ── SERVICES GRID ── */
+  .services-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+  .service-card {
+    background: var(--card); border: 0.5px solid var(--border); border-radius: 10px;
+    padding: 18px 18px 16px; position: relative; overflow: hidden;
+  }
+  .service-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  }
+  .service-card.infra::before { background: var(--blue); }
+  .service-card.chain::before { background: var(--orange); }
+  .service-card.storage::before { background: var(--yellow); }
+  .service-card.ai::before { background: var(--pink); }
+  .service-card.wallet::before { background: var(--green); }
+  .service-card.code::before { background: rgba(255,245,224,0.3); }
+
+  .svc-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .svc-name { font-family: 'Black Ops One', sans-serif; font-size: 15px; letter-spacing: 0.5px; color: var(--cream); }
+  .svc-tag {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 8px; border-radius: 20px;
+  }
+  .tag-infra { background: rgba(59,130,246,0.15); color: #60A5FA; }
+  .tag-chain { background: rgba(255,107,0,0.15); color: #FF8C42; }
+  .tag-storage { background: rgba(255,214,0,0.15); color: var(--yellow); }
+  .tag-ai { background: rgba(232,24,106,0.15); color: var(--pink); }
+  .tag-wallet { background: rgba(34,197,94,0.15); color: #4ADE80; }
+  .tag-code { background: rgba(255,245,224,0.08); color: rgba(255,245,224,0.4); }
+
+  .svc-role { font-size: 12px; color: rgba(255,245,224,0.5); line-height: 1.6; margin-bottom: 12px; }
+  .svc-detail { font-size: 11px; color: rgba(255,245,224,0.25); font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.05em; word-break: break-all; }
+
+  /* ── SECURITY ── */
+  .security-list { display: flex; flex-direction: column; gap: 10px; }
+  .sec-item {
+    background: var(--card); border-radius: 8px; padding: 14px 16px;
+    display: flex; gap: 14px; align-items: flex-start;
+    border-left: 3px solid transparent;
+  }
+  .sec-item.critical { border-color: var(--red); }
+  .sec-item.warning  { border-color: var(--amber); }
+  .sec-item.info     { border-color: var(--blue); }
+  .sec-badge {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 8px; border-radius: 4px;
+    white-space: nowrap; margin-top: 1px;
+  }
+  .badge-critical { background: rgba(239,68,68,0.15); color: #FCA5A5; }
+  .badge-warning   { background: rgba(245,158,11,0.15); color: #FCD34D; }
+  .badge-info      { background: rgba(59,130,246,0.15); color: #93C5FD; }
+  .sec-title { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; color: var(--cream); margin-bottom: 4px; }
+  .sec-desc { font-size: 12px; color: rgba(255,245,224,0.45); line-height: 1.6; }
+  .sec-action { font-size: 11px; color: rgba(255,245,224,0.6); margin-top: 6px; font-style: italic; }
+
+  /* ── CHECKLIST ── */
+  .checklist { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+  .check-group { background: var(--card); border: 0.5px solid var(--border); border-radius: 8px; padding: 16px; }
+  .check-group-title { font-family: 'Black Ops One', sans-serif; font-size: 12px; color: var(--pink); letter-spacing: 1px; margin-bottom: 12px; }
+  .check-item { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px; font-size: 12px; color: rgba(255,245,224,0.55); line-height: 1.5; }
+  .check-item:last-child { margin-bottom: 0; }
+  .check-box {
+    width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(255,245,224,0.2);
+    flex-shrink: 0; margin-top: 1px;
+  }
+
+  /* ── WALLET PLAN ── */
+  .wallet-plan { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+  .wallet-card { background: var(--card); border: 0.5px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+  .wallet-num { font-family: 'Black Ops One', sans-serif; font-size: 22px; color: var(--pink); opacity: 0.4; float: right; }
+  .wallet-name { font-family: 'Black Ops One', sans-serif; font-size: 13px; color: var(--yellow); letter-spacing: 0.5px; margin-bottom: 6px; }
+  .wallet-purpose { font-size: 12px; color: rgba(255,245,224,0.5); line-height: 1.6; margin-bottom: 8px; }
+  .wallet-fund { font-size: 11px; color: rgba(255,245,224,0.3); font-style: italic; }
+
+  footer { margin-top: 40px; font-size: 11px; color: rgba(255,245,224,0.15); text-align: center; }
+</style>
+</head>
+<body>
+
+<h1>HOT🔥POTATO — LAUNCH OVERVIEW</h1>
+<p class="subtitle">Services, security concerns, and pre-launch checklist — updated April 2026</p>
+
+<!-- ─── SERVICES ─── -->
+<div class="section-label">Connected Services</div>
+<div class="services-grid">
+
+  <div class="service-card infra">
+    <div class="svc-top">
+      <div class="svc-name">Railway</div>
+      <span class="svc-tag tag-infra">Infra</span>
+    </div>
+    <div class="svc-role">Hosts the Node.js backend API. Handles souvenir generation triggers, IPFS uploads, and serves game state to the frontend.</div>
+    <div class="svc-detail">railway.app · auto-deploys from GitHub main</div>
+  </div>
+
+  <div class="service-card chain">
+    <div class="svc-top">
+      <div class="svc-name">Alchemy</div>
+      <span class="svc-tag tag-chain">RPC</span>
+    </div>
+    <div class="svc-role">Provides the Base blockchain RPC endpoint. All contract reads (game state, history) and backend writes (setSouvenirURI) go through Alchemy.</div>
+    <div class="svc-detail">alchemy.com · key stored in Railway env → RPC_URL</div>
+  </div>
+
+  <div class="service-card storage">
+    <div class="svc-top">
+      <div class="svc-name">Pinata</div>
+      <span class="svc-tag tag-storage">IPFS</span>
+    </div>
+    <div class="svc-role">Pins souvenir images and JSON metadata to IPFS. Each souvenir NFT's tokenURI points to a Pinata-hosted metadata file.</div>
+    <div class="svc-detail">pinata.cloud · key stored in Railway env → PINATA_JWT</div>
+  </div>
+
+  <div class="service-card ai">
+    <div class="svc-top">
+      <div class="svc-name">OpenAI</div>
+      <span class="svc-tag tag-ai">Image Gen</span>
+    </div>
+    <div class="svc-role">Generates unique souvenir artwork via DALL-E when a PotatoPassed event fires. Rarity tier and hold duration influence the prompt.</div>
+    <div class="svc-detail">openai.com · key stored in Railway env → OPENAI_API_KEY</div>
+  </div>
+
+  <div class="service-card chain">
+    <div class="svc-top">
+      <div class="svc-name">Base</div>
+      <span class="svc-tag tag-chain">Chain</span>
+    </div>
+    <div class="svc-role">The L2 blockchain where the HotPotato smart contract lives. Currently on Base Sepolia (testnet). Mainnet deploy needed before launch.</div>
+    <div class="svc-detail">Contract: 0xd04A4fA2B05874d268Ce8bB8E8EaEc252ef2AB22 (Sepolia)</div>
+  </div>
+
+  <div class="service-card wallet">
+    <div class="svc-top">
+      <div class="svc-name">MetaMask</div>
+      <span class="svc-tag tag-wallet">Wallet</span>
+    </div>
+    <div class="svc-role">Two wallets in use: deployer wallet (owns contract, receives creator fee), and backend wallet (calls setSouvenirURI after each pass).</div>
+    <div class="svc-detail">Backend key stored in Railway env → WALLET_PRIVATE_KEY</div>
+  </div>
+
+  <div class="service-card code">
+    <div class="svc-top">
+      <div class="svc-name">GitHub</div>
+      <span class="svc-tag tag-code">Code</span>
+    </div>
+    <div class="svc-role">Source of truth for all code. Railway auto-deploys on push to main. Frontend (index.html) served directly from repo via GitHub Pages or Railway.</div>
+    <div class="svc-detail">github.com/Oli-mojo/hot-potato</div>
+  </div>
+
+  <div class="service-card chain">
+    <div class="svc-top">
+      <div class="svc-name">Basescan</div>
+      <span class="svc-tag tag-chain">Explorer</span>
+    </div>
+    <div class="svc-role">Contract verification and public transaction explorer. Contract should be verified (source code published) before mainnet launch for trust.</div>
+    <div class="svc-detail">sepolia.basescan.org · verify via Remix or Hardhat</div>
+  </div>
+
+</div>
+
+<!-- ─── SECURITY ─── -->
+<div class="section-label">Security Concerns</div>
+<div class="security-list">
+
+  <div class="sec-item critical">
+    <span class="sec-badge badge-critical">Critical</span>
+    <div>
+      <div class="sec-title">Alchemy API Key in Git History</div>
+      <div class="sec-desc">The old Alchemy RPC URL (containing key <code>CCsT7yY4zuEqcoCPeivbS</code>) was hardcoded in multiple backend files and is still present in git commit history, even though it was removed from the current codebase.</div>
+      <div class="sec-action">→ Rotate the key in Alchemy dashboard NOW. Then rewrite git history with BFG Repo Cleaner before any mainnet push.</div>
+    </div>
+  </div>
+
+  <div class="sec-item critical">
+    <span class="sec-badge badge-critical">Critical</span>
+    <div>
+      <div class="sec-title">Backend Wallet Private Key</div>
+      <div class="sec-desc">WALLET_PRIVATE_KEY is stored as a Railway environment variable. If Railway is compromised or credentials leaked, an attacker can call setSouvenirURI with malicious metadata. The wallet also pays gas — if drained, souvenir generation silently fails.</div>
+      <div class="sec-action">→ Use a fresh wallet for mainnet with minimal ETH balance (top up as needed). Enable Railway 2FA. Never commit the key to git.</div>
+    </div>
+  </div>
+
+  <div class="sec-item warning">
+    <span class="sec-badge badge-warning">Warning</span>
+    <div>
+      <div class="sec-title">Creator Wallet Linked to Personal History</div>
+      <div class="sec-desc">The current creator wallet (0x995a…) is derived from your existing MetaMask seed and has prior on-chain history (Coinbase deposit, OpenSea trades). This links the project wallet to your personal identity on-chain.</div>
+      <div class="sec-action">→ Create a fresh wallet from a new seed phrase and fund via CEX withdrawal for a clean on-chain separation. See Wallet Plan below.</div>
+    </div>
+  </div>
+
+  <div class="sec-item warning">
+    <span class="sec-badge badge-warning">Warning</span>
+    <div>
+      <div class="sec-title">Contract Not Verified on Basescan</div>
+      <div class="sec-desc">The deployed contract source code is not yet publicly verified. Users and marketplaces cannot inspect the contract logic, which reduces trust and may prevent OpenSea royalty enforcement.</div>
+      <div class="sec-action">→ Verify contract source on Basescan before mainnet launch via Remix "Verify & Publish" or Hardhat verify plugin.</div>
+    </div>
+  </div>
+
+  <div class="sec-item info">
+    <span class="sec-badge badge-info">Info</span>
+    <div>
+      <div class="sec-title">No Frontend Rate Limiting on Backend API</div>
+      <div class="sec-desc">The /api/souvenir/generate endpoint has no authentication or rate limiting. Anyone who knows the URL could spam souvenir generation requests, triggering OpenAI and Pinata API calls at your cost.</div>
+      <div class="sec-action">→ Add a shared secret header check on the generate endpoint, verified in Railway env vars. Low priority for testnet, important for mainnet.</div>
+    </div>
+  </div>
+
+  <div class="sec-item info">
+    <span class="sec-badge badge-info">Info</span>
+    <div>
+      <div class="sec-title">OpenAI & Pinata Keys Exposed if Railway Is Breached</div>
+      <div class="sec-desc">All API keys live together in Railway environment variables. A breach of the Railway account exposes all service credentials simultaneously.</div>
+      <div class="sec-action">→ Enable Railway 2FA. Consider using Railway's secret references rather than plain env vars. Rotate all keys after mainnet launch.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ─── PRE-LAUNCH CHECKLIST ─── -->
+<div class="section-label">Pre-Launch Checklist</div>
+<div class="checklist">
+
+  <div class="check-group">
+    <div class="check-group-title">Smart Contract</div>
+    <div class="check-item"><div class="check-box"></div>Deploy fresh contract to Base Mainnet from new deployer wallet</div>
+    <div class="check-item"><div class="check-box"></div>Verify contract source on Basescan (Remix → Verify & Publish)</div>
+    <div class="check-item"><div class="check-box"></div>Call transferOwnership to new backend wallet</div>
+    <div class="check-item"><div class="check-box"></div>Confirm creator fee (5%) routes to correct wallet on a test buy</div>
+    <div class="check-item"><div class="check-box"></div>Confirm ERC-2981 royalty returns correct data (check on Basescan)</div>
+    <div class="check-item"><div class="check-box"></div>Set initial Potato URI (potato image on IPFS)</div>
+  </div>
+
+  <div class="check-group">
+    <div class="check-group-title">Backend & Services</div>
+    <div class="check-item"><div class="check-box"></div>Update CONTRACT_ADDRESS in Railway env vars</div>
+    <div class="check-item"><div class="check-box"></div>Update RPC_URL to Base Mainnet Alchemy endpoint</div>
+    <div class="check-item"><div class="check-box"></div>Rotate Alchemy key (old one exposed in git history)</div>
+    <div class="check-item"><div class="check-box"></div>Update WALLET_PRIVATE_KEY to new backend wallet</div>
+    <div class="check-item"><div class="check-box"></div>Test souvenir generation end-to-end on mainnet with a real buy</div>
+    <div class="check-item"><div class="check-box"></div>Confirm Pinata images load in gallery and history</div>
+  </div>
+
+  <div class="check-group">
+    <div class="check-group-title">Frontend</div>
+    <div class="check-item"><div class="check-box"></div>Update CONTRACT_ADDRESS in index.html to mainnet address</div>
+    <div class="check-item"><div class="check-box"></div>Switch chain ID from Base Sepolia (84532) to Base Mainnet (8453)</div>
+    <div class="check-item"><div class="check-box"></div>Test wallet connect, buy modal, and transaction flow</div>
+    <div class="check-item"><div class="check-box"></div>Test nav scroll links (Rules, Souvenirs, History)</div>
+    <div class="check-item"><div class="check-box"></div>Confirm rarity odds modal shows correctly</div>
+    <div class="check-item"><div class="check-box"></div>Add real contract and OpenSea links in footer</div>
+  </div>
+
+  <div class="check-group">
+    <div class="check-group-title">Security & Git</div>
+    <div class="check-item"><div class="check-box"></div>Rewrite git history to remove old Alchemy key (BFG)</div>
+    <div class="check-item"><div class="check-box"></div>Force-push cleaned history to GitHub</div>
+    <div class="check-item"><div class="check-box"></div>Confirm no secrets in current codebase (grep for "CCsT7")</div>
+    <div class="check-item"><div class="check-box"></div>Add secret header check to /api/souvenir/generate</div>
+    <div class="check-item"><div class="check-box"></div>Enable 2FA on GitHub, Railway, Alchemy, Pinata, OpenAI</div>
+  </div>
+
+</div>
+
+<!-- ─── WALLET PLAN ─── -->
+<div class="section-label">Clean Wallet Plan (Before Mainnet)</div>
+<div class="wallet-plan">
+
+  <div class="wallet-card">
+    <div class="wallet-num">1</div>
+    <div class="wallet-name">Deployer Wallet</div>
+    <div class="wallet-purpose">Deploys the mainnet contract. Becomes the contract owner. Receives the 5% creator fee on every sale. Keep this wallet secure and offline after deployment.</div>
+    <div class="wallet-fund">Fund via: CEX withdrawal (Coinbase → new address). ~0.01 ETH needed for deploy gas.</div>
+  </div>
+
+  <div class="wallet-card">
+    <div class="wallet-num">2</div>
+    <div class="wallet-name">Backend Wallet</div>
+    <div class="wallet-purpose">Used only by Railway to call setSouvenirURI. Needs a small ETH balance for gas. Private key lives in Railway env vars only.</div>
+    <div class="wallet-fund">Fund via: small transfer from Deployer wallet. Top up as needed. Keep balance minimal.</div>
+  </div>
+
+  <div class="wallet-card">
+    <div class="wallet-num">3</div>
+    <div class="wallet-name">Creator Fee Wallet</div>
+    <div class="wallet-purpose">Receives the 5% creator fee from every purchase. Can be the same as Deployer or a separate cold wallet. Set as CREATOR_WALLET in the contract at deploy time.</div>
+    <div class="wallet-fund">Keep separate from Backend wallet. Consider a hardware wallet (Ledger) for mainnet.</div>
+  </div>
+
+</div>
+
+<footer>Hot Potato · Internal launch document · Not for distribution</footer>
+
+</body>
+</html>

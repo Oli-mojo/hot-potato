@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hot Potato — Game Mechanics Analysis</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap');
+  :root {
+    --pink: #E8186A; --yellow: #FFD600; --orange: #FF6B00;
+    --cream: #FFF5E0; --dark: #0F0800; --card: #1A0E05;
+    --border: rgba(232,24,106,0.2);
+    --green: #22C55E; --blue: #60A5FA; --purple: #CE93D8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--dark); color: var(--cream); font-family: 'Barlow', sans-serif; line-height: 1.7; padding: 48px 24px; max-width: 900px; margin: 0 auto; }
+  h1 { font-family: 'Black Ops One', sans-serif; font-size: 36px; color: var(--pink); letter-spacing: 2px; margin-bottom: 6px; }
+  .subtitle { font-size: 14px; color: rgba(255,245,224,0.4); margin-bottom: 48px; font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.1em; text-transform: uppercase; }
+  h2 { font-family: 'Black Ops One', sans-serif; font-size: 18px; color: var(--yellow); letter-spacing: 1px; margin: 40px 0 16px; border-left: 3px solid var(--yellow); padding-left: 14px; }
+  h3 { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--pink); margin: 24px 0 10px; }
+  p { font-size: 14px; color: rgba(255,245,224,0.7); margin-bottom: 14px; line-height: 1.75; }
+  strong { color: var(--cream); font-weight: 600; }
+  em { color: var(--yellow); font-style: normal; font-weight: 500; }
+
+  .mechanic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; margin: 20px 0; }
+  .mechanic-card { background: var(--card); border: 0.5px solid var(--border); border-radius: 10px; padding: 20px; }
+  .mc-icon { font-size: 26px; margin-bottom: 10px; }
+  .mc-title { font-family: 'Black Ops One', sans-serif; font-size: 13px; color: var(--pink); letter-spacing: 1px; margin-bottom: 8px; }
+  .mc-desc { font-size: 13px; color: rgba(255,245,224,0.55); line-height: 1.6; }
+  .mc-verdict { margin-top: 10px; font-size: 12px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+  .v-positive { color: var(--green); }
+  .v-watch    { color: var(--orange); }
+
+  .matrix-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px; }
+  .matrix-table th { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,245,224,0.35); text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  .matrix-table td { padding: 10px 12px; border-bottom: 0.5px solid rgba(232,24,106,0.07); color: rgba(255,245,224,0.65); vertical-align: top; }
+  .matrix-table td:first-child { color: var(--yellow); font-weight: 600; font-family: 'Barlow Condensed', sans-serif; }
+  .tag { display: inline-block; font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 8px; border-radius: 20px; margin-right: 4px; }
+  .tag-joy     { background: rgba(34,197,94,0.15); color: #22C55E; }
+  .tag-loop    { background: rgba(96,165,250,0.15); color: #60A5FA; }
+  .tag-tension { background: rgba(232,24,106,0.15); color: #FF4D9E; }
+  .tag-social  { background: rgba(206,147,216,0.15); color: #CE93D8; }
+  .tag-risk    { background: rgba(255,107,0,0.15); color: #FF8C42; }
+
+  .score-row { display: flex; align-items: center; gap: 14px; padding: 10px 0; border-bottom: 0.5px solid rgba(232,24,106,0.08); }
+  .score-label { width: 200px; font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 600; color: rgba(255,245,224,0.7); }
+  .score-bar-wrap { flex: 1; height: 6px; background: rgba(255,245,224,0.06); border-radius: 3px; }
+  .score-bar { height: 100%; border-radius: 3px; }
+  .score-num { font-family: 'Black Ops One', sans-serif; font-size: 13px; width: 28px; text-align: right; }
+  .callout { background: rgba(255,214,0,0.06); border: 0.5px solid rgba(255,214,0,0.2); border-radius: 8px; padding: 18px 20px; margin: 20px 0; }
+  .callout-title { font-family: 'Black Ops One', sans-serif; font-size: 13px; color: var(--yellow); letter-spacing: 1px; margin-bottom: 8px; }
+  .callout p { margin-bottom: 0; }
+  .risk-card { background: rgba(255,107,0,0.06); border: 0.5px solid rgba(255,107,0,0.2); border-radius: 8px; padding: 16px 18px; margin: 12px 0; }
+  .risk-title { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--orange); margin-bottom: 6px; }
+  footer { margin-top: 64px; padding-top: 24px; border-top: 0.5px solid var(--border); font-size: 12px; color: rgba(255,245,224,0.2); font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.05em; }
+</style>
+</head>
+<body>
+
+<h1>GAME MECHANICS ANALYSIS</h1>
+<div class="subtitle">Hot Potato · How the mechanics drive joy, tension, and the urge to play again</div>
+
+<h2>Overview</h2>
+<p>Hot Potato is a Harberger-tax-inspired NFT game: the potato is always for sale, the price always rises, and the seller is chosen by the market — not by the holder. This document analyses every mechanic added to the base game and examines how each one improves (or challenges) player experience, retention, and the desire to participate again.</p>
+
+<h2>Core Loop Analysis</h2>
+
+<div class="mechanic-grid">
+  <div class="mechanic-card">
+    <div class="mc-icon">🔥</div>
+    <div class="mc-title">Always For Sale</div>
+    <div class="mc-desc">Anyone can buy at any time. No owner can block a sale. This creates <strong>constant anxiety and excitement</strong> — you're never truly safe, and that's the point.</div>
+    <div class="mc-verdict v-positive">✓ Core tension engine — excellent</div>
+  </div>
+  <div class="mechanic-card">
+    <div class="mc-icon">📈</div>
+    <div class="mc-title">Price Only Goes Up</div>
+    <div class="mc-desc">Every buyer must set a new price ≥15% above what they paid. This creates an <strong>ever-rising floor</strong> that makes the game self-sustaining — higher prices mean higher stakes and more drama per transfer.</div>
+    <div class="mc-verdict v-positive">✓ Economic backbone — well designed</div>
+  </div>
+  <div class="mechanic-card">
+    <div class="mc-icon">🎁</div>
+    <div class="mc-title">Mandatory Exit via Souvenir</div>
+    <div class="mc-desc">You can't sell — you get bought out. The souvenir NFT is your reward for waiting. This <strong>reframes loss as reward</strong>, making being bought out feel like a win, not a defeat.</div>
+    <div class="mc-verdict v-positive">✓ Brilliant loss-reframing mechanic</div>
+  </div>
+  <div class="mechanic-card">
+    <div class="mc-icon">⏱️</div>
+    <div class="mc-title">Hold Duration → Rarity</div>
+    <div class="mc-desc">The longer you hold, the rarer your souvenir. This creates <strong>patience as strategy</strong>: short holders get Common, months-long holders reach Legendary. Skill vs. luck in perfect tension.</div>
+    <div class="mc-verdict v-positive">✓ Primary progression system</div>
+  </div>
+</div>
+
+<h2>Boost Mechanics — Individual Analysis</h2>
+
+<table class="matrix-table">
+  <thead><tr><th>Mechanic</th><th>How It Works</th><th>Tags</th><th>Impact on Game Feel</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>💸 Overpay Boost</td>
+      <td>Paying more than the 15% minimum at buy time bumps the previous holder's souvenir rarity tier by 1–4 steps.</td>
+      <td><span class="tag tag-joy">Joy</span><span class="tag tag-tension">Tension</span></td>
+      <td>Introduces <strong>strategic bidding</strong>. The buyer faces a real trade-off: pay more to give the current holder a better souvenir, increasing community goodwill, but at a higher personal cost. Creates a virtuous cycle where generous buyers are celebrated.</td>
+    </tr>
+    <tr>
+      <td>🎟️ Social Promo Codes</td>
+      <td>Codes like DISCORD or XFOLLOW give a +1 rarity boost. Reusable, set via env var.</td>
+      <td><span class="tag tag-social">Social</span><span class="tag tag-loop">Loop</span></td>
+      <td>Drives community actions (joining Discord, following on X) with a tangible in-game reward. Creates a <strong>real incentive to stay connected</strong> to the community — which in turn drives future buys and word-of-mouth.</td>
+    </tr>
+    <tr>
+      <td>🔥 Trade-In Codes</td>
+      <td>Burning a souvenir generates a single-use code. Rarity scales: Common=+1, Rare=+2, Epic=+3, Legendary=+4.</td>
+      <td><span class="tag tag-joy">Joy</span><span class="tag tag-risk">Risk</span><span class="tag tag-loop">Loop</span></td>
+      <td>Creates a <strong>sacrifice mechanic</strong> with meaningful stakes. Players must decide: keep the souvenir for its rarity/aesthetic, or burn it for a future chance at something even better? This deliberate destruction is deeply satisfying when it pays off. Drives repeat engagement.</td>
+    </tr>
+    <tr>
+      <td>🏆 Loyalty Boost</td>
+      <td>Wallets with prior holdings automatically get rarity boosts on future souvenirs. 1 hold = +1, 2 holds = +2, 3+ holds = +3 (auto-applied, no code needed).</td>
+      <td><span class="tag tag-loop">Loop</span><span class="tag tag-joy">Joy</span></td>
+      <td>The <strong>strongest retention mechanic</strong> in the game. Once you've held once, you have a reason to hold again — and the system rewards you for it. Veterans feel recognised and privileged. Creates a natural "veteran vs. newcomer" dynamic that makes the community feel stratified and interesting.</td>
+    </tr>
+    <tr>
+      <td>🤝 Referral Codes</td>
+      <td>Each wallet gets a unique referral code. When used by a new buyer, both parties get +1 boost on their next souvenir.</td>
+      <td><span class="tag tag-social">Social</span><span class="tag tag-loop">Loop</span></td>
+      <td>Mutual reward creates a genuine incentive to recruit. The referrer doesn't just benefit once — they benefit every time their code is used, encouraging them to keep sharing. The mutual +1 makes referrals feel like a <strong>gift exchange, not just self-promotion</strong>.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Timer Drama</h2>
+<p>The hold timer now changes colour and text based on how long the current holder has been holding. This is a small but powerful UI touch:</p>
+
+<div class="mechanic-grid">
+  <div class="mechanic-card">
+    <div class="mc-icon">❄️</div>
+    <div class="mc-title">Under 1 Hour</div>
+    <div class="mc-desc">"Just picked up" — muted, calm. The potato is lukewarm. No urgency yet.</div>
+    <div class="mc-verdict v-positive">✓ Sets the baseline</div>
+  </div>
+  <div class="mechanic-card">
+    <div class="mc-icon">🔥</div>
+    <div class="mc-title">1–24 Hours</div>
+    <div class="mc-desc">Orange glow. "Warming up 🔥" — the heat is building. Buyers feel mild urgency.</div>
+    <div class="mc-verdict v-positive">✓ First tension spike</div>
+  </div>
+  <div class="mechanic-card">
+    <div class="mc-icon">🔥🔥</div>
+    <div class="mc-title">1–7 Days</div>
+    <div class="mc-desc">Deep red. "Running hot!! 🔥🔥🔥" — prime buy pressure. The price is rising faster and buyers know it.</div>
+    <div class="mc-verdict v-positive">✓ Peak drama zone</div>
+  </div>
+  <div class="mechanic-card">
+    <div class="mc-icon">👑</div>
+    <div class="mc-title">3+ Months</div>
+    <div class="mc-desc">Gold pulse animation. "LEGENDARY 👑" — reverence mode. The holder is a legend. Buying now feels historic.</div>
+    <div class="mc-verdict v-positive">✓ Creates mythic status</div>
+  </div>
+</div>
+
+<p><strong>Why this matters:</strong> The timer is the most prominent real-time signal on the page. Making it visually dramatic transforms a raw number into an emotional cue. Players don't need to think about what the number means — the colour tells them how to feel.</p>
+
+<h2>Leaderboard + Hall of Fame</h2>
+<p>Leaderboards work because they give players <strong>external validation</strong> and a target to aim for. The Hot Potato leaderboard has two axes — longest hold (patience) and most times held (loyalty) — which creates two separate paths to prestige. A player who can't win the hold competition can still dominate the loyalty board by re-entering frequently.</p>
+<p>The Hall of Fame is reserved only for Legendary holders. This creates a <strong>permanent monument</strong> — your wallet address enshrined forever for holding longer than almost anyone else. The psychological impact of permanent recognition is outsized: players will hold longer just to see their address there.</p>
+
+<div class="callout">
+  <div class="callout-title">💡 Key Design Insight</div>
+  <p>Having <em>two</em> leaderboards eliminates the winner-takes-all problem. Even if one whale dominates the "longest hold" board, a frequent flyer who buys and exits quickly can lead the loyalty board. Multiple paths to status = more people feel like they're winning.</p>
+</div>
+
+<h2>Boost Stacking — Game Theory</h2>
+<p>All five boost types stack (hold time + overpay + promo code + loyalty + referral), capped at Legendary. This creates a <strong>strategic planning layer</strong> that didn't exist before:</p>
+
+<div class="mechanic-grid">
+  <div class="mechanic-card">
+    <div class="mc-icon">🧠</div>
+    <div class="mc-title">The Maximiser</div>
+    <div class="mc-desc">Lines up loyalty boost + trade-in code + referral + social code before buying. Aims for max rarity regardless of hold time. High effort, high reward.</div>
+    <div class="mc-verdict v-positive">✓ Rewards deep engagement</div>
+  </div>
+  <div class="mechanic-card">
+    <div class="mc-icon">😎</div>
+    <div class="mc-title">The Patient Holder</div>
+    <div class="mc-desc">Buys, holds for months, and lets hold-time rarity do the work. No codes, no strategy — just patience. Gets Epic or Legendary naturally.</div>
+    <div class="mc-verdict v-positive">✓ Rewards long commitment</div>
+  </div>
+  <div class="mechanic-card">
+    <div class="mc-icon">🔄</div>
+    <div class="mc-title">The Flipper</div>
+    <div class="mc-desc">Buys and immediately sets the minimum ask, expecting a quick buyout. Uses max boost stack to compensate for short hold time. Frequent participation, lower individual rarity.</div>
+    <div class="mc-verdict v-positive">✓ Keeps potato moving</div>
+  </div>
+</div>
+
+<h2>Psychological Dynamics</h2>
+
+<div class="score-row">
+  <div class="score-label">Loss Aversion → Reward</div>
+  <div class="score-bar-wrap"><div class="score-bar" style="width:90%;background:linear-gradient(90deg,var(--green),#4ADE80);"></div></div>
+  <div class="score-num" style="color:var(--green);">9</div>
+</div>
+<div class="score-row">
+  <div class="score-label">Tension / Urgency</div>
+  <div class="score-bar-wrap"><div class="score-bar" style="width:85%;background:linear-gradient(90deg,var(--orange),#FBBF24);"></div></div>
+  <div class="score-num" style="color:var(--orange);">8.5</div>
+</div>
+<div class="score-row">
+  <div class="score-label">Retention Loops</div>
+  <div class="score-bar-wrap"><div class="score-bar" style="width:88%;background:linear-gradient(90deg,var(--blue),#93C5FD);"></div></div>
+  <div class="score-num" style="color:var(--blue);">8.8</div>
+</div>
+<div class="score-row">
+  <div class="score-label">Social / Viral Mechanics</div>
+  <div class="score-bar-wrap"><div class="score-bar" style="width:75%;background:linear-gradient(90deg,var(--purple),#DDD6FE);"></div></div>
+  <div class="score-num" style="color:var(--purple);">7.5</div>
+</div>
+<div class="score-row">
+  <div class="score-label">Strategic Depth</div>
+  <div class="score-bar-wrap"><div class="score-bar" style="width:80%;background:linear-gradient(90deg,var(--pink),#FF4D9E);"></div></div>
+  <div class="score-num" style="color:var(--pink);">8.0</div>
+</div>
+<div class="score-row">
+  <div class="score-label">Onboarding Clarity</div>
+  <div class="score-bar-wrap"><div class="score-bar" style="width:65%;background:linear-gradient(90deg,#9CA3AF,#D1D5DB);"></div></div>
+  <div class="score-num" style="color:#9CA3AF;">6.5</div>
+</div>
+
+<h2>Risks and Watch Points</h2>
+
+<div class="risk-card">
+  <div class="risk-title">⚠️ Boost Complexity</div>
+  <p>Five stacking boost types is powerful for engaged players, but potentially overwhelming for first-timers. The Boosts Guide tab helps, but the buy modal itself should always feel simple — advanced options stay hidden behind the "Heat Up Your Rarity" toggle.</p>
+</div>
+<div class="risk-card">
+  <div class="risk-title">⚠️ Price Ceiling Risk</div>
+  <p>With a mandatory 15% price increase on every transfer, the potato will eventually reach a price where the addressable buyer pool shrinks. This is intentional — but it means early transfers drive most of the excitement. Consider a "reset" mechanism or price ceiling for mainnet.</p>
+</div>
+<div class="risk-card">
+  <div class="risk-title">⚠️ Leaderboard Concentration</div>
+  <p>A single whale who holds for 6 months will dominate the "longest hold" board forever. Counter-intuitive benefit: this creates a legendary narrative around that wallet. But it may demotivate others from even trying. The loyalty board (by times held) is the more important one for community health.</p>
+</div>
+<div class="risk-card">
+  <div class="risk-title">⚠️ In-Memory State</div>
+  <p>Trade-in codes, referral registrations, and pending boosts are stored in-memory on the backend server. A Railway restart wipes them. For mainnet, these should be persisted to a database or derived entirely from on-chain events.</p>
+</div>
+
+<h2>Summary Verdict</h2>
+
+<p>Hot Potato has grown from a clever Harberger-tax NFT into a <strong>layered, strategic, social game</strong>. The core mechanic is still the engine — but the boost system, leaderboard, Hall of Fame, trade-ins, and referrals each add a distinct reason to stay engaged beyond a single purchase.</p>
+
+<p>The mechanic stack creates <em>three distinct player types</em> (the patient holder, the flipper, the maximiser) that coexist naturally without one dominating. The timer drama makes the current state of the game emotionally legible at a glance. The Hall of Fame gives every player something to aspire to that doesn't require money — just time.</p>
+
+<p>The biggest opportunity before mainnet is to ensure <strong>boost state is persisted on-chain or in a database</strong>, and to simplify the first-time buyer experience so the joy of participating is immediately apparent even without understanding all the mechanics.</p>
+
+<div class="callout">
+  <div class="callout-title">🚀 One-Line Summary</div>
+  <p><em>Hot Potato is a game that makes holding feel like winning, selling feel like losing, and being bought out feel like a reward — which is exactly the right inversion for a game with no exits.</em></p>
+</div>
+
+<footer>Hot Potato · Game Mechanics Analysis · Built on Base</footer>
+
+</body>
+</html>

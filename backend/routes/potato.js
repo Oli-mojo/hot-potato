@@ -84,4 +84,38 @@ router.get('/history', async (req, res) => {
   }
 });
 
+// GET /api/potato/leaderboard — top holders, loyalty leaders, hall of fame
+router.get('/leaderboard', async (req, res) => {
+  try {
+    const provider = new ethers.JsonRpcProvider(RPC_URL);
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, SOUVENIR_READ_ABI, provider);
+    const count    = Number(await contract.souvenirCount());
+
+    const entries  = [];
+    const holdCount = {};
+
+    for (let i = 1; i < count; i++) {
+      try {
+        const data = await contract.souvenirs(i);
+        const addr = data.originalOwner;
+        const holdHours = Math.round(Number(data.holdDuration) / 360) / 10;
+        const rarity    = RARITY_MAP[Number(data.rarityTier)] || 'common';
+        entries.push({ address: addr, holdDurationHours: holdHours, rarity, hand: Number(data.transferNumber) });
+        holdCount[addr] = (holdCount[addr] || 0) + 1;
+      } catch {}
+    }
+
+    const longestHolds = [...entries].sort((a, b) => b.holdDurationHours - a.holdDurationHours).slice(0, 5);
+    const loyaltyBoard = Object.entries(holdCount)
+      .map(([address, timesHeld]) => ({ address, timesHeld }))
+      .sort((a, b) => b.timesHeld - a.timesHeld).slice(0, 5);
+    const hallOfFame   = entries.filter(e => e.rarity === 'legendary')
+      .sort((a, b) => b.holdDurationHours - a.holdDurationHours);
+
+    res.json({ longestHolds, loyaltyBoard, hallOfFame });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

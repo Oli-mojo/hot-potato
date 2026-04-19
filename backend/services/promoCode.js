@@ -1,9 +1,10 @@
 // Hot Potato — Promo Code Service
 //
-// Two types of codes:
+// Code types:
 // 1. Social codes — set in Railway env var PROMO_CODES as JSON: {"DISCORD":1,"XFOLLOW":1}
-//    These are reusable (everyone can use them), give a small +1 boost
+//    Reusable (everyone can use them), give a small +1 boost
 // 2. Trade-in codes — generated when a souvenir is burned, single-use, boost scales with rarity
+// 3. Referral codes — deterministic from wallet address (REF-XXXXXXXX), give mutual +1 boost
 //
 // Boost is applied to image generation + metadata rarity (on top of hold-duration tier)
 
@@ -16,6 +17,10 @@ const tradeInCodes = new Map();
 // Pending boosts for buyers — applied when they eventually get bought out
 // { walletAddress.toLowerCase() => { boost, fromCode, appliedAt } }
 const pendingBoosts = new Map();
+
+// Referral codes — deterministic from wallet address, registered on first display
+// { code => walletAddress.toLowerCase() }
+const referralCodes = new Map();
 
 const RARITY_BOOST   = { common: 1, rare: 2, epic: 3, legendary: 4 };
 const RARITY_ORDER   = ['common', 'rare', 'epic', 'legendary'];
@@ -41,6 +46,47 @@ function createTradeInCode(tokenId, rarity) {
   return { code, boost };
 }
 
+// ─── REFERRAL CODES ───────────────────────────────────────
+// Deterministic code from wallet — always the same for a given address
+function getReferralCode(walletAddress) {
+  const hash = crypto.createHash('sha256')
+    .update(walletAddress.toLowerCase() + 'HOTPOTATO2025')
+    .digest('hex');
+  return `REF-${hash.slice(0, 8).toUpperCase()}`;
+}
+
+// Register a wallet's referral code so it can be redeemed by others
+function registerReferral(walletAddress) {
+  const code = getReferralCode(walletAddress);
+  referralCodes.set(code, walletAddress.toLowerCase());
+  return { code, boost: 1 };
+}
+
+// Apply referral: referee gets +1 pending boost, referrer also gets +1 pending boost
+function applyReferral(referralCode, refereeAddress) {
+  const upper = referralCode.toUpperCase().trim();
+  const referrerAddress = referralCodes.get(upper);
+  if (!referrerAddress) return { success: false, reason: 'Referral code not registered' };
+  if (referrerAddress === refereeAddress.toLowerCase()) return { success: false, reason: 'Cannot use your own referral code' };
+
+  // Store +1 boost for referee
+  const refeeAddr = refereeAddress.toLowerCase();
+  const existingReferee = pendingBoosts.get(refeeAddr);
+  if (!existingReferee || 1 > existingReferee.boost) {
+    pendingBoosts.set(refeeAddr, { boost: 1, fromCode: upper, appliedAt: Date.now() });
+    console.log(`🤝 Referral: referee boost +1 stored for ${refeeAddr}`);
+  }
+
+  // Store +1 boost for referrer too (mutual)
+  const existingReferrer = pendingBoosts.get(referrerAddress);
+  if (!existingReferrer || 1 > existingReferrer.boost) {
+    pendingBoosts.set(referrerAddress, { boost: 1, fromCode: `referral-by-${refeeAddr}`, appliedAt: Date.now() });
+    console.log(`🤝 Referral: referrer boost +1 stored for ${referrerAddress}`);
+  }
+
+  return { success: true, referrer: referrerAddress };
+}
+
 // Validate any code — returns { valid, boost, type } or { valid: false, reason }
 function validateCode(code) {
   if (!code) return { valid: false, reason: 'No code provided' };
@@ -61,6 +107,13 @@ function validateCode(code) {
     return { valid: true, boost: tradeIn.boost, type: 'trade-in', code: upper };
   }
 
+  // Referral codes
+  if (upper.startsWith('REF-')) {
+    const referrer = referralCodes.get(upper);
+    if (referrer) return { valid: true, boost: 1, type: 'referral', code: upper, referrer };
+    return { valid: false, reason: 'Referral code not registered — the referrer must visit the site first' };
+  }
+
   return { valid: false, reason: 'Invalid code' };
 }
 
@@ -79,7 +132,7 @@ function storePendingBoost(walletAddress, boost, code) {
     tradeIn.usedBy  = walletAddress;
     tradeIn.usedAt  = Date.now();
   }
-  // Social codes are reusable — not marked used
+  // Social + referral codes are reusable — not marked used
 }
 
 // Consume pending boost for a wallet (called during souvenir generation)
@@ -142,4 +195,8 @@ async function getLoyaltyBoost(walletAddress) {
   }
 }
 
-module.exports = { createTradeInCode, validateCode, storePendingBoost, consumePendingBoost, applyBoost, RARITY_BOOST, getLoyaltyBoost };
+module.exports = {
+  createTradeInCode, validateCode, storePendingBoost, consumePendingBoost,
+  applyBoost, RARITY_BOOST, getLoyaltyBoost,
+  getReferralCode, registerReferral, applyReferral,
+};

@@ -456,6 +456,45 @@
   .hero-tagline  { animation-delay: 0.18s; }
   .hero-stats    { animation-delay: 0.24s; }
   .buy-section   { animation-delay: 0.30s; }
+
+  /* Timer drama */
+  .hold-timer { transition: color .8s ease; }
+  .timer-val  { transition: color .8s ease; }
+  .timer-status { font-style: italic; opacity: 0.7; }
+  @keyframes legendary-pulse {
+    0%, 100% { text-shadow: 0 0 8px rgba(255,214,0,0.6); }
+    50%       { text-shadow: 0 0 22px rgba(255,214,0,1), 0 0 44px rgba(255,214,0,0.4); }
+  }
+  .timer-legendary { animation: legendary-pulse 2s ease-in-out infinite; }
+
+  /* Leaderboard */
+  .lb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 700px) { .lb-grid { grid-template-columns: 1fr; } }
+  .lb-panel { background: var(--card-bg); border: 0.5px solid var(--border); border-radius: 10px; padding: 20px; }
+  .lb-panel-title { font-family: 'Black Ops One', sans-serif; font-size: 13px; color: var(--pink); letter-spacing: 1px; margin-bottom: 14px; }
+  .lb-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid rgba(232,24,106,0.08); font-size: 13px; }
+  .lb-row:last-child { border-bottom: none; }
+  .lb-rank { font-family: 'Black Ops One', sans-serif; font-size: 11px; color: rgba(255,245,224,0.25); width: 22px; flex-shrink: 0; text-align: center; }
+  .lb-rank-1 { color: var(--yellow) !important; }
+  .lb-rank-2 { color: #C0C0C0 !important; }
+  .lb-rank-3 { color: #CD7F32 !important; }
+  .lb-addr { flex: 1; font-family: 'Barlow Condensed', sans-serif; color: rgba(255,245,224,0.6); }
+  .lb-val  { font-family: 'Black Ops One', sans-serif; font-size: 12px; color: var(--yellow); }
+
+  .hof-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-top: 20px; }
+  .hof-card { background: linear-gradient(135deg, rgba(255,214,0,0.08), rgba(255,214,0,0.02)); border: 0.5px solid rgba(255,214,0,0.25); border-radius: 10px; padding: 16px; text-align: center; }
+  .hof-crown { font-size: 28px; margin-bottom: 8px; }
+  .hof-addr  { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; color: var(--yellow); font-weight: 700; margin-bottom: 4px; }
+  .hof-detail { font-size: 11px; color: rgba(255,245,224,0.4); }
+
+  /* Referral display in modal */
+  .referral-box { margin-top: 12px; padding: 10px 12px; background: rgba(255,214,0,0.05); border: 0.5px solid rgba(255,214,0,0.18); border-radius: 6px; }
+  .referral-label { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,245,224,0.35); margin-bottom: 5px; }
+  .referral-code-display { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .referral-code-val { font-family: 'Black Ops One', sans-serif; font-size: 14px; color: var(--yellow); letter-spacing: 2px; }
+  .referral-copy-btn { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; background: rgba(255,214,0,0.12); border: 0.5px solid rgba(255,214,0,0.3); border-radius: 4px; color: var(--yellow); padding: 4px 10px; cursor: pointer; transition: background .2s; }
+  .referral-copy-btn:hover { background: rgba(255,214,0,0.22); }
+  .referral-note { font-size: 11px; color: rgba(255,245,224,0.28); margin-top: 5px; }
 </style>
 </head>
 <body>
@@ -483,6 +522,7 @@
     <span class="nav-link" onclick="document.getElementById('rules').scrollIntoView({behavior:'smooth'})">Rules</span>
     <span class="nav-link" onclick="document.getElementById('souvenirs').scrollIntoView({behavior:'smooth'})">Souvenirs</span>
     <span class="nav-link" onclick="document.getElementById('history').scrollIntoView({behavior:'smooth'})">History</span>
+    <span class="nav-link" onclick="document.getElementById('leaderboard').scrollIntoView({behavior:'smooth'})">Leaderboard</span>
     <button class="connect-btn" onclick="connectWallet()">Connect Wallet</button>
   </div>
 </nav>
@@ -517,7 +557,7 @@
       </div>
       <div class="hold-timer">
         Current holder for <span class="timer-val" id="hold-display">2d 14h 33m</span>
-        <span>— rarity building 🔥</span>
+        <span class="timer-status" id="timer-status">— rarity building 🔥</span>
       </div>
       <button class="buy-btn" id="buy-btn" onclick="openModal()">🥔 BUY THE POTATO</button>
       <div class="buy-note">Minimum bid: 0.42 ETH · New price must be ≥ 0.483 ETH</div>
@@ -542,6 +582,7 @@
   <div class="rules-tabs">
     <button class="rules-tab active" onclick="showRulesTab('how-it-works', this)">How It Works</button>
     <button class="rules-tab" onclick="showRulesTab('rarity-boost', this)">Rarity Boost</button>
+    <button class="rules-tab" onclick="showRulesTab('boosts-guide', this)">Boosts Guide</button>
     <button class="rules-tab" onclick="showRulesTab('terms', this)">Terms of Use</button>
   </div>
 
@@ -574,10 +615,11 @@
   <!-- Panel 2: Rarity Boost -->
   <div class="rules-panel" id="panel-rarity-boost">
     <p class="boost-intro">
-      When you buy the potato, you set the new asking price — but you can also <b>overpay above the minimum</b>.
-      Paying more than the minimum earns you a <b>rarity boost</b>: when you eventually get bought out,
-      your hold-duration tier is bumped up, giving you better souvenir odds. It's the only strategic
-      lever in the game — hold time is luck, overpay is skill.
+      Your souvenir rarity starts from <b>how long you hold</b> — but four things can push it higher.
+      <b>Overpaying</b> above the 15% minimum bumps your tier at purchase time.
+      <b>Promo codes</b> (from Discord, X, or community events) stack on top.
+      <b>Trade in</b> a souvenir you already own to convert it into a single-use boost code.
+      And <b>loyal holders</b> — wallets that have held the potato before — automatically get a bonus when they get bought out again. All boosts stack, capped at Legendary.
     </p>
     <table class="boost-table">
       <thead><tr><th>Overpay above minimum</th><th>Boost</th><th>Effect on souvenir</th></tr></thead>
@@ -613,7 +655,44 @@
     </div>
   </div>
 
-  <!-- Panel 3: Terms of Use -->
+  <!-- Panel 3: Boosts Guide -->
+  <div class="rules-panel" id="panel-boosts-guide">
+    <p class="boost-intro">All boosts apply to your souvenir's rarity image and metadata when you get bought out. They stack — but are capped at <b>Legendary</b>.</p>
+    <div class="rules-grid">
+      <div class="rule-card">
+        <span class="rule-icon">⏱️</span>
+        <div class="rule-title">Hold Time (Base)</div>
+        <div class="rule-desc">Your starting rarity comes from how long you held. Under 24h = mostly Common. Hold 3+ months and you're in <span class="rule-highlight">Legendary territory</span>. No action needed — just wait.</div>
+      </div>
+      <div class="rule-card">
+        <span class="rule-icon">💸</span>
+        <div class="rule-title">Overpay Boost</div>
+        <div class="rule-desc">Set your new ask price <span class="rule-highlight">higher than the 15% minimum</span> when you buy. Pay 10–24% over min → +1 tier. 25–49% over → +2. 50–99% → +3. 100%+ → +4 (max).</div>
+      </div>
+      <div class="rule-card">
+        <span class="rule-icon">🎟️</span>
+        <div class="rule-title">Promo Codes</div>
+        <div class="rule-desc">Enter a code in the buy modal before purchasing. Social codes (<span class="rule-highlight">DISCORD</span>, <span class="rule-highlight">XFOLLOW</span>) give +1. Trade-in codes scale up to +4. Use <b>🔥 Heat Up Your Rarity</b> in the buy modal.</div>
+      </div>
+      <div class="rule-card">
+        <span class="rule-icon">🔥</span>
+        <div class="rule-title">Trade-In Codes</div>
+        <div class="rule-desc">Own a souvenir? <span class="rule-highlight">Burn it</span> from the gallery to get a single-use code. Common → +1, Rare → +2, Epic → +3, Legendary → +4. A sacrifice for a future legend.</div>
+      </div>
+      <div class="rule-card">
+        <span class="rule-icon">🏆</span>
+        <div class="rule-title">Loyalty Boost</div>
+        <div class="rule-desc">Held the potato before? You earn an <span class="rule-highlight">automatic boost</span> next time you're bought out — no code needed. 1 prior hold → +1. 2 holds → +2. 3+ holds → +3 (max loyalty).</div>
+      </div>
+      <div class="rule-card">
+        <span class="rule-icon">🤝</span>
+        <div class="rule-title">Referral Boost</div>
+        <div class="rule-desc">Share your referral code from the buy modal. When someone uses it, <span class="rule-highlight">both of you get +1</span> added to your next souvenir. Find your code after connecting your wallet.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel 4: Terms of Use -->
   <div class="rules-panel" id="panel-terms">
     <div class="terms-body">
       <h3>Decentralized & Autonomous</h3>
@@ -654,6 +733,32 @@
   </table>
 </div>
 
+<div class="section" id="leaderboard">
+  <div class="section-header">
+    <div class="section-title">LEADERBOARD</div>
+    <div class="section-count" id="leaderboard-count">loading…</div>
+  </div>
+
+  <div class="lb-grid">
+    <div class="lb-panel">
+      <div class="lb-panel-title">⏱️ LONGEST HOLDS</div>
+      <div id="lb-longest">Loading…</div>
+    </div>
+    <div class="lb-panel">
+      <div class="lb-panel-title">🏆 LOYALTY LEADERS</div>
+      <div id="lb-loyalty">Loading…</div>
+    </div>
+  </div>
+
+  <div style="margin-top:28px;">
+    <div style="font-family:'Black Ops One',sans-serif;font-size:13px;color:var(--yellow);letter-spacing:1px;margin-bottom:4px;">🌟 HALL OF FAME — LEGENDARY HOLDERS</div>
+    <div style="font-size:12px;color:rgba(255,245,224,0.3);margin-bottom:12px;">Wallets that earned a Legendary souvenir by holding the potato long enough to reach myth status.</div>
+    <div class="hof-grid" id="hof-grid">
+      <div style="color:rgba(255,245,224,0.3);font-size:13px;grid-column:1/-1;padding:16px 0;">No Legendary holders yet — will you be the first?</div>
+    </div>
+  </div>
+</div>
+
 <footer>
   <div class="footer-logo">HOT🔥POTATO</div>
   <div class="footer-links">
@@ -669,13 +774,21 @@
   <div class="modal">
     <button class="modal-close" onclick="closeModal()">✕</button>
     <div class="modal-title">BUY THE POTATO</div>
-    <div class="modal-sub">You'll receive the Hot Potato NFT. The current holder gets their souvenir — rarity based on how long they've held.</div>
+    <div class="modal-sub">You're entering an unstoppable game. Pay the price — the current holder cashes out and earns their souvenir. Set your ask price high: the next buyer pays <em>you</em> that amount. Hold longer for a rarer souvenir when your turn comes.</div>
     <div class="modal-row"><span class="modal-key">Current price</span><span class="modal-val yellow">0.42 ETH</span></div>
     <div class="modal-input-label" id="modal-input-label">Your new asking price (min. 0.012 ETH)</div>
     <input class="modal-input" type="text" inputmode="decimal" id="new-price-input" value="0.50">
     <div class="modal-input-note">Set this higher to maximise your profit when the next buyer comes.</div>
 
     <div id="loyalty-status" style="display:none;font-size:12px;color:rgba(255,245,224,0.4);margin-top:14px;padding:8px 10px;background:rgba(255,245,224,0.04);border-radius:6px;border:0.5px solid rgba(255,245,224,0.08);"></div>
+    <div id="referral-box" class="referral-box" style="display:none;">
+      <div class="referral-label">Your referral code</div>
+      <div class="referral-code-display">
+        <span class="referral-code-val" id="referral-code-val">—</span>
+        <button class="referral-copy-btn" onclick="copyReferralCode()">Copy</button>
+      </div>
+      <div class="referral-note">Share this — both you and the buyer get a +1 rarity boost</div>
+    </div>
     <div class="promo-toggle" onclick="togglePromo()">🔥 Heat Up Your Rarity</div>
     <div id="promo-section" style="display:none;">
       <div class="promo-row">
@@ -819,7 +932,33 @@ function formatDuration(secs) {
 
 function updateTimer() {
   holdSeconds++;
-  document.getElementById('hold-display').textContent = formatDuration(holdSeconds);
+  const el     = document.getElementById('hold-display');
+  const status = document.getElementById('timer-status');
+  if (!el) return;
+  el.textContent = formatDuration(holdSeconds);
+
+  const days = holdSeconds / 86400;
+  let color, statusText, legendaryClass = false;
+  if (days < 0.04) {            // < 1 hour
+    color = 'rgba(255,245,224,0.5)'; statusText = '— just picked up';
+  } else if (days < 1) {        // < 24h
+    color = 'var(--orange)';    statusText = '— warming up 🔥';
+  } else if (days < 3) {        // 1-3 days
+    color = '#FF4D00';          statusText = '— getting hot 🔥🔥';
+  } else if (days < 7) {        // 3-7 days
+    color = '#FF2200';          statusText = '— running hot!! 🔥🔥🔥';
+  } else if (days < 30) {       // 1 week – 1 month → Rare territory
+    color = '#85B7EB';          statusText = '— Rare territory 💎';
+  } else if (days < 90) {       // 1-3 months → Epic territory
+    color = '#CE93D8';          statusText = '— Epic territory ⚡';
+  } else {                      // 3+ months → Legendary
+    color = '#FFD600';          statusText = '— LEGENDARY 👑';
+    legendaryClass = true;
+  }
+
+  el.style.color = color;
+  el.className   = legendaryClass ? 'timer-val timer-legendary' : 'timer-val';
+  if (status) status.textContent = statusText;
 }
 setInterval(updateTimer, 1000);
 
@@ -926,12 +1065,17 @@ function showRulesTab(panelId, btn) {
 function openModal() {
   if (!walletAddress) {
     connectWallet().then(() => {
-      if (walletAddress) { document.getElementById('modal').classList.add('open'); showLoyaltyStatus(); }
+      if (walletAddress) {
+        document.getElementById('modal').classList.add('open');
+        showLoyaltyStatus();
+        showReferralCode();
+      }
     });
     return;
   }
   document.getElementById('modal').classList.add('open');
   showLoyaltyStatus();
+  showReferralCode();
 }
 
 async function showLoyaltyStatus() {
@@ -957,6 +1101,32 @@ async function showLoyaltyStatus() {
   } catch (e) { el.style.display = 'none'; }
 }
 function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+// ─── REFERRAL CODE ────────────────────────────────────────
+async function showReferralCode() {
+  if (!walletAddress) return;
+  const box = document.getElementById('referral-box');
+  const val = document.getElementById('referral-code-val');
+  if (!box || !val) return;
+  try {
+    const res  = await fetch(`${API_BASE}/souvenir/referral/${walletAddress}`);
+    const data = await res.json();
+    if (data.code) {
+      val.textContent  = data.code;
+      box.style.display = 'block';
+    }
+  } catch (e) { box.style.display = 'none'; }
+}
+
+function copyReferralCode() {
+  const val = document.getElementById('referral-code-val');
+  if (!val) return;
+  navigator.clipboard.writeText(val.textContent).then(() => {
+    showToast('📋 Referral code copied!');
+  }).catch(() => {
+    showToast('Code: ' + val.textContent);
+  });
+}
 document.getElementById('modal').addEventListener('click', e => {
   if (e.target === document.getElementById('modal')) closeModal();
 });
@@ -1314,13 +1484,82 @@ async function loadHistory() {
   }
 }
 
+// ─── LEADERBOARD ──────────────────────────────────────────
+async function loadLeaderboard() {
+  try {
+    const res  = await fetch(`${API_BASE}/potato/leaderboard`);
+    const data = await res.json();
+    if (data.error) return;
+
+    const rankEmoji = ['🥇', '🥈', '🥉', '4', '5'];
+    const rankClass = ['lb-rank lb-rank-1', 'lb-rank lb-rank-2', 'lb-rank lb-rank-3', 'lb-rank', 'lb-rank'];
+    const fmt = addr => addr ? addr.slice(0, 6) + '…' + addr.slice(-4) : '—';
+
+    // Longest holds
+    const longestEl = document.getElementById('lb-longest');
+    if (longestEl) {
+      if (!data.longestHolds || data.longestHolds.length === 0) {
+        longestEl.innerHTML = '<div style="color:rgba(255,245,224,0.3);font-size:13px;padding:12px 0;">No data yet.</div>';
+      } else {
+        longestEl.innerHTML = data.longestHolds.map((h, i) => `
+          <div class="lb-row">
+            <span class="${rankClass[i]}">${rankEmoji[i] || (i + 1)}</span>
+            <span class="lb-addr">${fmt(h.address)}</span>
+            <span class="lb-val">${h.holdDurationHours >= 24 ? (h.holdDurationHours / 24).toFixed(1) + 'd' : h.holdDurationHours.toFixed(1) + 'h'}</span>
+            <span class="rarity-pill r-${h.rarity === 'legendary' ? 'legend' : h.rarity}" style="font-size:9px;padding:2px 7px;">${h.rarity}</span>
+          </div>`).join('');
+      }
+    }
+
+    // Loyalty leaders
+    const loyaltyEl = document.getElementById('lb-loyalty');
+    if (loyaltyEl) {
+      if (!data.loyaltyBoard || data.loyaltyBoard.length === 0) {
+        loyaltyEl.innerHTML = '<div style="color:rgba(255,245,224,0.3);font-size:13px;padding:12px 0;">No data yet.</div>';
+      } else {
+        loyaltyEl.innerHTML = data.loyaltyBoard.map((h, i) => `
+          <div class="lb-row">
+            <span class="${rankClass[i]}">${rankEmoji[i] || (i + 1)}</span>
+            <span class="lb-addr">${fmt(h.address)}</span>
+            <span class="lb-val">${h.timesHeld}× held</span>
+          </div>`).join('');
+      }
+    }
+
+    // Hall of Fame
+    const hofEl = document.getElementById('hof-grid');
+    if (hofEl) {
+      if (!data.hallOfFame || data.hallOfFame.length === 0) {
+        hofEl.innerHTML = '<div style="color:rgba(255,245,224,0.3);font-size:13px;grid-column:1/-1;padding:16px 0;">No Legendary holders yet — will you be the first?</div>';
+      } else {
+        hofEl.innerHTML = data.hallOfFame.map(h => `
+          <div class="hof-card">
+            <div class="hof-crown">👑</div>
+            <div class="hof-addr">${fmt(h.address)}</div>
+            <div class="hof-detail">Hand #${h.hand} · ${h.holdDurationHours >= 24 ? (h.holdDurationHours / 24).toFixed(1) + ' days' : h.holdDurationHours.toFixed(1) + 'h'}</div>
+          </div>`).join('');
+      }
+    }
+
+    // Update count
+    const total = (data.longestHolds || []).length + (data.hallOfFame || []).length;
+    const lbCount = document.getElementById('leaderboard-count');
+    if (lbCount) lbCount.textContent = data.hallOfFame?.length > 0 ? `${data.hallOfFame.length} legendary` : 'live rankings';
+
+  } catch (err) {
+    console.error('Leaderboard load failed:', err);
+  }
+}
+
 // ─── INIT ─────────────────────────────────────────────────
 loadGameState();
 loadGallery();
 loadHistory();
+loadLeaderboard();
 setInterval(loadGameState, 30000);  // Refresh every 30s
 setInterval(loadGallery, 120000);   // Refresh gallery every 2 min
 setInterval(loadHistory, 300000);   // Refresh history every 5 min
+setInterval(loadLeaderboard, 300000); // Refresh leaderboard every 5 min
 </script>
 </body>
 </html>

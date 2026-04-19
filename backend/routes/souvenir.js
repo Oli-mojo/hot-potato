@@ -7,7 +7,7 @@ const { getPotatoState, getRarityTier, rollRarity, setSouvenirURI } = require('.
 const { generateSouvenirImage } = require('../services/imageGen');
 const { uploadImageToIPFS, uploadMetadataToIPFS, buildMetadata } = require('../services/ipfs');
 const { announcePotatoPassed } = require('../services/social');
-const { createTradeInCode, validateCode, storePendingBoost, consumePendingBoost, applyBoost, getLoyaltyBoost } = require('../services/promoCode');
+const { createTradeInCode, validateCode, storePendingBoost, consumePendingBoost, applyBoost, getLoyaltyBoost, registerReferral, applyReferral } = require('../services/promoCode');
 
 const { ethers } = require('ethers');
 const SOUVENIR_ABI = [
@@ -98,12 +98,40 @@ router.get('/validate-promo/:code', (req, res) => {
 router.get('/loyalty/:address', async (req, res) => {
   try {
     const { boost, timesHeld } = await getLoyaltyBoost(req.params.address);
-    const nextBoost = timesHeld === 0 ? 1 : timesHeld === 1 ? 2 : 3;
-    const nextAt    = timesHeld === 0 ? 1 : timesHeld === 1 ? 2 : 3;
+    const nextAt = timesHeld === 0 ? 1 : timesHeld === 1 ? 2 : 3;
     res.json({ timesHeld, boost, nextBoostAt: nextAt, maxed: boost >= 3 });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// GET /api/souvenir/referral/:address — register + return referral code for this wallet
+router.get('/referral/:address', (req, res) => {
+  try {
+    const { address } = req.params;
+    if (!address || !address.startsWith('0x')) {
+      return res.status(400).json({ error: 'Invalid address' });
+    }
+    const { code, boost } = registerReferral(address);
+    res.json({ code, boost, message: 'Share this code — both you and the buyer get a +1 rarity boost' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/souvenir/apply-referral
+// Body: { referralCode, walletAddress }
+// Applies mutual +1 boost to referee and referrer
+router.post('/apply-referral', (req, res) => {
+  const { referralCode, walletAddress } = req.body;
+  if (!referralCode || !walletAddress) {
+    return res.status(400).json({ error: 'referralCode and walletAddress required' });
+  }
+  const result = applyReferral(referralCode, walletAddress);
+  if (!result.success) {
+    return res.status(400).json({ error: result.reason });
+  }
+  res.json({ success: true, boost: 1, type: 'referral', referrer: result.referrer });
 });
 
 // POST /api/souvenir/trade-in
