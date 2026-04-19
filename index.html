@@ -1014,19 +1014,27 @@ async function confirmBuy() {
 
 // ─── SOUVENIR WALLET CHECK ────────────────────────────────
 // After wallet connects, check if this address owns any souvenirs and prompt MetaMask
+// Only prompts once per token — remembers via localStorage
 async function checkAndPromptSouvenirs(address) {
   try {
     const res  = await fetch(`${API_BASE}/souvenir/owned/${address}`);
     const data = await res.json();
     if (!data.owned || data.owned.length === 0) return;
-    // Small delay so the connect toast clears first
+
+    const storageKey = `hp_prompted_${address.toLowerCase()}`;
+    const alreadyPrompted = JSON.parse(localStorage.getItem(storageKey) || '[]');
+    const newTokens = data.owned.filter(({ tokenId }) => !alreadyPrompted.includes(tokenId));
+    if (newTokens.length === 0) return;
+
     setTimeout(async () => {
-      for (const { tokenId } of data.owned) {
+      for (const { tokenId } of newTokens) {
         try {
           await window.ethereum.request({
             method: 'wallet_watchAsset',
             params: { type: 'ERC721', options: { address: CONTRACT_ADDRESS, tokenId: tokenId.toString() } },
           });
+          alreadyPrompted.push(tokenId);
+          localStorage.setItem(storageKey, JSON.stringify(alreadyPrompted));
         } catch (e) {}
       }
     }, 1500);
