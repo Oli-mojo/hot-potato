@@ -16,7 +16,7 @@ const SOUVENIR_ABI = [
   'function tokenURI(uint256 tokenId) view returns (string)',
   'function souvenirs(uint256 tokenId) view returns (uint256 transferNumber, uint256 pricePaid, uint256 holdDuration, uint8 rarityTier, address originalOwner)',
 ];
-const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || '0xd04A4fA2B05874d268Ce8bB8E8EaEc252ef2AB22';
+const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || '0x90Bfcf98282445B35e3ce48b9Eb21E532E603473';
 const RPC_URL = process.env.RPC_URL;
 const BURN_ADDRESS = '0x000000000000000000000000000000000000dEaD';
 const IPFS_GATEWAY = 'https://gateway.pinata.cloud/ipfs/';
@@ -193,11 +193,13 @@ router.get('/gallery', async (req, res) => {
     const souvenirs = [];
     for (let i = 1; i < count; i++) {
       try {
-        const [data, uri] = await Promise.all([
+        const [data, uri, owner] = await Promise.all([
           contract.souvenirs(i),
           contract.tokenURI(i).catch(() => null),
+          contract.ownerOf(i).catch(() => null),
         ]);
         const imageUrl = await fetchImageFromMetadata(uri);
+        const burned = owner ? owner.toLowerCase() === BURN_ADDRESS.toLowerCase() : false;
         souvenirs.push({
           tokenId: i,
           transferNumber: Number(data.transferNumber),
@@ -207,6 +209,7 @@ router.get('/gallery', async (req, res) => {
           originalOwner: data.originalOwner,
           tokenURI: uri,
           imageUrl,
+          burned,
         });
       } catch (e) {}
     }

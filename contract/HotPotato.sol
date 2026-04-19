@@ -2,15 +2,20 @@
 pragma solidity ^0.8.20;
 
 // ============================================================
-//  HOT POTATO — v2
+//  HOT POTATO — v3
 //  Single ERC-721 NFT always for sale. Price only goes up.
 //  Outgoing holder earns a souvenir NFT on every sale.
 //
-//  New in v2:
+//  New in v3 (vs v2):
+//  - Tiered minimum price increase — flat 15% made sense at
+//    low prices but becomes punishing at scale. Now scales down
+//    gracefully as price rises, keeping the game accessible.
+//
+//  v2 features retained:
 //  - 5% of every sale → Original Potato Wallet (creator)
 //  - Premium boost: overpaying above minimum earns better
 //    rarity odds on your future souvenir
-//  - Starting price: 0.001 ETH (10× lower than v1)
+//  - Starting price: 0.001 ETH
 //  - ERC-2981 royalty standard for marketplace compatibility
 // ============================================================
 
@@ -28,9 +33,26 @@ contract HotPotato is ERC721, ERC2981, Ownable, ReentrancyGuard {
 
     // ─── Game constants ───────────────────────────────────────
     uint256 public constant STARTING_PRICE    = 0.001 ether;
-    uint256 public constant MIN_INCREASE_BPS  = 11500;  // 115% = minimum 15% increase
     uint256 public constant CREATOR_FEE_BPS   = 500;    // 5%
     uint256 public constant BPS_DENOMINATOR   = 10000;
+
+    // Tiered minimum price increase — scales down as price rises so the
+    // game stays accessible at high valuations.
+    //
+    //   Price paid      Min increase   Min next-ask multiplier
+    //   ──────────────  ────────────   ───────────────────────
+    //   < 0.1 ETH       +25%           125% of price paid
+    //   0.1 – 1 ETH     +15%           115%  (original rule)
+    //   1 – 10 ETH      +10%           110%
+    //   10 – 100 ETH    + 7%           107%
+    //   100+ ETH        + 5%           105%
+    function _minIncreaseBps(uint256 price) internal pure returns (uint256) {
+        if (price <    0.1 ether)  return 12500; // +25%
+        if (price <    1   ether)  return 11500; // +15%
+        if (price <   10   ether)  return 11000; // +10%
+        if (price <  100   ether)  return 10700; // + 7%
+        return                            10500; // + 5%
+    }
 
     // ─── Original Potato Wallet ───────────────────────────────
     address public constant CREATOR_WALLET =
@@ -97,18 +119,20 @@ contract HotPotato is ERC721, ERC2981, Ownable, ReentrancyGuard {
 
     // ─── Buy The Potato ───────────────────────────────────────
     /**
-     * @param newAskingPrice  The price you want to sell at (must be >= msg.value * 1.15)
+     * @param newAskingPrice  The price you want to sell at.
+     *                        Must be >= msg.value × (1 + minIncrease%).
+     *                        The minimum increase scales with price — see _minIncreaseBps().
      *
-     * Strategy tip: pay more than minimum to bank a premium boost on your
-     * future souvenir. The bigger the overpayment, the rarer the odds.
+     * Strategy tip: pay more than the minimum to bank a premium boost on your
+     * future souvenir. The bigger the overpayment above asking price, the rarer the odds.
      *
-     *   Boost level   Overpayment above min   Rarity effect
-     *   ──────────    ─────────────────────   ─────────────
-     *   0             < 10%                   Pure hold-duration odds
-     *   1             10–24%                  +1 rarity tier
-     *   2             25–49%                  +2 rarity tiers
-     *   3             50–99%                  +3 rarity tiers
-     *   4             100%+                   Max tier (legendary odds)
+     *   Boost level   Overpayment above asking price   Rarity effect
+     *   ──────────    ──────────────────────────────   ─────────────
+     *   0             < 10%                            Pure hold-duration odds
+     *   1             10–24%                           +1 rarity tier
+     *   2             25–49%                           +2 rarity tiers
+     *   3             50–99%                           +3 rarity tiers
+     *   4             100%+                            Max tier (legendary odds)
      */
     function buyPotato(uint256 newAskingPrice) external payable nonReentrant {
         address seller = ownerOf(POTATO_TOKEN_ID);
@@ -116,13 +140,13 @@ contract HotPotato is ERC721, ERC2981, Ownable, ReentrancyGuard {
 
         // ── Validate payment ────────────────────────────────
         // currentPrice is the asking price set by the current holder.
-        // Buyer must pay at least that amount. The 15% minimum increase
-        // is enforced by requiring the new asking price >= payment * 1.15.
+        // Buyer must pay at least that amount.
         require(msg.value >= currentPrice, "Payment too low: must meet the current asking price");
 
-        // ── Validate new asking price ───────────────────────
-        uint256 minNextAsk = (msg.value * MIN_INCREASE_BPS) / BPS_DENOMINATOR;
-        require(newAskingPrice >= minNextAsk, "New asking price too low: must be >= 15% above what you paid");
+        // ── Validate new asking price (tiered minimum) ──────
+        uint256 bps        = _minIncreaseBps(msg.value);
+        uint256 minNextAsk = (msg.value * bps) / BPS_DENOMINATOR;
+        require(newAskingPrice >= minNextAsk, "New asking price too low: must exceed tiered minimum increase");
 
         // ── Calculate buyer's stored boost ──────────────────
         // Boost is based on how much above the asking price they paid
@@ -274,6 +298,7 @@ contract HotPotato is ERC721, ERC2981, Ownable, ReentrancyGuard {
         uint8   currentBoostLevel,
         uint256 minNextPayment
     ) {
+        uint256 minNext = (currentPrice * _minIncreaseBps(currentPrice)) / BPS_DENOMINATOR;
         return (
             ownerOf(POTATO_TOKEN_ID),
             currentPrice,
@@ -281,7 +306,7 @@ contract HotPotato is ERC721, ERC2981, Ownable, ReentrancyGuard {
             totalTransfers,
             souvenirCount - 1,
             holderInfo.premiumBoostLevel,
-            currentPrice
+            minNext
         );
     }
 

@@ -366,8 +366,23 @@
   .gallery { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
   .souvenir-card { background: var(--card-bg); border: 0.5px solid var(--border); border-radius: 10px; overflow: hidden; cursor: pointer; transition: transform .2s, border-color .2s; }
   .souvenir-card:hover { transform: translateY(-4px); border-color: var(--pink); }
+  .souvenir-card.burned { border-color: rgba(80,60,40,0.5); }
+  .souvenir-card.burned:hover { border-color: rgba(120,80,40,0.7); transform: translateY(-2px); }
   .souvenir-art { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 40px; position: relative; }
   .souvenir-generating { position: absolute; inset: 0; background: rgba(15,8,0,0.7); display: flex; align-items: center; justify-content: center; font-size: 10px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--pink); }
+  .burned-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(160deg, rgba(20,10,5,0.72) 0%, rgba(40,20,8,0.55) 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    backdrop-filter: grayscale(0.6) sepia(0.4);
+  }
+  .burned-banner {
+    font-family: 'Black Ops One', sans-serif; font-size: 11px; letter-spacing: 2px;
+    color: rgba(180,120,60,0.9); background: rgba(0,0,0,0.55);
+    border: 0.5px solid rgba(120,70,30,0.5); border-radius: 4px;
+    padding: 4px 10px; text-align: center;
+  }
+  .burned-img-wrap img { filter: grayscale(0.5) sepia(0.3) brightness(0.7); }
   .souvenir-info { padding: 8px 10px; border-top: 0.5px solid var(--border); }
   .souvenir-hand { font-family: 'Black Ops One', sans-serif; font-size: 11px; color: rgba(255,245,224,0.4); letter-spacing: 1px; }
   .souvenir-rarity { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 2px; }
@@ -622,15 +637,18 @@
       And <b>loyal holders</b> — wallets that have held the potato before — automatically get a bonus when they get bought out again. All boosts stack, capped at Legendary.
     </p>
     <table class="boost-table">
-      <thead><tr><th>Overpay above minimum</th><th>Boost</th><th>Effect on souvenir</th></tr></thead>
+      <thead><tr><th>Overpay above asking price</th><th>Boost</th><th>Effect on souvenir</th></tr></thead>
       <tbody>
-        <tr><td>0%</td><td>None</td><td>Standard rarity based on hold time</td></tr>
+        <tr><td>0 – 9%</td><td>None</td><td>Standard rarity based on hold time</td></tr>
         <tr><td>10 – 24%</td><td>+1 tier</td><td>e.g. Common → Rare odds</td></tr>
         <tr><td>25 – 49%</td><td>+2 tiers</td><td>e.g. Common → Epic odds</td></tr>
         <tr><td>50 – 99%</td><td>+3 tiers</td><td>e.g. Common → Legendary odds</td></tr>
         <tr><td>100%+</td><td>+4 tiers (max)</td><td>Maximum Legendary odds regardless of hold time</td></tr>
       </tbody>
     </table>
+    <p style="font-size:12px;color:rgba(255,245,224,0.35);margin-top:14px;">
+      <b style="color:rgba(255,245,224,0.5);">Note:</b> The minimum price increase scales with the potato's value — lower % at high prices so the game stays accessible. At current prices the minimum is shown next to the buy button.
+    </p>
     <div class="boost-tiers">
       <div class="boost-tier-card">
         <div class="boost-tier-label" style="color:#aaa;">🥔 Common</div>
@@ -817,7 +835,7 @@
 <script>
 // ─── CONFIG ───────────────────────────────────────────────
 const API_BASE = 'https://hot-potato-production.up.railway.app/api';
-const CONTRACT_ADDRESS = '0xd04A4fA2B05874d268Ce8bB8E8EaEc252ef2AB22';
+const CONTRACT_ADDRESS = '0x90Bfcf98282445B35e3ce48b9Eb21E532E603473'; // v3 — tiered minimum
 const CHAIN_ID = 84532; // Base Sepolia
 const CONTRACT_ABI = [
   'function buyPotato(uint256 newAskingPrice) external payable',
@@ -844,9 +862,12 @@ async function loadGameState() {
     gameState = await res.json();
 
     const price = parseFloat(gameState.currentPrice).toFixed(4);
-    // Round UP to 4dp so pre-fill always passes contract validation
-    const rawMin = parseFloat(gameState.currentPrice) * 1.15;
+    // Use tiered minimum from backend — falls back to 15% if not present
+    const rawMin = gameState.minNextPayment
+      ? parseFloat(gameState.minNextPayment)
+      : parseFloat(gameState.currentPrice) * 1.15;
     const minNext = (Math.ceil(rawMin * 10000) / 10000).toFixed(4);
+    const minPct  = gameState.minIncreasePercent ?? 15;
     gameState._minNext = parseFloat(minNext); // store for confirmBuy validation
     const holder = gameState.currentHolder;
     const shortHolder = holder.slice(0, 6) + '...' + holder.slice(-4);
@@ -866,8 +887,11 @@ async function loadGameState() {
     if (document.querySelector('.price-eth')) document.querySelector('.price-eth').textContent = `${price} ETH`;
     if (document.querySelector('.price-usd')) document.querySelector('.price-usd').textContent = `≈ $${(price * 3000).toFixed(0)}`;
 
+    // Update price change label with actual tier %
+    if (document.querySelector('.price-change')) document.querySelector('.price-change').textContent = `↑ MIN +${minPct}%`;
+
     // Update buy note
-    if (document.querySelector('.buy-note')) document.querySelector('.buy-note').textContent = `Minimum bid: ${price} ETH · New price must be ≥ ${minNext} ETH`;
+    if (document.querySelector('.buy-note')) document.querySelector('.buy-note').textContent = `Minimum bid: ${price} ETH · New ask must be ≥ ${minNext} ETH (+${minPct}%)`;
 
     // Update modal
     if (document.querySelector('.modal-row .modal-val.yellow')) document.querySelector('.modal-row .modal-val.yellow').textContent = `${price} ETH`;
@@ -875,7 +899,7 @@ async function loadGameState() {
       document.querySelector('.modal-input').min = minNext;
       document.querySelector('.modal-input').value = minNext;
     }
-    if (document.getElementById('modal-input-label')) document.getElementById('modal-input-label').textContent = `Your new asking price (min. ${minNext} ETH)`;
+    if (document.getElementById('modal-input-label')) document.getElementById('modal-input-label').textContent = `Your new asking price (min. ${minNext} ETH · +${minPct}%)`;
     if (document.querySelector('.modal-input-note')) document.querySelector('.modal-input-note').textContent = `Set this higher to maximise your profit when the next buyer comes.`;
 
     // Update modal rarity pill
@@ -1418,14 +1442,21 @@ async function loadGallery() {
     }
 
     gallery.innerHTML = data.souvenirs.map(s => {
-      const art = s.imageUrl
-        ? `<img src="${s.imageUrl}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px 8px 0 0;" onerror="this.outerHTML='<div style=\\'aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:40px;background:#1A0E05;\\'>${rarityBadge[s.rarityTier] || '🥔'}</div>'">`
-        : `<div style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:40px;background:#1A0E05;">${rarityBadge[s.rarityTier] || '🥔'}</div>`;
-      const isOwned   = ownedIds.has(s.tokenId);
+      const imgEl = s.imageUrl
+        ? `<img src="${s.imageUrl}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px 8px 0 0;${s.burned ? 'filter:grayscale(0.55) sepia(0.35) brightness(0.65);' : ''}" onerror="this.outerHTML='<div style=\\'aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:40px;background:#1A0E05;\\'>${rarityBadge[s.rarityTier] || '🥔'}</div>'">`
+        : `<div style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:40px;background:#1A0E05;${s.burned ? 'filter:grayscale(0.55) sepia(0.35) brightness(0.65);' : ''}">${rarityBadge[s.rarityTier] || '🥔'}</div>`;
+      const burnedOverlay = s.burned ? `
+        <div class="burned-overlay">
+          <div style="font-size:22px;">🔥</div>
+          <div class="burned-banner">CHARRED</div>
+          <div style="font-size:10px;color:rgba(180,120,60,0.6);font-family:'Barlow Condensed',sans-serif;letter-spacing:0.08em;">TRADED IN</div>
+        </div>` : '';
+      const art = `<div style="position:relative;">${imgEl}${burnedOverlay}</div>`;
+      const isOwned   = !s.burned && ownedIds.has(s.tokenId);
       const tradeInBtn = isOwned
         ? `<button onclick="tradeInSouvenir(${s.tokenId},'${s.rarityTier}')" style="width:100%;margin-top:4px;background:rgba(255,107,0,0.12);border:0.5px solid rgba(255,107,0,0.3);border-radius:4px;color:#FF8C42;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:5px;cursor:pointer;">🔥 Trade In for Boost</button>`
         : '';
-      return `<div class="souvenir-card">
+      return `<div class="souvenir-card${s.burned ? ' burned' : ''}">
         ${art}
         <div style="padding:8px 10px 10px;">
           <div style="font-size:11px;color:${rarityColors[s.rarityTier] || '#fff'};font-weight:700;">${(s.rarityTier || 'common').toUpperCase()}</div>

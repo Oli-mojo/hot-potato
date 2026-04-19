@@ -166,7 +166,7 @@ const LOYALTY_ABI = [
 async function getLoyaltyBoost(walletAddress) {
   try {
     const rpcUrl   = process.env.RPC_URL;
-    const contract_address = process.env.CONTRACT_ADDRESS || '0xd04A4fA2B05874d268Ce8bB8E8EaEc252ef2AB22';
+    const contract_address = process.env.CONTRACT_ADDRESS || '0x90Bfcf98282445B35e3ce48b9Eb21E532E603473';
     if (!rpcUrl) return { boost: 0, timesHeld: 0 };
 
     const provider = new ethers.JsonRpcProvider(rpcUrl);

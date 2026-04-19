@@ -1,7 +1,7 @@
 // Hot Potato — Smart Contract Service
 const { ethers } = require('ethers');
 
-const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || '0xd04A4fA2B05874d268Ce8bB8E8EaEc252ef2AB22';
+const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || '0x90Bfcf98282445B35e3ce48b9Eb21E532E603473'; // v3
 const RPC_URL = process.env.RPC_URL;
 const WALLET_PRIVATE_KEY = process.env.WALLET_PRIVATE_KEY;
 
@@ -34,6 +34,16 @@ function getSigner() {
   return new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
 }
 
+// Mirrors the Solidity _minIncreaseBps() function in HotPotato.sol v3.
+// Returns the BPS multiplier (e.g. 11500 = 1.15×) for a given price in ETH.
+function minIncreaseBps(priceEth) {
+  if (priceEth <   0.1)  return 12500; // +25%
+  if (priceEth <   1.0)  return 11500; // +15%
+  if (priceEth <  10.0)  return 11000; // +10%
+  if (priceEth < 100.0)  return 10700; // + 7%
+  return                         10500; // + 5%
+}
+
 async function getPotatoState() {
   const provider = getProvider();
   const contract = getContract(provider);
@@ -45,6 +55,9 @@ async function getPotatoState() {
 
   const holdDurationSeconds = Number(gameState.timeHeld);
   const holdDurationHours = holdDurationSeconds / 3600;
+  const priceEth = parseFloat(ethers.formatEther(gameState.price));
+  const bps = minIncreaseBps(priceEth);
+  const minNextEth = (priceEth * bps) / 10000;
 
   return {
     currentPrice: ethers.formatEther(gameState.price),
@@ -54,6 +67,8 @@ async function getPotatoState() {
     holdDurationSeconds,
     holdDurationHours: Math.round(holdDurationHours * 10) / 10,
     totalSouvenirs: Number(souvenirCount) - 1, // souvenirCount starts at 1
+    minNextPayment: minNextEth.toFixed(6),     // tiered minimum next ask
+    minIncreasePercent: (bps / 100 - 100),     // e.g. 15, 10, 7, 5
   };
 }
 

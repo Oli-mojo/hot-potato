@@ -1,9 +1,20 @@
-# Hot Potato v2 — Deployment Guide
+# Hot Potato v3 — Deployment Guide
 
-## What's new in v2
+## What's new in v3
+- **Tiered minimum price increase** — replaces flat 15%. Scales down at high prices so the game stays accessible.
+
+| Price paid | Minimum increase |
+|---|---|
+| < 0.1 ETH | +25% |
+| 0.1 – 1 ETH | +15% (original) |
+| 1 – 10 ETH | +10% |
+| 10 – 100 ETH | +7% |
+| 100+ ETH | +5% |
+
+## v2 features retained
 - **5% creator fee** on every sale → `0x995a13322683cf42463Cd1bDE6412020Ce685008`
 - **Premium boost** — overpaying above minimum banks better rarity odds for your souvenir
-- **Starting price** 0.001 ETH (10× lower than v1)
+- **Starting price** 0.001 ETH
 - **ERC-2981** royalty standard (OpenSea etc. will respect the 5% royalty)
 
 ---
@@ -89,3 +100,4 @@ const CONTRACT_ADDRESS = '<new contract address>';
 |---------|---------|---------|
 | v1 | Base Sepolia | `0x2E8eA15a54Db53375807A8F74ad6ff6eC4a4065e` |
 | v2 | Base Sepolia | `0xd04A4fA2B05874d268Ce8bB8E8EaEc252ef2AB22` |
+| v3 | Base Sepolia | `0x90Bfcf98282445B35e3ce48b9Eb21E532E603473` |
