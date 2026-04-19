@@ -800,21 +800,23 @@
 
     <div id="loyalty-status" style="display:none;font-size:12px;color:rgba(255,245,224,0.4);margin-top:14px;padding:8px 10px;background:rgba(255,245,224,0.04);border-radius:6px;border:0.5px solid rgba(255,245,224,0.08);"></div>
     <div id="referral-box" class="referral-box" style="display:none;">
-      <div class="referral-label">Your referral code</div>
+      <div class="referral-label">Your referral code — share this</div>
       <div class="referral-code-display">
         <span class="referral-code-val" id="referral-code-val">—</span>
         <button class="referral-copy-btn" onclick="copyReferralCode()">Copy</button>
       </div>
-      <div class="referral-note">Share this — both you and the buyer get a +1 rarity boost</div>
+      <div class="referral-note">Both you and the buyer get a +1 rarity boost when they use it</div>
     </div>
-    <div class="promo-toggle" onclick="togglePromo()">🔥 Heat Up Your Rarity</div>
-    <div id="promo-section" style="display:none;">
-      <div class="promo-row">
-        <input class="promo-input" type="text" id="promo-input" placeholder="HP-XXXXXXXX">
+
+    <div style="margin-top:12px;padding:10px 12px;background:rgba(255,245,224,0.03);border:0.5px solid rgba(255,245,224,0.07);border-radius:6px;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,245,224,0.3);margin-bottom:6px;">Got a friend's referral or promo code?</div>
+      <div class="promo-row" style="margin-top:0;">
+        <input class="promo-input" type="text" id="promo-input" placeholder="REF-XXXXXXXX or HP-XXXXXXXX">
         <button class="promo-apply-btn" onclick="applyPromoCode()">Apply</button>
       </div>
       <div class="promo-status" id="promo-status"></div>
     </div>
+
 
     <button class="modal-buy-btn" onclick="confirmBuy()">🔥 CONFIRM PURCHASE</button>
   </div>
@@ -1293,10 +1295,6 @@ async function confirmBuy() {
 // ─── PROMO CODE ───────────────────────────────────────────
 let activePromoCode = null;
 
-function togglePromo() {
-  const section = document.getElementById('promo-section');
-  section.style.display = section.style.display === 'none' ? 'block' : 'none';
-}
 
 async function applyPromoCode() {
   const input = document.getElementById('promo-input');
