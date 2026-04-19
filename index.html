@@ -425,6 +425,24 @@
   .modal-close { position: absolute; top: 16px; right: 16px; background: transparent; border: none; color: rgba(255,245,224,0.3); font-size: 20px; cursor: pointer; transition: color .2s; }
   .modal-close:hover { color: var(--cream); }
 
+  .promo-toggle { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,245,224,0.3); cursor: pointer; margin-top: 14px; display: inline-block; transition: color .2s; }
+  .promo-toggle:hover { color: var(--pink); }
+  .promo-row { display: flex; gap: 8px; margin-top: 8px; }
+  .promo-input { flex: 1; background: rgba(255,245,224,0.05); border: 0.5px solid var(--border); border-radius: 6px; padding: 10px 12px; font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cream); outline: none; transition: border-color .2s; }
+  .promo-input:focus { border-color: var(--pink); }
+  .promo-apply-btn { background: var(--pink); border: none; border-radius: 6px; padding: 10px 14px; font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #fff; cursor: pointer; white-space: nowrap; transition: background .2s; }
+  .promo-apply-btn:hover { background: var(--pink-light); }
+  .promo-status { font-size: 12px; margin-top: 6px; min-height: 16px; }
+
+  .tradein-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 600; align-items: center; justify-content: center; }
+  .tradein-overlay.open { display: flex; }
+  .tradein-modal { background: var(--card-bg); border: 0.5px solid var(--border); border-radius: 16px; padding: 32px; width: 360px; position: relative; text-align: center; }
+  .tradein-title { font-family: 'Black Ops One', sans-serif; font-size: 20px; color: var(--cream); letter-spacing: 1px; margin-bottom: 8px; }
+  .tradein-sub { font-size: 13px; color: rgba(255,245,224,0.4); margin-bottom: 20px; line-height: 1.6; }
+  .tradein-code { font-family: 'Black Ops One', sans-serif; font-size: 22px; color: var(--yellow); letter-spacing: 3px; background: rgba(255,214,0,0.08); border: 1px dashed rgba(255,214,0,0.3); border-radius: 8px; padding: 16px; margin: 16px 0; }
+  .tradein-boost { font-size: 13px; color: rgba(255,245,224,0.5); margin-bottom: 20px; }
+  .tradein-close { width: 100%; background: var(--pink); border: none; border-radius: 6px; padding: 14px; font-family: 'Black Ops One', sans-serif; font-size: 14px; letter-spacing: 2px; color: #fff; cursor: pointer; }
+
   footer { padding: 24px; display: flex; justify-content: space-between; align-items: center; }
   .footer-logo { font-family: 'Black Ops One', sans-serif; font-size: 16px; color: rgba(255,245,224,0.2); letter-spacing: 2px; }
   .footer-links { display: flex; gap: 20px; }
@@ -657,7 +675,28 @@
     <div class="modal-input-label" id="modal-input-label">Your new asking price (min. 0.012 ETH)</div>
     <input class="modal-input" type="text" inputmode="decimal" id="new-price-input" value="0.50">
     <div class="modal-input-note">Set this higher to maximise your profit when the next buyer comes.</div>
+
+    <div class="promo-toggle" onclick="togglePromo()">🎟️ Have a promo code?</div>
+    <div id="promo-section" style="display:none;">
+      <div class="promo-row">
+        <input class="promo-input" type="text" id="promo-input" placeholder="HP-XXXXXXXX">
+        <button class="promo-apply-btn" onclick="applyPromoCode()">Apply</button>
+      </div>
+      <div class="promo-status" id="promo-status"></div>
+    </div>
+
     <button class="modal-buy-btn" onclick="confirmBuy()">🔥 CONFIRM PURCHASE</button>
+  </div>
+</div>
+
+<!-- Trade-In Modal -->
+<div class="tradein-overlay" id="tradein-modal">
+  <div class="tradein-modal">
+    <div class="tradein-title">🔥 SOUVENIR TRADED IN</div>
+    <div class="tradein-sub">Your souvenir has been burned. Here's your rarity boost code — use it when you buy the potato.</div>
+    <div class="tradein-code" id="tradein-code">HP-XXXXXXXX</div>
+    <div class="tradein-boost" id="tradein-boost"></div>
+    <button class="tradein-close" onclick="document.getElementById('tradein-modal').classList.remove('open')">CLOSE</button>
   </div>
 </div>
 
@@ -670,8 +709,10 @@ const CHAIN_ID = 84532; // Base Sepolia
 const CONTRACT_ABI = [
   'function buyPotato(uint256 newAskingPrice) external payable',
   'function getGameState() external view returns (address currentOwner, uint256 price, uint256 timeHeld, uint256 totalTransfers)',
+  'function safeTransferFrom(address from, address to, uint256 tokenId)',
   'event PotatoPassed(address indexed from, address indexed to, uint256 price, uint256 holdDuration, uint256 souvenirTokenId, uint8 rarityTier, uint8 buyerBoostLevel)',
 ];
+const BURN_ADDRESS = '0x000000000000000000000000000000000000dEaD';
 
 // ─── STATE ────────────────────────────────────────────────
 let gameState = null;
@@ -963,6 +1004,19 @@ async function confirmBuy() {
     showToast('🥔 You now hold the Hot Potato!');
     loadGameState();
 
+    // If buyer entered a promo code, store the pending boost on the backend
+    if (activePromoCode) {
+      fetch(`${API_BASE}/souvenir/apply-promo`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ walletAddress, promoCode: activePromoCode }),
+      }).then(() => {
+        activePromoCode = null;
+        document.getElementById('promo-input').value = '';
+        document.getElementById('promo-status').textContent = '';
+      });
+    }
+
     // Prompt MetaMask to add the Hot Potato NFT (token #0) to the user's wallet
     try {
       await window.ethereum.request({
@@ -996,6 +1050,7 @@ async function confirmBuy() {
                 rarityTier: rarityTier.toString(),
                 pricePaid: ethers.formatEther(price),
                 newAskingPrice: document.getElementById('new-price-input')?.value || '?',
+                promoCode: activePromoCode || undefined,
               }),
             }).then(() => {
               setTimeout(loadGallery, 60000); // refresh gallery after ~1 min
@@ -1009,6 +1064,83 @@ async function confirmBuy() {
     showToast('❌ Transaction failed: ' + (err.reason || err.message || 'unknown'), '#FF4444');
     btn.textContent = '🔥 CONFIRM PURCHASE';
     btn.disabled = false;
+  }
+}
+
+// ─── PROMO CODE ───────────────────────────────────────────
+let activePromoCode = null;
+
+function togglePromo() {
+  const section = document.getElementById('promo-section');
+  section.style.display = section.style.display === 'none' ? 'block' : 'none';
+}
+
+async function applyPromoCode() {
+  const input = document.getElementById('promo-input');
+  const status = document.getElementById('promo-status');
+  const code = input.value.trim();
+  if (!code) return;
+  status.textContent = 'Checking…';
+  status.style.color = 'rgba(255,245,224,0.4)';
+  try {
+    const res  = await fetch(`${API_BASE}/souvenir/validate-promo/${encodeURIComponent(code)}`);
+    const data = await res.json();
+    if (data.valid) {
+      activePromoCode = data.code;
+      const tierNames = ['', '+1 tier', '+2 tiers', '+3 tiers', '+4 tiers (max)'];
+      status.textContent = `✅ Valid! Rarity boost: ${tierNames[data.boost] || `+${data.boost}`}`;
+      status.style.color = '#22C55E';
+    } else {
+      activePromoCode = null;
+      status.textContent = `❌ ${data.reason || 'Invalid code'}`;
+      status.style.color = '#EF4444';
+    }
+  } catch (e) {
+    status.textContent = '❌ Could not validate — try again';
+    status.style.color = '#EF4444';
+  }
+}
+
+// ─── TRADE-IN ─────────────────────────────────────────────
+async function tradeInSouvenir(tokenId, rarity) {
+  if (!walletAddress) { showToast('Connect your wallet first', '#FF6B00'); return; }
+
+  const rarityBoost = { common: '+1 tier', rare: '+2 tiers', epic: '+3 tiers', legendary: '+4 tiers (max)' };
+  const confirmed = confirm(
+    `Trade in this ${rarity} souvenir for a rarity boost code?\n\n` +
+    `Boost: ${rarityBoost[rarity] || '+1 tier'}\n\n` +
+    `⚠️ This is permanent — the souvenir will be burned.`
+  );
+  if (!confirmed) return;
+
+  try {
+    showToast('⏳ Burning souvenir — confirm in MetaMask…', '#FF6B00');
+    const provider = new ethers.BrowserProvider(window._ethProvider || window.ethereum);
+    const signer   = await provider.getSigner();
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+    const tx       = await contract.safeTransferFrom(walletAddress, BURN_ADDRESS, tokenId);
+    showToast('⏳ Waiting for confirmation…', '#FF6B00');
+    const receipt  = await tx.wait();
+
+    showToast('🔥 Souvenir burned! Generating your code…', '#FF6B00');
+    const res  = await fetch(`${API_BASE}/souvenir/trade-in`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ walletAddress, tokenId, txHash: receipt.hash }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('tradein-code').textContent  = data.code;
+      document.getElementById('tradein-boost').textContent =
+        `${data.rarity.charAt(0).toUpperCase() + data.rarity.slice(1)} souvenir → rarity boost when you next buy`;
+      document.getElementById('tradein-modal').classList.add('open');
+      loadGallery(); // refresh gallery
+    } else {
+      showToast('❌ Trade-in failed: ' + (data.error || 'unknown'), '#FF4444');
+    }
+  } catch (err) {
+    console.error('Trade-in error:', err);
+    showToast('❌ ' + (err.reason || err.message || 'Trade-in failed'), '#FF4444');
   }
 }
 
@@ -1080,18 +1212,32 @@ async function loadGallery() {
       return;
     }
     if (gCount) gCount.textContent = `${data.total} minted`;
+
+    // Fetch owned souvenirs for trade-in buttons
+    let ownedIds = new Set();
+    if (walletAddress) {
+      try {
+        const ownedRes  = await fetch(`${API_BASE}/souvenir/owned/${walletAddress}`);
+        const ownedData = await ownedRes.json();
+        ownedIds = new Set((ownedData.owned || []).map(o => o.tokenId));
+      } catch (e) {}
+    }
+
     gallery.innerHTML = data.souvenirs.map(s => {
       const art = s.imageUrl
         ? `<img src="${s.imageUrl}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px 8px 0 0;" onerror="this.outerHTML='<div style=\\'aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:40px;background:#1A0E05;\\'>${rarityBadge[s.rarityTier] || '🥔'}</div>'">`
         : `<div style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:40px;background:#1A0E05;">${rarityBadge[s.rarityTier] || '🥔'}</div>`;
+      const isOwned   = ownedIds.has(s.tokenId);
+      const tradeInBtn = isOwned
+        ? `<button onclick="tradeInSouvenir(${s.tokenId},'${s.rarityTier}')" style="width:100%;margin-top:4px;background:rgba(255,107,0,0.12);border:0.5px solid rgba(255,107,0,0.3);border-radius:4px;color:#FF8C42;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:5px;cursor:pointer;">🔥 Trade In for Boost</button>`
+        : '';
       return `<div class="souvenir-card">
         ${art}
         <div style="padding:8px 10px 10px;">
           <div style="font-size:11px;color:${rarityColors[s.rarityTier] || '#fff'};font-weight:700;">${(s.rarityTier || 'common').toUpperCase()}</div>
           <div style="font-size:11px;color:rgba(255,245,224,0.3);margin-bottom:8px;">Hand #${s.transferNumber} · ${s.holdDurationHours}h</div>
-          <button onclick="addSouvenirToMetaMask(${s.tokenId})" style="width:100%;background:rgba(255,245,224,0.06);border:0.5px solid rgba(255,245,224,0.15);border-radius:4px;color:rgba(255,245,224,0.4);font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:5px;cursor:pointer;">
-            + Add to MetaMask
-          </button>
+          <button onclick="addSouvenirToMetaMask(${s.tokenId})" style="width:100%;background:rgba(255,245,224,0.06);border:0.5px solid rgba(255,245,224,0.15);border-radius:4px;color:rgba(255,245,224,0.4);font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:5px;cursor:pointer;">+ Add to MetaMask</button>
+          ${tradeInBtn}
         </div>
       </div>`;
     }).join('');
