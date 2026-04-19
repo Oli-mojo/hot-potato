@@ -671,13 +671,12 @@
     <div class="modal-title">BUY THE POTATO</div>
     <div class="modal-sub">You'll receive the Hot Potato NFT. The current holder gets their souvenir — rarity based on how long they've held.</div>
     <div class="modal-row"><span class="modal-key">Current price</span><span class="modal-val yellow">0.42 ETH</span></div>
-    <div class="modal-row"><span class="modal-key">Seller earns souvenir</span><span class="modal-val"><span id="modal-rarity-pill" class="rarity-pill r-common">🥔 Common tier</span></span></div>
     <div class="modal-input-label" id="modal-input-label">Your new asking price (min. 0.012 ETH)</div>
     <input class="modal-input" type="text" inputmode="decimal" id="new-price-input" value="0.50">
     <div class="modal-input-note">Set this higher to maximise your profit when the next buyer comes.</div>
 
     <div id="loyalty-status" style="display:none;font-size:12px;color:rgba(255,245,224,0.4);margin-top:14px;padding:8px 10px;background:rgba(255,245,224,0.04);border-radius:6px;border:0.5px solid rgba(255,245,224,0.08);"></div>
-    <div class="promo-toggle" onclick="togglePromo()">🎟️ Have a promo code?</div>
+    <div class="promo-toggle" onclick="togglePromo()">🔥 Heat Up Your Rarity</div>
     <div id="promo-section" style="display:none;">
       <div class="promo-row">
         <input class="promo-input" type="text" id="promo-input" placeholder="HP-XXXXXXXX">
@@ -948,9 +947,11 @@ async function showLoyaltyStatus() {
       el.style.display = 'block';
       const boostLabels = ['', '+1 tier', '+2 tiers', '+3 tiers (max)'];
       if (data.maxed) {
-        el.innerHTML = `🏆 <b style="color:var(--yellow)">Loyal holder</b> — ${data.timesHeld}x veteran · Max loyalty boost active (+3 tiers)`;
+        el.innerHTML = `🏆 <b style="color:var(--yellow)">Loyal Holder — ${data.timesHeld}x veteran</b><br>
+          <span style="font-size:11px;color:rgba(255,245,224,0.35);">You've held the potato before. Your souvenir rarity is automatically boosted — max loyalty bonus active (+3 tiers).</span>`;
       } else {
-        el.innerHTML = `🏆 <b style="color:var(--yellow)">${data.timesHeld}x holder</b> · Loyalty boost: <b style="color:var(--yellow)">${boostLabels[data.boost]}</b> active on your next souvenir`;
+        el.innerHTML = `🏆 <b style="color:var(--yellow)">Loyal Holder — ${data.timesHeld}x holder</b><br>
+          <span style="font-size:11px;color:rgba(255,245,224,0.35);">You've held the potato before. When you get bought out, your souvenir rarity is automatically boosted <b style="color:var(--yellow)">${boostLabels[data.boost]}</b> — no code needed.</span>`;
       }
     }
   } catch (e) { el.style.display = 'none'; }
