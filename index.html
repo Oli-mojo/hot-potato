@@ -1222,12 +1222,17 @@ async function confirmBuy() {
     showToast('🥔 You now hold the Hot Potato!');
     loadGameState();
 
-    // If buyer entered a promo code, store the pending boost on the backend
+    // If buyer entered a promo/referral code, store the pending boost on the backend
     if (activePromoCode) {
-      fetch(`${API_BASE}/souvenir/apply-promo`, {
+      const isReferral = activePromoCode.toUpperCase().startsWith('REF-');
+      const endpoint   = isReferral ? 'apply-referral' : 'apply-promo';
+      const body       = isReferral
+        ? { referralCode: activePromoCode, walletAddress }
+        : { walletAddress, promoCode: activePromoCode };
+      fetch(`${API_BASE}/souvenir/${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ walletAddress, promoCode: activePromoCode }),
+        body: JSON.stringify(body),
       }).then(() => {
         activePromoCode = null;
         document.getElementById('promo-input').value = '';
@@ -1306,7 +1311,8 @@ async function applyPromoCode() {
     if (data.valid) {
       activePromoCode = data.code;
       const tierNames = ['', '+1 tier', '+2 tiers', '+3 tiers', '+4 tiers (max)'];
-      status.textContent = `✅ Valid! Rarity boost: ${tierNames[data.boost] || `+${data.boost}`}`;
+      const referralNote = data.type === 'referral' ? ' · referrer also gets +1 🤝' : '';
+      status.textContent = `✅ Valid! Rarity boost: ${tierNames[data.boost] || `+${data.boost}`}${referralNote}`;
       status.style.color = '#22C55E';
     } else {
       activePromoCode = null;
