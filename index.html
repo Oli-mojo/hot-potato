@@ -1705,10 +1705,38 @@ async function loadGallery() {
     const myAddress = walletAddress ? walletAddress.toLowerCase() : null;
 
     // Compute rank tokens for competitive badges
-    const nonBurned = data.souvenirs.filter(s => !s.burned);
+    const allSouvenirs = data.souvenirs;
+    const nonBurned    = allSouvenirs.filter(s => !s.burned);
     const longestHoldId  = nonBurned.length ? nonBurned.reduce((a,b) => b.holdDurationHours > a.holdDurationHours ? b : a).tokenId : -1;
+    const shortestHoldId = nonBurned.filter(s => s.holdDurationHours > 0).length > 1
+      ? nonBurned.filter(s => s.holdDurationHours > 0).reduce((a,b) => b.holdDurationHours < a.holdDurationHours ? b : a).tokenId : -1;
     const highestPriceId = nonBurned.length ? nonBurned.reduce((a,b) => parseFloat(b.pricePaid) > parseFloat(a.pricePaid) ? b : a).tokenId : -1;
-    const latestId       = data.souvenirs[0]?.tokenId; // already sorted newest first
+    const latestId       = allSouvenirs[0]?.tokenId; // already sorted newest first
+    const genesisId      = [...allSouvenirs].sort((a,b) => a.tokenId - b.tokenId)[0]?.tokenId;
+    const ogHolderId     = allSouvenirs.find(s => s.transferNumber === 1)?.tokenId;
+    const legendaryCount = allSouvenirs.filter(s => s.rarityTier === 'legendary').length;
+    const soleLegendId   = legendaryCount === 1 ? allSouvenirs.find(s => s.rarityTier === 'legendary')?.tokenId : -1;
+
+    // Biggest overpay: for each souvenir, compute how much above minimum the holder set their ask
+    // asking price set by hand N = pricePaid of souvenir N+1 (what the next buyer paid)
+    // They bought at pricePaid of souvenir N, minimum ask = that * tieredBps
+    function tieredBps(eth) {
+      if (eth < 0.1)  return 1.25;
+      if (eth < 1.0)  return 1.15;
+      if (eth < 10.0) return 1.10;
+      if (eth < 100)  return 1.07;
+      return 1.05;
+    }
+    const sorted = [...allSouvenirs].sort((a,b) => a.transferNumber - b.transferNumber);
+    let biggestOverpayId = -1, biggestOverpayPct = 0;
+    for (let i = 0; i < sorted.length - 1; i++) {
+      const paid    = parseFloat(sorted[i].pricePaid);
+      const nextPaid = parseFloat(sorted[i+1].pricePaid);
+      if (!paid || !nextPaid) continue;
+      const minAsk = paid * tieredBps(paid);
+      const overPct = ((nextPaid - minAsk) / minAsk) * 100;
+      if (overPct > biggestOverpayPct) { biggestOverpayPct = overPct; biggestOverpayId = sorted[i].tokenId; }
+    }
 
     gallery.innerHTML = data.souvenirs.map(s => {
       const tier       = s.rarityTier || 'common';
@@ -1737,10 +1765,17 @@ async function loadGallery() {
       const art = `<div style="position:relative;">${imgEl}${rarityBadgeEl}${yoursBadge}${burnedOverlay}</div>`;
 
       // Rank badges
+      const b = (emoji, label, bg, color, border) =>
+        `<span style="background:${bg};color:${color};border:0.5px solid ${border};border-radius:20px;font-size:9px;font-weight:700;letter-spacing:0.08em;padding:2px 7px;font-family:'Barlow Condensed',sans-serif;">${emoji} ${label}</span>`;
       const rankBadges = [];
-      if (!s.burned && s.tokenId === longestHoldId)  rankBadges.push(`<span style="background:rgba(255,107,0,0.15);color:#FF8C42;border:0.5px solid rgba(255,107,0,0.3);border-radius:20px;font-size:9px;font-weight:700;letter-spacing:0.08em;padding:2px 7px;font-family:'Barlow Condensed',sans-serif;">⏱ LONGEST HOLD</span>`);
-      if (!s.burned && s.tokenId === highestPriceId) rankBadges.push(`<span style="background:rgba(250,199,117,0.12);color:#FAC775;border:0.5px solid rgba(250,199,117,0.3);border-radius:20px;font-size:9px;font-weight:700;letter-spacing:0.08em;padding:2px 7px;font-family:'Barlow Condensed',sans-serif;">💰 TOP PRICE</span>`);
-      if (s.tokenId === latestId)                    rankBadges.push(`<span style="background:rgba(232,24,106,0.12);color:var(--pink);border:0.5px solid rgba(232,24,106,0.3);border-radius:20px;font-size:9px;font-weight:700;letter-spacing:0.08em;padding:2px 7px;font-family:'Barlow Condensed',sans-serif;">🔥 LATEST</span>`);
+      if (s.tokenId === genesisId)                                rankBadges.push(b('🏁','GENESIS',        'rgba(250,199,117,0.18)','#FAC775','rgba(250,199,117,0.5)'));
+      if (s.tokenId === ogHolderId && s.tokenId !== genesisId)    rankBadges.push(b('🥔','OG HOLDER',       'rgba(255,245,224,0.08)','rgba(255,245,224,0.5)','rgba(255,245,224,0.2)'));
+      if (!s.burned && s.tokenId === soleLegendId)                rankBadges.push(b('👑','SOLE LEGEND',     'rgba(250,199,117,0.18)','#FAC775','rgba(250,199,117,0.5)'));
+      if (!s.burned && s.tokenId === longestHoldId)               rankBadges.push(b('⏱','IRON HANDS',      'rgba(255,107,0,0.15)', '#FF8C42','rgba(255,107,0,0.3)'));
+      if (!s.burned && s.tokenId === shortestHoldId)              rankBadges.push(b('✋','PAPER HANDS',     'rgba(100,100,120,0.2)','rgba(200,200,220,0.5)','rgba(150,150,180,0.3)'));
+      if (!s.burned && s.tokenId === highestPriceId)              rankBadges.push(b('💰','TOP PRICE',       'rgba(250,199,117,0.12)','#FAC775','rgba(250,199,117,0.3)'));
+      if (!s.burned && s.tokenId === biggestOverpayId && biggestOverpayPct > 5) rankBadges.push(b('📈','BIGGEST OVERPAY','rgba(232,24,106,0.12)','var(--pink)','rgba(232,24,106,0.3)'));
+      if (s.tokenId === latestId && s.tokenId !== genesisId)      rankBadges.push(b('🔥','LATEST',          'rgba(232,24,106,0.12)','var(--pink)','rgba(232,24,106,0.3)'));
       const rankRow = rankBadges.length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;">${rankBadges.join('')}</div>` : '';
 
       // Stats row: hold time + price paid + short address
