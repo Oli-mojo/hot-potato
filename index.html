@@ -326,14 +326,15 @@
   .potato-badge {
     position: absolute;
     top: -12px; right: -12px;
-    background: var(--yellow);
-    color: var(--dark);
+    background: #ffffff;
+    color: #1a0f00;
     font-family: 'Black Ops One', sans-serif;
     font-size: 11px;
     padding: 5px 10px;
     border-radius: 20px;
     letter-spacing: 1px;
     z-index: 3;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.35);
   }
   .potato-owner {
     position: absolute;
@@ -647,7 +648,7 @@
   .lb-taunt { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; color: rgba(255,245,224,0.35); font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   /* Overpay quick-select buttons */
-  .overpay-btn { background: rgba(255,245,224,0.05); border: 0.5px solid rgba(255,245,224,0.12); border-radius: 6px; padding: 8px 0; font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.05em; color: rgba(255,245,224,0.4); cursor: pointer; flex: 1; transition: all .15s; }
+  .overpay-btn { background: rgba(255,245,224,0.05); border: 0.5px solid rgba(255,245,224,0.15); border-radius: 6px; padding: 8px 0; font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.05em; color: rgba(255,245,224,0.65); cursor: pointer; flex: 1; transition: all .15s; }
   .overpay-btn:hover { border-color: rgba(232,24,106,0.4); color: var(--pink); }
   .overpay-btn.active { background: rgba(232,24,106,0.12); border-color: rgba(232,24,106,0.45); color: var(--pink); }
 
@@ -656,7 +657,7 @@
   .leave-mark-title { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,245,224,0.35); margin-bottom: 8px; }
   .profile-field { width: 100%; background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,245,224,0.12); border-radius: 6px; color: var(--cream); font-family: 'Barlow Condensed', sans-serif; font-size: 14px; padding: 8px 10px; box-sizing: border-box; outline: none; margin-bottom: 6px; }
   .profile-field:focus { border-color: rgba(255,245,224,0.3); }
-  .profile-field::placeholder { color: rgba(255,245,224,0.2); }
+  .profile-field::placeholder { color: rgba(255,245,224,0.35); }
 
   .hof-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-top: 20px; }
   .hof-card { background: linear-gradient(135deg, rgba(255,214,0,0.08), rgba(255,214,0,0.02)); border: 0.5px solid rgba(255,214,0,0.25); border-radius: 10px; padding: 16px; text-align: center; }
@@ -671,7 +672,7 @@
   .referral-code-val { font-family: 'Black Ops One', sans-serif; font-size: 14px; color: var(--yellow); letter-spacing: 2px; }
   .referral-copy-btn { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; background: rgba(255,214,0,0.12); border: 0.5px solid rgba(255,214,0,0.3); border-radius: 4px; color: var(--yellow); padding: 4px 10px; cursor: pointer; transition: background .2s; }
   .referral-copy-btn:hover { background: rgba(255,214,0,0.22); }
-  .referral-note { font-size: 11px; color: rgba(255,245,224,0.28); margin-top: 5px; }
+  .referral-note { font-size: 11px; color: rgba(255,245,224,0.55); margin-top: 5px; }
 </style>
 </head>
 <body>
@@ -994,21 +995,21 @@
     <div class="modal-row"><span class="modal-key">Current price</span><span class="modal-val yellow" id="modal-current-price">… ETH</span></div>
 
     <div style="margin:12px 0 4px;">
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,245,224,0.3);margin-bottom:7px;">Overpay by — bank a rarity boost ⚡</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,245,224,0.55);margin-bottom:7px;">Overpay by — bank a rarity boost ⚡</div>
       <div style="display:flex;gap:6px;">
         <button class="overpay-btn active" onclick="setOverpay(0, this)">Minimum</button>
         <button class="overpay-btn" onclick="setOverpay(0.20, this)">+20% ⚡</button>
         <button class="overpay-btn" onclick="setOverpay(0.30, this)">+30% ⚡⚡</button>
         <button class="overpay-btn" onclick="setOverpay(0.50, this)">+50% ⚡⚡⚡</button>
       </div>
-      <div id="overpay-summary" style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:rgba(255,245,224,0.3);margin-top:6px;min-height:16px;"></div>
+      <div id="overpay-summary" style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:rgba(255,245,224,0.55);margin-top:6px;min-height:16px;"></div>
     </div>
 
     <div class="modal-input-label" id="modal-input-label">Your new asking price</div>
     <input class="modal-input" type="text" inputmode="decimal" id="new-price-input" value="">
     <div class="modal-input-note">Set this higher to maximise your profit when the next buyer comes.</div>
 
-    <div id="loyalty-status" style="display:none;font-size:12px;color:rgba(255,245,224,0.4);margin-top:14px;padding:8px 10px;background:rgba(255,245,224,0.04);border-radius:6px;border:0.5px solid rgba(255,245,224,0.08);"></div>
+    <div id="loyalty-status" style="display:none;font-size:12px;color:rgba(255,245,224,0.65);margin-top:14px;padding:8px 10px;background:rgba(255,245,224,0.04);border-radius:6px;border:0.5px solid rgba(255,245,224,0.08);"></div>
     <div id="referral-box" class="referral-box" style="display:none;">
       <div class="referral-label">Your referral code — share this</div>
       <div class="referral-code-display">
@@ -1019,7 +1020,7 @@
     </div>
 
     <div style="margin-top:12px;padding:10px 12px;background:rgba(255,245,224,0.03);border:0.5px solid rgba(255,245,224,0.07);border-radius:6px;">
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,245,224,0.3);margin-bottom:6px;">Got a friend's referral or promo code?</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,245,224,0.6);margin-bottom:6px;">Got a friend's referral or promo code?</div>
       <div class="promo-row" style="margin-top:0;">
         <input class="promo-input" type="text" id="promo-input" placeholder="REF-XXXXXXXX or HP-XXXXXXXX">
         <button class="promo-apply-btn" onclick="applyPromoCode()">Apply</button>
@@ -1032,7 +1033,7 @@
       <div class="leave-mark-title">✍️ Leave Your Mark</div>
       <input class="profile-field" id="profile-name-input" placeholder="Your name (e.g. IronHands99)" maxlength="20" autocomplete="off">
       <input class="profile-field" id="profile-taunt-input" placeholder='Your taunt (e.g. "Try prying this from me.")' maxlength="80" autocomplete="off">
-      <div style="font-size:10px;color:rgba(255,245,224,0.25);">Shows on the leaderboard — optional</div>
+      <div style="font-size:10px;color:rgba(255,245,224,0.5);">Shows on the leaderboard — optional</div>
     </div>
 
     <button class="modal-buy-btn" onclick="confirmBuy()">🔥 CONFIRM PURCHASE</button>
