@@ -11,7 +11,7 @@
 
 const axios = require('axios');
 
-const RARITY_EMOJI  = { common: '🥔', rare: '💎', epic: '⚡', legendary: '🌟' };
+const RARITY_EMOJI  = { common: '🥔', rare: '💎', epic: '⚡', legendary: '👑' };
 const RARITY_COLOR  = { common: 0x888888, rare: 0x4FC3F7, epic: 0xCE93D8, legendary: 0xFFD600 };
 const RARITY_LABEL  = { common: 'Common', rare: 'Rare', epic: 'Epic', legendary: 'Legendary' };
 
@@ -28,33 +28,124 @@ function formatDuration(hours) {
   return `${(hours / 720).toFixed(1)} months`;
 }
 
+// ─── Narrative builder ────────────────────────────────────────────────────────
+// Returns { title, headline, description, color } based on what happened.
+function buildNarrative({ hand, fromAddress, holdDurationHours, pricePaid, rarity, newAskingPrice, siteUrl }) {
+  const addr     = shortAddr(fromAddress);
+  const duration = formatDuration(holdDurationHours);
+  const emoji    = RARITY_EMOJI[rarity] || '🥔';
+  const label    = RARITY_LABEL[rarity] || 'Common';
+  const color    = RARITY_COLOR[rarity] || 0x888888;
+
+  // Legendary souvenir
+  if (rarity === 'legendary') {
+    return {
+      title:       `👑 A LEGEND IS BORN — HAND #${hand}`,
+      headline:    `${addr} held the potato for ${duration} and earned a Legendary souvenir.`,
+      description: `The potato is back on the market for ${newAskingPrice} ETH. Can you top that?\n[**Buy now →**](${siteUrl})`,
+      color:       0xFFD600,
+    };
+  }
+
+  // Epic souvenir
+  if (rarity === 'epic') {
+    return {
+      title:       `⚡ EPIC DROP — HAND #${hand}`,
+      headline:    `${addr} held for ${duration} and pulled an Epic souvenir.`,
+      description: `Strong hands get rewarded. Next ask: ${newAskingPrice} ETH.\n[**Think you can hold longer? →**](${siteUrl})`,
+      color:       0xCE93D8,
+    };
+  }
+
+  // Iron hands — 7+ days
+  if (holdDurationHours >= 168) {
+    return {
+      title:       `🔥 IRON HANDS CASHED OUT — HAND #${hand}`,
+      headline:    `${addr} held the potato for ${duration}. That's patience. They earned a ${label} souvenir.`,
+      description: `The potato is yours for ${newAskingPrice} ETH — if you can handle the heat.\n[**Buy now →**](${siteUrl})`,
+      color:       0xFF6B00,
+    };
+  }
+
+  // Solid hold — 48h to 7 days
+  if (holdDurationHours >= 48) {
+    return {
+      title:       `💪 SOLID HOLD — HAND #${hand}`,
+      headline:    `${addr} held for ${duration} and walked away with a ${label} souvenir.`,
+      description: `The potato is back and asking ${newAskingPrice} ETH. Who's next?\n[**Buy now →**](${siteUrl})`,
+      color:       0xFF8C42,
+    };
+  }
+
+  // Paper hands — under 30 minutes
+  if (holdDurationHours < 0.5) {
+    return {
+      title:       `✋ PAPER HANDS — HAND #${hand}`,
+      headline:    `${addr} buckled after just ${duration}. Too hot to hold.`,
+      description: `The potato is back on the market for ${newAskingPrice} ETH. Maybe you'll last longer.\n[**Buy now →**](${siteUrl})`,
+      color:       0x888888,
+    };
+  }
+
+  // Rare souvenir with short hold — lucky roll
+  if (rarity === 'rare' && holdDurationHours < 6) {
+    return {
+      title:       `💎 LUCKY PULL — HAND #${hand}`,
+      headline:    `${addr} only held for ${duration} but pulled a Rare souvenir. Sometimes you get lucky.`,
+      description: `The potato is asking ${newAskingPrice} ETH.\n[**Buy now →**](${siteUrl})`,
+      color:       0x4FC3F7,
+    };
+  }
+
+  // Standard pass
+  const standardTitles = [
+    `🔥 THE POTATO HAS PASSED — HAND #${hand}`,
+    `🥔 HAND #${hand} COMPLETE`,
+    `🔥 POTATO INCOMING — HAND #${hand}`,
+  ];
+  const standardDescs = [
+    `${addr} held for ${duration} and earned a ${emoji} ${label} souvenir. The potato is back on the market for ${newAskingPrice} ETH.`,
+    `${duration} was enough for ${addr}. They walked away with a ${label} souvenir. Next asking price: ${newAskingPrice} ETH.`,
+    `The potato changed hands after ${duration}. ${addr} earned a ${label} souvenir. Can you hold longer?`,
+  ];
+  const pick = hand % 3; // deterministic variety per hand number
+  return {
+    title:       standardTitles[pick],
+    headline:    standardDescs[pick],
+    description: `[**Buy now →**](${siteUrl})`,
+    color,
+  };
+}
+
 // ─── DISCORD ──────────────────────────────────────────────────────────────────
-async function postToDiscord({ hand, fromAddress, holdDurationHours, pricePaid, rarity, newAskingPrice, imageUrl }) {
+async function postToDiscord(params) {
   const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
   if (!webhookUrl) {
     console.log('ℹ️  No DISCORD_WEBHOOK_URL set — skipping Discord post');
     return;
   }
 
+  const { hand, fromAddress, holdDurationHours, pricePaid, rarity, newAskingPrice, imageUrl } = params;
   const siteUrl  = process.env.SITE_URL || 'https://hotpotato.xyz';
   const emoji    = RARITY_EMOJI[rarity]  || '🥔';
-  const color    = RARITY_COLOR[rarity]  || 0x888888;
   const label    = RARITY_LABEL[rarity]  || 'Common';
   const duration = formatDuration(holdDurationHours);
 
+  const { title, headline, description, color } = buildNarrative({ ...params, siteUrl });
+
   const embed = {
-    title: '🔥 THE POTATO HAS PASSED!',
+    title,
     color,
+    description: `${headline}\n\n${description}`,
     fields: [
-      { name: 'Hand',          value: `#${hand}`,                    inline: true },
-      { name: 'Previous holder', value: shortAddr(fromAddress),      inline: true },
-      { name: 'Held for',      value: duration,                      inline: true },
-      { name: 'Price paid',    value: `${pricePaid} ETH`,            inline: true },
-      { name: 'Souvenir',      value: `${emoji} ${label}`,           inline: true },
-      { name: 'New ask',       value: `${newAskingPrice} ETH`,       inline: true },
+      { name: 'Hand',             value: `#${hand}`,                   inline: true },
+      { name: 'Previous holder',  value: shortAddr(fromAddress),       inline: true },
+      { name: 'Held for',         value: duration,                     inline: true },
+      { name: 'Price paid',       value: `${pricePaid} ETH`,           inline: true },
+      { name: 'Souvenir',         value: `${emoji} ${label}`,          inline: true },
+      { name: 'New ask',          value: `${newAskingPrice} ETH`,      inline: true },
     ],
-    description: `The hot potato is back on the market.\n[**Buy now →**](${siteUrl})`,
-    image: imageUrl ? { url: imageUrl } : undefined,
+    image:  imageUrl ? { url: imageUrl } : undefined,
     footer: { text: 'Hot Potato · Built on Base' },
     timestamp: new Date().toISOString(),
   };
@@ -64,7 +155,6 @@ async function postToDiscord({ hand, fromAddress, holdDurationHours, pricePaid, 
 }
 
 // ─── X (TWITTER) ──────────────────────────────────────────────────────────────
-// Uses raw OAuth 1.0a with Node's built-in crypto + axios — no extra package needed.
 const crypto = require('crypto');
 
 function oauthSign({ method, url, params, apiKey, apiSecret, accessToken, accessSecret }) {
@@ -102,7 +192,7 @@ function oauthSign({ method, url, params, apiKey, apiSecret, accessToken, access
   return header;
 }
 
-async function postToX({ hand, fromAddress, holdDurationHours, pricePaid, rarity, newAskingPrice }) {
+async function postToX(params) {
   const apiKey       = process.env.TWITTER_API_KEY;
   const apiSecret    = process.env.TWITTER_API_SECRET;
   const accessToken  = process.env.TWITTER_ACCESS_TOKEN;
@@ -113,27 +203,32 @@ async function postToX({ hand, fromAddress, holdDurationHours, pricePaid, rarity
     return;
   }
 
+  const { hand, fromAddress, holdDurationHours, pricePaid, rarity, newAskingPrice } = params;
   const siteUrl  = process.env.SITE_URL || 'https://hotpotato.xyz';
   const emoji    = RARITY_EMOJI[rarity]  || '🥔';
   const label    = RARITY_LABEL[rarity]  || 'Common';
   const duration = formatDuration(holdDurationHours);
+  const addr     = shortAddr(fromAddress);
 
+  const { title, headline } = buildNarrative({ ...params, siteUrl });
+
+  // Twitter version — plain text, punchy, within 280 chars
   const text =
-`🔥 THE POTATO HAS PASSED!
+`${title}
 
-Hand #${hand} — ${shortAddr(fromAddress)} held for ${duration}
-Paid ${pricePaid} ETH → earned ${emoji} ${label} souvenir
+${headline}
 
-Current asking price: ${newAskingPrice} ETH
+Paid ${pricePaid} ETH → earned ${emoji} ${label}
+New ask: ${newAskingPrice} ETH
+
 👉 ${siteUrl}
-
-#HotPotato #NFT #Base #BaseChain`;
+#HotPotato #NFT #Base`;
 
   const url   = 'https://api.twitter.com/2/tweets';
   const body  = { text };
   const authHeader = oauthSign({
     method: 'POST', url,
-    params: {}, // body is JSON, not form-encoded, so not included in signature params
+    params: {},
     apiKey, apiSecret, accessToken, accessSecret,
   });
 
@@ -145,7 +240,6 @@ Current asking price: ${newAskingPrice} ETH
 }
 
 // ─── MAIN EXPORT ──────────────────────────────────────────────────────────────
-// Call this after a PotatoPassed event — fire and forget, never throws.
 async function announcePotatoPassed(params) {
   const results = await Promise.allSettled([
     postToDiscord(params),
