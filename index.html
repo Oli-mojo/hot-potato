@@ -1003,13 +1003,13 @@
 <script>
 // ─── CONFIG ───────────────────────────────────────────────
 const API_BASE = 'https://hot-potato-production.up.railway.app/api';
-const CONTRACT_ADDRESS = '0x90Bfcf98282445B35e3ce48b9Eb21E532E603473'; // v3 — tiered minimum
+const CONTRACT_ADDRESS = '0x12A0C8f0BeaBe3AD904096c77A839f6b87A32bec'; // v4 — two-contract
 
 // Marketplace config — switch to mainnet URLs before launch
 const CHAIN_SLUG    = 'base-sepolia';  // change to 'base' on mainnet
 const OPENSEA_BASE  = `https://testnets.opensea.io/assets/${CHAIN_SLUG}`;  // change to https://opensea.io/assets/base on mainnet
 function openSeaTokenUrl(tokenId) { return `${OPENSEA_BASE}/${CONTRACT_ADDRESS}/${tokenId}`; }
-const OPENSEA_COLLECTION = `https://testnets.opensea.io/${CONTRACT_ADDRESS}`; // mainnet: https://opensea.io/collection/{slug}
+const OPENSEA_COLLECTION = `https://testnets.opensea.io/0x22dCc7cdE4689260ecA455d33EA460812A0fC8e9`; // souvenir collection
 const CHAIN_ID = 84532; // Base Sepolia
 const CONTRACT_ABI = [
   'function buyPotato(uint256 newAskingPrice) external payable',
