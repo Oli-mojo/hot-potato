@@ -414,12 +414,13 @@
 
   /* Brewing panel */
   .brewing-panel {
-    width: 260px;
+    width: 100%;
     background: rgba(255,245,224,0.04);
     border: 0.5px solid rgba(255,245,224,0.1);
     border-radius: 10px;
     padding: 12px 14px;
     transition: border-color 1.5s ease;
+    margin-top: 24px;
   }
   .brewing-panel.tier-rare     { border-color: rgba(55,138,221,0.3); }
   .brewing-panel.tier-epic     { border-color: rgba(150,100,220,0.35); }
@@ -757,18 +758,30 @@
         Every transfer mints a souvenir. <span>Only strong hands get Legendary.</span>
       </div>
     </div>
-    <div class="hero-steps">
-      <div class="hero-step">
-        <div class="step-num">01</div>
-        <div class="step-text"><strong>Buy the potato.</strong> Pay the current price and set your own asking price. Price only ever goes up.</div>
+    <!-- Souvenir brewing panel -->
+    <div class="brewing-panel" id="brewing-panel">
+      <div class="brewing-header">
+        <span class="brewing-info-wrap">
+          <span class="brewing-label">🎁 Souvenir brewing…</span>
+          <i class="brewing-info-icon">i</i>
+          <div class="brewing-tooltip">
+            <strong>The current holder's souvenir</strong>
+            When someone buys the potato, the <em>outgoing holder</em> — the person being bought out — receives a souvenir NFT.<br><br>
+            These are the rarity odds for that souvenir. The longer the current holder has been holding, the better the odds get.
+          </div>
+        </span>
+        <span class="brewing-tier-badge tier-common" id="brewing-tier-badge">COMMON</span>
       </div>
-      <div class="hero-step">
-        <div class="step-num">02</div>
-        <div class="step-text"><strong>Hold your nerve.</strong> Every hour you hold, your souvenir rarity improves — from Common all the way to Legendary.</div>
+      <div class="brewing-odds" id="brewing-odds">
+        <div class="brewing-odd"><span class="brewing-odd-label">🥔 Common</span><span class="brewing-odd-val" id="bo-common">85%</span></div>
+        <div class="brewing-odd"><span class="brewing-odd-label">💎 Rare</span>  <span class="brewing-odd-val" id="bo-rare">12%</span></div>
+        <div class="brewing-odd"><span class="brewing-odd-label">⚡ Epic</span>   <span class="brewing-odd-val" id="bo-epic">2%</span></div>
+        <div class="brewing-odd"><span class="brewing-odd-label">👑 Legendary</span><span class="brewing-odd-val hi" id="bo-legendary">1%</span></div>
       </div>
-      <div class="hero-step">
-        <div class="step-num">03</div>
-        <div class="step-text"><strong>Get bought out, cash in.</strong> Someone pays your asking price. You pocket the difference and keep your souvenir forever.</div>
+      <div class="brewing-progress"><div class="brewing-progress-fill" id="brewing-progress-fill" style="width:5%"></div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
+        <div id="brewing-steal" style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.05em;color:var(--pink);opacity:0.7;">Buy now → they get Common</div>
+        <div class="brewing-next" id="brewing-next" style="margin-top:0;">Hold 6h for Rare odds</div>
       </div>
     </div>
   </div>
@@ -802,32 +815,6 @@
       </div>
       <button class="buy-btn" id="buy-btn" onclick="openModal()">🥔 BUY THE POTATO</button>
       <div class="buy-note">Minimum bid: … ETH</div>
-    </div>
-    <!-- Souvenir brewing panel -->
-    <div class="brewing-panel" id="brewing-panel">
-      <div class="brewing-header">
-        <span class="brewing-info-wrap">
-          <span class="brewing-label">🎁 Souvenir brewing…</span>
-          <i class="brewing-info-icon">i</i>
-          <div class="brewing-tooltip">
-            <strong>The current holder's souvenir</strong>
-            When someone buys the potato, the <em>outgoing holder</em> — the person being bought out — receives a souvenir NFT.<br><br>
-            These are the rarity odds for that souvenir. The longer the current holder has been holding, the better the odds get.
-          </div>
-        </span>
-        <span class="brewing-tier-badge tier-common" id="brewing-tier-badge">COMMON</span>
-      </div>
-      <div class="brewing-odds" id="brewing-odds">
-        <div class="brewing-odd"><span class="brewing-odd-label">🥔 Common</span><span class="brewing-odd-val" id="bo-common">85%</span></div>
-        <div class="brewing-odd"><span class="brewing-odd-label">💎 Rare</span>  <span class="brewing-odd-val" id="bo-rare">12%</span></div>
-        <div class="brewing-odd"><span class="brewing-odd-label">⚡ Epic</span>   <span class="brewing-odd-val" id="bo-epic">2%</span></div>
-        <div class="brewing-odd"><span class="brewing-odd-label">👑 Legendary</span><span class="brewing-odd-val hi" id="bo-legendary">1%</span></div>
-      </div>
-      <div class="brewing-progress"><div class="brewing-progress-fill" id="brewing-progress-fill" style="width:5%"></div></div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
-        <div id="brewing-steal" style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.05em;color:var(--pink);opacity:0.7;">Buy now → they get Common</div>
-        <div class="brewing-next" id="brewing-next" style="margin-top:0;">Hold 6h for Rare odds</div>
-      </div>
     </div>
   </div>
 </div>
