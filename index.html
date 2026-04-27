@@ -685,16 +685,16 @@
     </div>
     <div class="buy-section">
       <div class="price-tag">
-        <div class="price-eth">0.42 ETH</div>
-        <div class="price-usd">≈ $1,260</div>
+        <div class="price-eth">… ETH</div>
+        <div class="price-usd">≈ $—</div>
         <div class="price-change">↑ MIN +15%</div>
       </div>
       <div class="hold-timer">
-        Current holder for <span class="timer-val" id="hold-display">2d 14h 33m</span>
-        <span class="timer-status" id="timer-status">— rarity building 🔥</span>
+        Current holder for <span class="timer-val" id="hold-display">…</span>
+        <span class="timer-status" id="timer-status">— loading</span>
       </div>
       <button class="buy-btn" id="buy-btn" onclick="openModal()">🥔 BUY THE POTATO</button>
-      <div class="buy-note">Minimum bid: 0.42 ETH · New price must be ≥ 0.483 ETH</div>
+      <div class="buy-note">Minimum bid: … ETH</div>
     </div>
   </div>
   <div class="hero-right">
@@ -945,7 +945,7 @@
     <div style="margin:12px 0 4px;">
       <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,245,224,0.3);margin-bottom:7px;">Overpay by — bank a rarity boost ⚡</div>
       <div style="display:flex;gap:6px;">
-        <button class="overpay-btn active" onclick="setOverpay(0, this)">Exact</button>
+        <button class="overpay-btn active" onclick="setOverpay(0, this)">Minimum</button>
         <button class="overpay-btn" onclick="setOverpay(0.20, this)">+20% ⚡</button>
         <button class="overpay-btn" onclick="setOverpay(0.30, this)">+30% ⚡⚡</button>
         <button class="overpay-btn" onclick="setOverpay(0.50, this)">+50% ⚡⚡⚡</button>
@@ -1045,8 +1045,8 @@ async function loadGameState() {
     const minNext = (Math.ceil(rawMin * 10000) / 10000).toFixed(4);
     const minPct  = gameState.minIncreasePercent ?? 15;
     gameState._minNext = parseFloat(minNext); // store for confirmBuy validation
-    const holder = gameState.currentHolder;
-    const shortHolder = holder.slice(0, 6) + '...' + holder.slice(-4);
+    const holder = gameState.currentOwner;
+    const shortHolder = holder ? holder.slice(0, 6) + '...' + holder.slice(-4) : '…';
     const transfers = gameState.totalTransfers;
     const souvenirs = gameState.totalSouvenirs;
     const rarity = gameState.rarity;
@@ -1120,6 +1120,9 @@ async function loadGameState() {
     document.getElementById('stat-transfers').textContent = '—';
     document.getElementById('stat-souvenirs').textContent = '—';
     if (document.querySelector('.price-eth')) document.querySelector('.price-eth').textContent = '— ETH';
+    if (document.querySelector('.price-usd')) document.querySelector('.price-usd').textContent = '';
+    if (document.querySelector('.price-change')) document.querySelector('.price-change').textContent = '';
+    if (document.querySelector('.buy-note')) document.querySelector('.buy-note').textContent = 'Minimum bid: — ETH';
     const eb = document.getElementById('hero-eyebrow') || document.querySelector('.hero-eyebrow');
     if (eb) eb.innerHTML = `<div class="live-dot" style="background:#ff4444"></div> API error — retrying…`;
   }
