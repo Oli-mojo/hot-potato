@@ -420,7 +420,6 @@
     border-radius: 10px;
     padding: 12px 14px;
     transition: border-color 1.5s ease;
-    margin-top: 24px;
   }
   .brewing-panel.tier-rare     { border-color: rgba(55,138,221,0.3); }
   .brewing-panel.tier-epic     { border-color: rgba(150,100,220,0.35); }
@@ -758,6 +757,11 @@
         Every transfer mints a souvenir. <span>Only strong hands get Legendary.</span>
       </div>
     </div>
+    <div class="hero-stats">
+      <div class="stat"><div class="stat-val" id="stat-price">…</div><div class="stat-lbl">ETH Price</div></div>
+      <div class="stat"><div class="stat-val" id="stat-transfers">…</div><div class="stat-lbl">Transfers</div></div>
+      <div class="stat"><div class="stat-val" id="stat-souvenirs">…</div><div class="stat-lbl">Souvenirs</div></div>
+    </div>
     <!-- Souvenir brewing panel -->
     <div class="brewing-panel" id="brewing-panel">
       <div class="brewing-header">
@@ -797,11 +801,6 @@
         <img class="potato-img" src="hero-potato.jpg" alt="Hot Potato">
         <div class="potato-owner" id="potato-owner">Owner: 0x4f2a…8c3e</div>
       </div>
-    </div>
-    <div class="hero-stats">
-      <div class="stat"><div class="stat-val" id="stat-price">…</div><div class="stat-lbl">ETH Price</div></div>
-      <div class="stat"><div class="stat-val" id="stat-transfers">…</div><div class="stat-lbl">Transfers</div></div>
-      <div class="stat"><div class="stat-val" id="stat-souvenirs">…</div><div class="stat-lbl">Souvenirs</div></div>
     </div>
     <div class="buy-section">
       <div class="price-tag">
