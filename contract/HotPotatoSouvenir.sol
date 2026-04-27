@@ -4,15 +4,15 @@ pragma solidity ^0.8.20;
 // ============================================================
 //  HOT POTATO SOUVENIR — v1
 //  Separate ERC-721 collection for souvenir NFTs.
-//  Minted by the HotPotato game contract on every sale.
-//  Each souvenir permanently records the holder's stats.
+//  Minted exclusively by the HotPotato game contract on every sale.
+//  Each souvenir permanently records the holder's stats on-chain.
 //
 //  Deployment order:
-//    1. Deploy HotPotatoSouvenir → get SOUVENIR_ADDRESS
-//    2. Deploy HotPotato(SOUVENIR_ADDRESS) → get GAME_ADDRESS
-//    3. Call souvenir.setGameContract(GAME_ADDRESS)
-//    4. Call souvenir.transferOwnership(BACKEND_WALLET)
-//    5. Call game.transferOwnership(BACKEND_WALLET)
+//    1. Deploy HotPotatoSouvenir            → SOUVENIR_ADDRESS
+//    2. Deploy HotPotato(SOUVENIR_ADDRESS)  → GAME_ADDRESS
+//    3. souvenir.setGameContract(GAME_ADDRESS)
+//    4. souvenir.transferOwnership(BACKEND_WALLET)
+//    5. game.transferOwnership(BACKEND_WALLET)
 // ============================================================
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
@@ -41,8 +41,10 @@ contract HotPotatoSouvenir is ERC721, ERC2981, Ownable {
     uint256 public constant BPS_DENOMINATOR = 10000;
 
     // ─── State ────────────────────────────────────────────────
-    uint256 public totalMinted;       // total souvenirs minted (also = next token ID)
-    address public gameContract;      // the HotPotato game — only authorised minter
+    // Starts at 1 so the first souvenir is token ID 1 (matching backend expectations)
+    uint256 public nextTokenId = 1;
+
+    address public gameContract; // the HotPotato game — only authorised minter
 
     mapping(uint256 => SouvenirData) public souvenirs;
     mapping(uint256 => string)       private _tokenURIs;
@@ -92,7 +94,7 @@ contract HotPotatoSouvenir is ERC721, ERC2981, Ownable {
         uint256 holdDuration,
         uint8   rarityTierUint
     ) external onlyGame returns (uint256) {
-        uint256 tokenId = totalMinted++;
+        uint256 tokenId = nextTokenId++;
         _mint(to, tokenId);
         souvenirs[tokenId] = SouvenirData({
             transferNumber: transferNumber,
@@ -105,6 +107,13 @@ contract HotPotatoSouvenir is ERC721, ERC2981, Ownable {
         return tokenId;
     }
 
+    // ─── Read helpers ─────────────────────────────────────────
+
+    /// Total souvenirs minted. Alias for backend compatibility.
+    function souvenirCount() external view returns (uint256) {
+        return nextTokenId; // nextTokenId = total minted + 1 (matches v3 game contract semantics)
+    }
+
     // ─── Token URI ────────────────────────────────────────────
     function tokenURI(uint256 tokenId)
         public view override returns (string memory)
@@ -112,11 +121,22 @@ contract HotPotatoSouvenir is ERC721, ERC2981, Ownable {
         return _tokenURIs[tokenId];
     }
 
-    /// Set souvenir metadata URI — called by backend after IPFS upload
+    /// Set a single souvenir's metadata URI — called by backend after IPFS upload
     function setSouvenirURI(uint256 tokenId, string calldata uri)
         external onlyOwner
     {
         _tokenURIs[tokenId] = uri;
+    }
+
+    /// Set multiple souvenir URIs in one transaction — gas-efficient for backfills
+    function batchSetSouvenirURI(
+        uint256[] calldata tokenIds,
+        string[]  calldata uris
+    ) external onlyOwner {
+        require(tokenIds.length == uris.length, "Length mismatch");
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            _tokenURIs[tokenIds[i]] = uris[i];
+        }
     }
 
     // ─── ERC-165 ──────────────────────────────────────────────

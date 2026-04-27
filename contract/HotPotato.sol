@@ -2,21 +2,24 @@
 pragma solidity ^0.8.20;
 
 // ============================================================
-//  HOT POTATO — v3
+//  HOT POTATO — v4
 //  Single ERC-721 NFT always for sale. Price only goes up.
-//  Outgoing holder earns a souvenir NFT on every sale.
+//  Souvenir NFTs are minted by a separate HotPotatoSouvenir
+//  contract, keeping the two collections cleanly separated on
+//  OpenSea and marketplaces.
 //
-//  New in v3 (vs v2):
-//  - Tiered minimum price increase — flat 15% made sense at
-//    low prices but becomes punishing at scale. Now scales down
-//    gracefully as price rises, keeping the game accessible.
+//  What changed from v3:
+//  - Souvenir minting delegated to ISouvenirContract
+//  - Souvenir storage removed from this contract entirely
+//  - Constructor takes souvenir contract address
 //
-//  v2 features retained:
-//  - 5% of every sale → Original Potato Wallet (creator)
-//  - Premium boost: overpaying above minimum earns better
-//    rarity odds on your future souvenir
+//  Game rules (unchanged):
+//  - Token 0 = The Hot Potato, always for sale
+//  - Price only goes up (tiered minimum increase)
+//  - 5% of every sale → creator wallet
+//  - Overpaying above the minimum banks a rarity boost
+//  - Hold longer for rarer souvenir odds
 //  - Starting price: 0.001 ETH
-//  - ERC-2981 royalty standard for marketplace compatibility
 // ============================================================
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
@@ -24,37 +27,50 @@ import "@openzeppelin/contracts/token/common/ERC2981.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
+// ─── Souvenir contract interface ──────────────────────────────
+interface ISouvenirContract {
+    function mint(
+        address to,
+        uint256 transferNumber,
+        uint256 pricePaid,
+        uint256 holdDuration,
+        uint8   rarityTierUint
+    ) external returns (uint256 tokenId);
+
+    function souvenirCount() external view returns (uint256);
+}
+
 contract HotPotato is ERC721, ERC2981, Ownable, ReentrancyGuard {
 
-    // ─── Token IDs ────────────────────────────────────────────
-    // Token 0 = The Hot Potato (special, always exists, just transferred)
-    // Tokens 1+ = Souvenir NFTs (minted fresh on each sale)
+    // ─── Token ID ─────────────────────────────────────────────
+    // Token 0 = The Hot Potato. Only token this contract ever holds.
     uint256 public constant POTATO_TOKEN_ID = 0;
 
     // ─── Game constants ───────────────────────────────────────
-    uint256 public constant STARTING_PRICE    = 0.001 ether;
-    uint256 public constant CREATOR_FEE_BPS   = 500;    // 5%
-    uint256 public constant BPS_DENOMINATOR   = 10000;
+    uint256 public constant STARTING_PRICE  = 0.001 ether;
+    uint256 public constant CREATOR_FEE_BPS = 500;   // 5%
+    uint256 public constant BPS_DENOMINATOR = 10000;
 
-    // Tiered minimum price increase — scales down as price rises so the
-    // game stays accessible at high valuations.
+    // ─── Tiered minimum price increase ────────────────────────
+    // Scales down as price rises so the game stays accessible at
+    // high valuations.
     //
-    //   Price paid      Min increase   Min next-ask multiplier
-    //   ──────────────  ────────────   ───────────────────────
-    //   < 0.1 ETH       +25%           125% of price paid
-    //   0.1 – 1 ETH     +15%           115%  (original rule)
-    //   1 – 10 ETH      +10%           110%
-    //   10 – 100 ETH    + 7%           107%
-    //   100+ ETH        + 5%           105%
+    //   Price paid      Min increase   Multiplier (BPS)
+    //   ──────────────  ────────────   ────────────────
+    //   < 0.1 ETH       +25%           12500
+    //   0.1 – 1 ETH     +15%           11500
+    //   1 – 10 ETH      +10%           11000
+    //   10 – 100 ETH    + 7%           10700
+    //   100+ ETH        + 5%           10500
     function _minIncreaseBps(uint256 price) internal pure returns (uint256) {
-        if (price <    0.1 ether)  return 12500; // +25%
-        if (price <    1   ether)  return 11500; // +15%
-        if (price <   10   ether)  return 11000; // +10%
-        if (price <  100   ether)  return 10700; // + 7%
-        return                            10500; // + 5%
+        if (price <    0.1 ether)  return 12500;
+        if (price <    1   ether)  return 11500;
+        if (price <   10   ether)  return 11000;
+        if (price <  100   ether)  return 10700;
+        return                            10500;
     }
 
-    // ─── Original Potato Wallet ───────────────────────────────
+    // ─── Creator wallet ───────────────────────────────────────
     address public constant CREATOR_WALLET =
         0x995a13322683cf42463Cd1bDE6412020Ce685008;
 
@@ -62,17 +78,7 @@ contract HotPotato is ERC721, ERC2981, Ownable, ReentrancyGuard {
     // 0=Common  1=Rare  2=Epic  3=Legendary
     enum RarityTier { Common, Rare, Epic, Legendary }
 
-    // ─── Souvenir on-chain data ───────────────────────────────
-    struct SouvenirData {
-        uint256 transferNumber;   // which hand this was
-        uint256 pricePaid;        // what the buyer paid (wei)
-        uint256 holdDuration;     // how long the seller held (seconds)
-        RarityTier rarityTier;    // rolled at time of sale
-        address originalOwner;    // who earned this souvenir
-    }
-
-    // ─── Holder info stored at purchase time ──────────────────
-    // Used to calculate rarity when they eventually sell
+    // ─── Holder info — stored at purchase time ────────────────
     struct HolderInfo {
         uint256 purchaseTimestamp;
         uint8   premiumBoostLevel; // 0–4, based on how much they overpaid
@@ -81,12 +87,13 @@ contract HotPotato is ERC721, ERC2981, Ownable, ReentrancyGuard {
     // ─── State ────────────────────────────────────────────────
     uint256 public currentPrice;
     uint256 public totalTransfers;
-    uint256 public souvenirCount;  // next souvenir token ID (starts at 1)
 
     HolderInfo public holderInfo;
 
-    mapping(uint256 => SouvenirData) public souvenirs;
-    mapping(uint256 => string)       private _tokenURIs;
+    ISouvenirContract public souvenirContract;
+
+    // Hot Potato's own metadata URI (set by owner/backend)
+    string private _potatoURI;
 
     // ─── Events ───────────────────────────────────────────────
     event PotatoPassed(
@@ -96,13 +103,18 @@ contract HotPotato is ERC721, ERC2981, Ownable, ReentrancyGuard {
         uint256 holdDuration,
         uint256 souvenirTokenId,
         uint8   rarityTier,
-        uint8   buyerBoostLevel   // stored boost for the new holder
+        uint8   buyerBoostLevel
     );
 
     // ─── Constructor ──────────────────────────────────────────
-    constructor() ERC721("Hot Potato", "HOTP") Ownable(msg.sender) {
-        currentPrice  = STARTING_PRICE;
-        souvenirCount = 1; // first souvenir will be token 1
+    constructor(address _souvenirContract)
+        ERC721("Hot Potato", "HOTP")
+        Ownable(msg.sender)
+    {
+        require(_souvenirContract != address(0), "Zero souvenir address");
+        souvenirContract = ISouvenirContract(_souvenirContract);
+
+        currentPrice = STARTING_PRICE;
 
         // Mint The Hot Potato to deployer
         _mint(msg.sender, POTATO_TOKEN_ID);
@@ -113,74 +125,62 @@ contract HotPotato is ERC721, ERC2981, Ownable, ReentrancyGuard {
             premiumBoostLevel: 0
         });
 
-        // ERC-2981: register 5% royalty for marketplace secondary sales
+        // ERC-2981: 5% royalty for marketplace secondary sales
         _setDefaultRoyalty(CREATOR_WALLET, uint96(CREATOR_FEE_BPS));
     }
 
     // ─── Buy The Potato ───────────────────────────────────────
     /**
-     * @param newAskingPrice  The price you want to sell at.
+     * @param newAskingPrice  Your new asking price for the next buyer.
      *                        Must be >= msg.value × (1 + minIncrease%).
-     *                        The minimum increase scales with price — see _minIncreaseBps().
      *
-     * Strategy tip: pay more than the minimum to bank a premium boost on your
-     * future souvenir. The bigger the overpayment above asking price, the rarer the odds.
-     *
-     *   Boost level   Overpayment above asking price   Rarity effect
-     *   ──────────    ──────────────────────────────   ─────────────
-     *   0             < 10%                            Pure hold-duration odds
-     *   1             10–24%                           +1 rarity tier
-     *   2             25–49%                           +2 rarity tiers
-     *   3             50–99%                           +3 rarity tiers
-     *   4             100%+                            Max tier (legendary odds)
+     * Overpay above the minimum to bank a rarity boost on your souvenir:
+     *   Boost   Overpayment above asking   Effect
+     *   ─────   ────────────────────────   ──────────────────────────
+     *   0       < 10%                      Pure hold-duration odds
+     *   1       10–24%                     +1 rarity tier
+     *   2       25–49%                     +2 rarity tiers
+     *   3       50–99%                     +3 rarity tiers
+     *   4       100%+                      Max (Legendary odds)
      */
     function buyPotato(uint256 newAskingPrice) external payable nonReentrant {
         address seller = ownerOf(POTATO_TOKEN_ID);
         require(msg.sender != seller, "You already hold the potato");
 
         // ── Validate payment ────────────────────────────────
-        // currentPrice is the asking price set by the current holder.
-        // Buyer must pay at least that amount.
-        require(msg.value >= currentPrice, "Payment too low: must meet the current asking price");
+        require(msg.value >= currentPrice, "Payment too low");
 
-        // ── Validate new asking price (tiered minimum) ──────
+        // ── Validate new asking price ────────────────────────
         uint256 bps        = _minIncreaseBps(msg.value);
         uint256 minNextAsk = (msg.value * bps) / BPS_DENOMINATOR;
-        require(newAskingPrice >= minNextAsk, "New asking price too low: must exceed tiered minimum increase");
+        require(newAskingPrice >= minNextAsk, "New asking price below tiered minimum");
 
-        // ── Calculate buyer's stored boost ──────────────────
-        // Boost is based on how much above the asking price they paid
-        uint8 buyerBoost = _premiumBoostLevel(msg.value, currentPrice);
+        // ── Capture pre-sale state ───────────────────────────
+        uint256 holdDuration     = block.timestamp - holderInfo.purchaseTimestamp;
+        uint8   sellerBoost      = holderInfo.premiumBoostLevel;
+        uint8   rarityTierUint   = uint8(_rollRarity(holdDuration, sellerBoost));
+        uint8   buyerBoost       = _premiumBoostLevel(msg.value, currentPrice);
+        uint256 handNumber       = totalTransfers + 1;
 
-        // ── Roll seller's souvenir rarity ───────────────────
-        uint256 holdDuration = block.timestamp - holderInfo.purchaseTimestamp;
-        uint8 rarityTierUint = uint8(_rollRarity(holdDuration, holderInfo.premiumBoostLevel));
-
-        // ── Mint souvenir to seller ──────────────────────────
-        uint256 souvenirId = souvenirCount++;
-        _mint(seller, souvenirId);
-        souvenirs[souvenirId] = SouvenirData({
-            transferNumber: totalTransfers + 1,
-            pricePaid:      msg.value,
-            holdDuration:   holdDuration,
-            rarityTier:     RarityTier(rarityTierUint),
-            originalOwner:  seller
-        });
-
-        // ── Transfer The Hot Potato ──────────────────────────
-        _transfer(seller, msg.sender, POTATO_TOKEN_ID);
+        // ── Update state BEFORE external calls (CEI pattern) ─
         totalTransfers++;
-
-        // ── Update state (before external calls) ────────────
         currentPrice = newAskingPrice;
         holderInfo   = HolderInfo({
             purchaseTimestamp: block.timestamp,
             premiumBoostLevel: buyerBoost
         });
 
-        // ── Pay creator (5%) then seller (95%) ──────────────
-        uint256 creatorFee      = (msg.value * CREATOR_FEE_BPS) / BPS_DENOMINATOR;
-        uint256 sellerProceeds  = msg.value - creatorFee;
+        // ── Mint souvenir to seller via souvenir contract ────
+        uint256 souvenirId = souvenirContract.mint(
+            seller, handNumber, msg.value, holdDuration, rarityTierUint
+        );
+
+        // ── Transfer The Hot Potato to buyer ─────────────────
+        _transfer(seller, msg.sender, POTATO_TOKEN_ID);
+
+        // ── Pay creator (5%) then seller (95%) ───────────────
+        uint256 creatorFee     = (msg.value * CREATOR_FEE_BPS) / BPS_DENOMINATOR;
+        uint256 sellerProceeds = msg.value - creatorFee;
 
         (bool creatorOk,) = CREATOR_WALLET.call{value: creatorFee}("");
         require(creatorOk, "Creator fee transfer failed");
@@ -195,42 +195,26 @@ contract HotPotato is ERC721, ERC2981, Ownable, ReentrancyGuard {
     }
 
     // ─── Premium Boost Logic ──────────────────────────────────
-    /**
-     * Returns boost level 0–4 based on how much above minimum was paid.
-     * Stored at purchase time; applied when the holder eventually sells.
-     */
     function _premiumBoostLevel(uint256 paid, uint256 minimum)
         internal pure returns (uint8)
     {
         if (paid <= minimum) return 0;
-        // overpaymentBps = how many BPS above minimum
-        // e.g., paid = 1.5× minimum → overpaymentBps = 5000 (50%)
         uint256 overpaymentBps = ((paid - minimum) * BPS_DENOMINATOR) / minimum;
-
-        if (overpaymentBps >= 10000) return 4; // 100%+ above minimum → max boost
+        if (overpaymentBps >= 10000) return 4; // 100%+
         if (overpaymentBps >= 5000)  return 3; // 50–99%
         if (overpaymentBps >= 2500)  return 2; // 25–49%
         if (overpaymentBps >= 1000)  return 1; // 10–24%
-        return 0;                               // < 10% — no boost
+        return 0;
     }
 
     // ─── Rarity Roll ──────────────────────────────────────────
-    /**
-     * Premium boost advances your effective hold tier upward.
-     * e.g., held < 24h (tier 0) + boost 2 = tier 2 (1–4 week odds).
-     * Capped at tier 4 (3+ month / legendary odds).
-     */
     function _rollRarity(uint256 holdDuration, uint8 premiumBoost)
         internal view returns (RarityTier)
     {
         uint8 holdTier      = _holdTier(holdDuration);
-        uint8 effectiveTier = holdTier + premiumBoost > 4
-                                ? 4
-                                : holdTier + premiumBoost;
-
+        uint8 effectiveTier = holdTier + premiumBoost > 4 ? 4 : holdTier + premiumBoost;
         uint256[4] memory w = _tierWeights(effectiveTier);
 
-        // Pseudo-random roll using block data + context
         uint256 rand = uint256(keccak256(abi.encodePacked(
             block.prevrandao,
             block.timestamp,
@@ -246,34 +230,30 @@ contract HotPotato is ERC721, ERC2981, Ownable, ReentrancyGuard {
         return RarityTier.Common;
     }
 
-    // ─── Hold Duration → Tier ─────────────────────────────────
-    // Compressed tiers — calibrated for a crypto-native audience
-    // where a month of holding is impressive, not a baseline.
+    // ─── Hold Duration → Base Tier ────────────────────────────
     function _holdTier(uint256 holdDuration) internal pure returns (uint8) {
-        if (holdDuration <   6 hours)  return 0; // < 6h     — Common
-        if (holdDuration <  48 hours)  return 1; // 6h–48h   — Rare
-        if (holdDuration <   7 days)   return 2; // 2–7 days — Epic
-        if (holdDuration <  30 days)   return 3; // 7–30 days — Legendary
-        return 4;                                 // 30+ days  — Max
+        if (holdDuration <   6 hours) return 0; // < 6h      — Common
+        if (holdDuration <  48 hours) return 1; // 6h–2 days — Rare
+        if (holdDuration <   7 days)  return 2; // 2–7 days  — Epic
+        if (holdDuration <  30 days)  return 3; // 7–30 days — Legendary
+        return 4;                               // 30+ days  — Max odds
     }
 
     // ─── Tier → Rarity Weights ────────────────────────────────
-    // [Common, Rare, Epic, Legendary] must sum to 100
+    // [Common, Rare, Epic, Legendary] — must sum to 100
     function _tierWeights(uint8 tier)
         internal pure returns (uint256[4] memory)
     {
-        if (tier == 0) return [uint256(85), 12,  2,  1]; // < 24h
-        if (tier == 1) return [uint256(60), 28,  9,  3]; // 1–7 days
-        if (tier == 2) return [uint256(20), 40, 25, 15]; // 1–4 weeks
-        if (tier == 3) return [uint256( 5), 20, 45, 30]; // 1–3 months
-                       return [uint256( 1),  9, 40, 50]; // 3+ months
+        if (tier == 0) return [uint256(85), 12,  2,  1];
+        if (tier == 1) return [uint256(60), 28,  9,  3];
+        if (tier == 2) return [uint256(20), 40, 25, 15];
+        if (tier == 3) return [uint256( 5), 20, 45, 30];
+                       return [uint256( 1),  9, 40, 50];
     }
 
     // ─── Read Functions ───────────────────────────────────────
 
-    /**
-     * Same signature as v1 — backend requires no changes.
-     */
+    /// Core game state — same signature as v3 for backend compatibility.
     function getGameState() external view returns (
         address currentOwner,
         uint256 price,
@@ -288,9 +268,7 @@ contract HotPotato is ERC721, ERC2981, Ownable, ReentrancyGuard {
         );
     }
 
-    /**
-     * Extended state — new fields for the frontend boost display.
-     */
+    /// Extended state including souvenir count and boost info.
     function getExtendedState() external view returns (
         address currentOwner,
         uint256 price,
@@ -306,16 +284,13 @@ contract HotPotato is ERC721, ERC2981, Ownable, ReentrancyGuard {
             currentPrice,
             block.timestamp - holderInfo.purchaseTimestamp,
             totalTransfers,
-            souvenirCount - 1,
+            souvenirContract.souvenirCount() - 1, // -1 because souvenirCount starts at 1
             holderInfo.premiumBoostLevel,
             minNext
         );
     }
 
-    /**
-     * Preview rarity odds for the current holder at this moment.
-     * Useful for the frontend to show "your current souvenir odds".
-     */
+    /// Preview rarity odds for the current holder right now.
     function previewRarityOdds() external view returns (
         uint8 holdTier,
         uint8 premiumBoost,
@@ -326,8 +301,8 @@ contract HotPotato is ERC721, ERC2981, Ownable, ReentrancyGuard {
         uint256 chanceLegendary
     ) {
         uint256 holdDuration = block.timestamp - holderInfo.purchaseTimestamp;
-        holdTier     = _holdTier(holdDuration);
-        premiumBoost = holderInfo.premiumBoostLevel;
+        holdTier      = _holdTier(holdDuration);
+        premiumBoost  = holderInfo.premiumBoostLevel;
         effectiveTier = holdTier + premiumBoost > 4 ? 4 : holdTier + premiumBoost;
         uint256[4] memory w = _tierWeights(effectiveTier);
         return (holdTier, premiumBoost, effectiveTier, w[0], w[1], w[2], w[3]);
@@ -337,22 +312,24 @@ contract HotPotato is ERC721, ERC2981, Ownable, ReentrancyGuard {
     function tokenURI(uint256 tokenId)
         public view override returns (string memory)
     {
-        return _tokenURIs[tokenId];
+        require(tokenId == POTATO_TOKEN_ID, "Only token 0 exists in this contract");
+        return _potatoURI;
     }
 
-    /// Set souvenir metadata URI (called by backend after IPFS upload)
-    function setSouvenirURI(uint256 tokenId, string calldata uri)
-        external onlyOwner
-    {
-        _tokenURIs[tokenId] = uri;
-    }
-
-    /// Set the Hot Potato's own metadata URI
+    /// Set The Hot Potato's own metadata URI (called by owner/backend)
     function setPotatoURI(string calldata uri) external onlyOwner {
-        _tokenURIs[POTATO_TOKEN_ID] = uri;
+        _potatoURI = uri;
     }
 
-    // ─── ERC-165 supportsInterface ────────────────────────────
+    // ─── Admin ────────────────────────────────────────────────
+
+    /// Update the souvenir contract address (owner only, for emergency use)
+    function setSouvenirContract(address _souvenirContract) external onlyOwner {
+        require(_souvenirContract != address(0), "Zero address");
+        souvenirContract = ISouvenirContract(_souvenirContract);
+    }
+
+    // ─── ERC-165 ──────────────────────────────────────────────
     function supportsInterface(bytes4 interfaceId)
         public view override(ERC721, ERC2981)
         returns (bool)
