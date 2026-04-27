@@ -5,8 +5,9 @@ require('dotenv').config(); // Railway (reads from environment)
 const express = require('express');
 const cors = require('cors');
 
-const potatoRoutes = require('./routes/potato');
+const potatoRoutes   = require('./routes/potato');
 const souvenirRoutes = require('./routes/souvenir');
+const playerRoutes   = require('./routes/player');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -18,8 +19,9 @@ app.use(cors({
 app.use(express.json());
 
 // Routes
-app.use('/api/potato', potatoRoutes);
+app.use('/api/potato',   potatoRoutes);
 app.use('/api/souvenir', souvenirRoutes);
+app.use('/api/player',   playerRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

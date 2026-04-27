@@ -599,6 +599,16 @@
   .lb-rank-3 { color: #CD7F32 !important; }
   .lb-addr { flex: 1; font-family: 'Barlow Condensed', sans-serif; color: rgba(255,245,224,0.6); }
   .lb-val  { font-family: 'Black Ops One', sans-serif; font-size: 12px; color: var(--yellow); }
+  .lb-player { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .lb-name  { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; color: rgba(255,245,224,0.85); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lb-taunt { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; color: rgba(255,245,224,0.35); font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Leave Your Mark — buy modal profile section */
+  .leave-mark-section { margin-top: 14px; padding: 12px; background: rgba(255,245,224,0.03); border: 0.5px solid rgba(255,245,224,0.08); border-radius: 8px; }
+  .leave-mark-title { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,245,224,0.35); margin-bottom: 8px; }
+  .profile-field { width: 100%; background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,245,224,0.12); border-radius: 6px; color: var(--cream); font-family: 'Barlow Condensed', sans-serif; font-size: 14px; padding: 8px 10px; box-sizing: border-box; outline: none; margin-bottom: 6px; }
+  .profile-field:focus { border-color: rgba(255,245,224,0.3); }
+  .profile-field::placeholder { color: rgba(255,245,224,0.2); }
 
   .hof-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-top: 20px; }
   .hof-card { background: linear-gradient(135deg, rgba(255,214,0,0.08), rgba(255,214,0,0.02)); border: 0.5px solid rgba(255,214,0,0.25); border-radius: 10px; padding: 16px; text-align: center; }
@@ -738,13 +748,13 @@
       </div>
       <div class="rule-card">
         <span class="rule-icon">🎁</span>
-        <div class="rule-title">You Can't Sell</div>
-        <div class="rule-desc">You don't choose when to exit. When someone buys from you, the contract <span class="rule-highlight">automatically sends your ETH</span> and mints your souvenir. You just wait.</div>
+        <div class="rule-title">You Have No Choice</div>
+        <div class="rule-desc">You don't decide when to exit. When someone buys from you, the contract <span class="rule-highlight">automatically sends your ETH</span> and mints your souvenir. You just wait.</div>
       </div>
       <div class="rule-card">
         <span class="rule-icon">👑</span>
-        <div class="rule-title">Hold Longer. Get Rarer.</div>
-        <div class="rule-desc">Your souvenir rarity depends on <span class="rule-highlight">how long you held</span>. Under 24h = Common. 3+ months = 50% chance of Legendary.</div>
+        <div class="rule-title">Legends Pay to Play.</div>
+        <div class="rule-desc">Want a Legendary souvenir? <span class="rule-highlight">You have to earn it.</span> Hold longer, overpay on entry, burn a rival's souvenir. Legends aren't handed out.</div>
       </div>
     </div>
   </div>
@@ -864,7 +874,7 @@
     </a>
   </div>
   <div style="font-size:11px;color:rgba(255,245,224,0.25);font-family:'Barlow Condensed',sans-serif;margin-bottom:16px;letter-spacing:0.03em;">
-    Sell your souvenirs on <a id="opensea-link-inline" href="#" target="_blank" rel="noopener" style="color:rgba(100,180,255,0.6);text-decoration:none;" onmouseover="this.style.color='rgba(100,180,255,0.9)'" onmouseout="this.style.color='rgba(100,180,255,0.6)'">OpenSea</a> — royalties are honoured there, meaning 5% of the sale goes back to the creator.
+    Sell your souvenirs on <a id="opensea-link-inline" href="#" target="_blank" rel="noopener" style="color:rgba(100,180,255,0.6);text-decoration:none;" onmouseover="this.style.color='rgba(100,180,255,0.9)'" onmouseout="this.style.color='rgba(100,180,255,0.6)'">OpenSea</a>.
   </div>
   <div class="gallery" id="souvenir-gallery"><div style="color:rgba(255,245,224,0.3);font-size:13px;grid-column:1/-1;padding:24px 0;">Loading souvenirs…</div></div>
 </div>
@@ -947,6 +957,13 @@
     </div>
 
 
+    <div class="leave-mark-section">
+      <div class="leave-mark-title">✍️ Leave Your Mark</div>
+      <input class="profile-field" id="profile-name-input" placeholder="Your name (e.g. IronHands99)" maxlength="20" autocomplete="off">
+      <input class="profile-field" id="profile-taunt-input" placeholder='Your taunt (e.g. "Try prying this from me.")' maxlength="80" autocomplete="off">
+      <div style="font-size:10px;color:rgba(255,245,224,0.25);">Shows on the leaderboard — optional</div>
+    </div>
+
     <button class="modal-buy-btn" onclick="confirmBuy()">🔥 CONFIRM PURCHASE</button>
   </div>
 </div>
@@ -986,6 +1003,7 @@ const BURN_ADDRESS = '0x000000000000000000000000000000000000dEaD';
 let gameState = null;
 let walletAddress = null;
 let holdSeconds = 0;
+let playerProfiles = {}; // cache: lowercaseAddress → { name, taunt }
 
 const rarityLabel = { common: 'Common', rare: 'Rare', epic: 'Epic', legendary: 'Legendary' };
 const rarityClass  = { common: 'r-common', rare: 'r-rare', epic: 'r-epic', legendary: 'r-legend' };
@@ -1272,6 +1290,7 @@ async function connectWallet() {
     }
     showToast('✅ Wallet connected — ' + walletAddress.slice(0,6) + '...' + walletAddress.slice(-4));
     checkAndPromptSouvenirs(walletAddress);
+    loadProfiles([walletAddress]); // pre-cache own profile for modal pre-fill
   } catch (err) {
     clearTimeout(resetTimer);
     console.error('Wallet connection failed:', err);
@@ -1307,6 +1326,7 @@ function openModal() {
   document.getElementById('modal').classList.add('open');
   showLoyaltyStatus();
   showReferralCode();
+  prefillProfileFields();
 }
 
 async function showLoyaltyStatus() {
@@ -1465,6 +1485,7 @@ async function confirmBuy() {
     btn.disabled = false;
 
     showToast('🥔 You now hold the Hot Potato!');
+    saveProfile(); // save name + taunt if entered
     loadGameState();
 
     // If buyer entered a promo/referral code, store the pending boost on the backend
@@ -1915,6 +1936,55 @@ async function loadHistory() {
   }
 }
 
+// ─── PLAYER PROFILES ──────────────────────────────────────
+async function loadProfiles(addresses) {
+  if (!addresses || addresses.length === 0) return;
+  const unique = [...new Set(addresses.map(a => a.toLowerCase()))];
+  try {
+    const res  = await fetch(`${API_BASE}/player/profiles?addresses=${unique.join(',')}`);
+    const data = await res.json();
+    Object.assign(playerProfiles, data);
+  } catch {}
+}
+
+function getDisplayName(addr) {
+  if (!addr) return '—';
+  const p = playerProfiles[addr.toLowerCase()];
+  return (p && p.name) ? p.name : (addr.slice(0, 6) + '…' + addr.slice(-4));
+}
+
+function getPlayerTaunt(addr) {
+  if (!addr) return null;
+  const p = playerProfiles[addr.toLowerCase()];
+  return (p && p.taunt) ? p.taunt : null;
+}
+
+async function saveProfile() {
+  if (!walletAddress) return;
+  const name  = (document.getElementById('profile-name-input')?.value  || '').trim();
+  const taunt = (document.getElementById('profile-taunt-input')?.value || '').trim();
+  if (!name && !taunt) return;
+  try {
+    await fetch(`${API_BASE}/player/profile`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ walletAddress, name, taunt }),
+    });
+    // Update local cache immediately
+    playerProfiles[walletAddress.toLowerCase()] = { name: name || null, taunt: taunt || null };
+  } catch {}
+}
+
+function prefillProfileFields() {
+  if (!walletAddress) return;
+  const p = playerProfiles[walletAddress.toLowerCase()];
+  if (!p) return;
+  const nameEl  = document.getElementById('profile-name-input');
+  const tauntEl = document.getElementById('profile-taunt-input');
+  if (nameEl  && p.name)  nameEl.value  = p.name;
+  if (tauntEl && p.taunt) tauntEl.value = p.taunt;
+}
+
 // ─── LEADERBOARD ──────────────────────────────────────────
 async function loadLeaderboard() {
   try {
@@ -1924,7 +1994,26 @@ async function loadLeaderboard() {
 
     const rankEmoji = ['🥇', '🥈', '🥉', '4', '5'];
     const rankClass = ['lb-rank lb-rank-1', 'lb-rank lb-rank-2', 'lb-rank lb-rank-3', 'lb-rank', 'lb-rank'];
-    const fmt = addr => addr ? addr.slice(0, 6) + '…' + addr.slice(-4) : '—';
+
+    // Collect all addresses and load profiles before rendering
+    const allAddrs = [
+      ...(data.longestHolds || []).map(h => h.address),
+      ...(data.loyaltyBoard || []).map(h => h.address),
+      ...(data.hallOfFame   || []).map(h => h.address),
+    ].filter(Boolean);
+    await loadProfiles(allAddrs);
+
+    const playerRow = (addr, valHtml, extraHtml = '') => {
+      const name  = getDisplayName(addr);
+      const taunt = getPlayerTaunt(addr);
+      return `
+        <div class="lb-player">
+          <span class="lb-name">${name}</span>
+          ${taunt ? `<span class="lb-taunt">"${taunt}"</span>` : ''}
+        </div>
+        ${valHtml}
+        ${extraHtml}`;
+    };
 
     // Longest holds
     const longestEl = document.getElementById('lb-longest');
@@ -1935,9 +2024,10 @@ async function loadLeaderboard() {
         longestEl.innerHTML = data.longestHolds.map((h, i) => `
           <div class="lb-row">
             <span class="${rankClass[i]}">${rankEmoji[i] || (i + 1)}</span>
-            <span class="lb-addr">${fmt(h.address)}</span>
-            <span class="lb-val">${h.holdDurationHours >= 24 ? (h.holdDurationHours / 24).toFixed(1) + 'd' : h.holdDurationHours.toFixed(1) + 'h'}</span>
-            <span class="rarity-pill r-${h.rarity === 'legendary' ? 'legend' : h.rarity}" style="font-size:9px;padding:2px 7px;">${h.rarity}</span>
+            ${playerRow(h.address,
+              `<span class="lb-val">${h.holdDurationHours >= 24 ? (h.holdDurationHours / 24).toFixed(1) + 'd' : h.holdDurationHours.toFixed(1) + 'h'}</span>`,
+              `<span class="rarity-pill r-${h.rarity === 'legendary' ? 'legend' : h.rarity}" style="font-size:9px;padding:2px 7px;">${h.rarity}</span>`
+            )}
           </div>`).join('');
       }
     }
@@ -1951,8 +2041,7 @@ async function loadLeaderboard() {
         loyaltyEl.innerHTML = data.loyaltyBoard.map((h, i) => `
           <div class="lb-row">
             <span class="${rankClass[i]}">${rankEmoji[i] || (i + 1)}</span>
-            <span class="lb-addr">${fmt(h.address)}</span>
-            <span class="lb-val">${h.timesHeld}× held</span>
+            ${playerRow(h.address, `<span class="lb-val">${h.timesHeld}× held</span>`)}
           </div>`).join('');
       }
     }
@@ -1963,12 +2052,17 @@ async function loadLeaderboard() {
       if (!data.hallOfFame || data.hallOfFame.length === 0) {
         hofEl.innerHTML = '<div style="color:rgba(255,245,224,0.3);font-size:13px;grid-column:1/-1;padding:16px 0;">No Legendary holders yet — will you be the first?</div>';
       } else {
-        hofEl.innerHTML = data.hallOfFame.map(h => `
+        hofEl.innerHTML = data.hallOfFame.map(h => {
+          const name  = getDisplayName(h.address);
+          const taunt = getPlayerTaunt(h.address);
+          return `
           <div class="hof-card">
             <div class="hof-crown">👑</div>
-            <div class="hof-addr">${fmt(h.address)}</div>
+            <div class="hof-addr">${name}</div>
+            ${taunt ? `<div class="hof-detail" style="font-style:italic;color:rgba(255,214,0,0.5);">"${taunt}"</div>` : ''}
             <div class="hof-detail">Hand #${h.hand} · ${h.holdDurationHours >= 24 ? (h.holdDurationHours / 24).toFixed(1) + ' days' : h.holdDurationHours.toFixed(1) + 'h'}</div>
-          </div>`).join('');
+          </div>`;
+        }).join('');
       }
     }
 
