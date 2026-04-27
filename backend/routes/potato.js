@@ -5,7 +5,8 @@ const { ethers } = require('ethers');
 const { getPotatoState, getRarityTier } = require('../services/contract');
 const axios = require('axios');
 
-const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || '0x90Bfcf98282445B35e3ce48b9Eb21E532E603473';
+const CONTRACT_ADDRESS  = process.env.CONTRACT_ADDRESS;
+const SOUVENIR_ADDRESS  = process.env.SOUVENIR_ADDRESS || process.env.CONTRACT_ADDRESS;
 const RPC_URL  = process.env.RPC_URL;
 const IPFS_GW  = 'https://gateway.pinata.cloud/ipfs/';
 const RARITY_MAP = ['common', 'rare', 'epic', 'legendary'];
@@ -76,7 +77,7 @@ router.get('/', async (req, res) => {
 router.get('/history', async (req, res) => {
   try {
     const provider = new ethers.JsonRpcProvider(RPC_URL);
-    const contract = new ethers.Contract(CONTRACT_ADDRESS, SOUVENIR_READ_ABI, provider);
+    const contract = new ethers.Contract(SOUVENIR_ADDRESS, SOUVENIR_READ_ABI, provider);
     const count    = Number(await contract.souvenirCount());
 
     // Fetch only uncached tokens — all in parallel
@@ -99,7 +100,7 @@ router.get('/history', async (req, res) => {
 router.get('/leaderboard', async (req, res) => {
   try {
     const provider = new ethers.JsonRpcProvider(RPC_URL);
-    const contract = new ethers.Contract(CONTRACT_ADDRESS, SOUVENIR_READ_ABI, provider);
+    const contract = new ethers.Contract(SOUVENIR_ADDRESS, SOUVENIR_READ_ABI, provider);
     const count    = Number(await contract.souvenirCount());
 
     // Reuse the same cache — leaderboard is free if history was loaded first
