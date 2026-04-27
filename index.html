@@ -875,6 +875,32 @@
 
 </div>
 
+<div class="section" id="leaderboard">
+  <div class="section-header">
+    <div class="section-title">LEADERBOARD</div>
+    <div class="section-count" id="leaderboard-count">loading…</div>
+  </div>
+
+  <div class="lb-grid">
+    <div class="lb-panel">
+      <div class="lb-panel-title">⏱️ LONGEST HOLDS</div>
+      <div id="lb-longest">Loading…</div>
+    </div>
+    <div class="lb-panel">
+      <div class="lb-panel-title">🏆 LOYALTY LEADERS</div>
+      <div id="lb-loyalty">Loading…</div>
+    </div>
+  </div>
+
+  <div style="margin-top:28px;">
+    <div style="font-family:'Black Ops One',sans-serif;font-size:13px;color:var(--yellow);letter-spacing:1px;margin-bottom:4px;">🌟 HALL OF FAME — LEGENDARY HOLDERS</div>
+    <div style="font-size:12px;color:rgba(255,245,224,0.3);margin-bottom:12px;">Wallets that earned a Legendary souvenir by holding the potato long enough to reach myth status.</div>
+    <div class="hof-grid" id="hof-grid">
+      <div style="color:rgba(255,245,224,0.3);font-size:13px;grid-column:1/-1;padding:16px 0;">👑 Coming soon — will you be the first?</div>
+    </div>
+  </div>
+</div>
+
 <div class="section" id="souvenirs">
   <div class="section-header">
     <div class="section-title">SOUVENIR GALLERY</div>
@@ -899,32 +925,6 @@
     <thead><tr><th>Hand</th><th>Address</th><th>Price Paid</th><th>Held For</th><th>Souvenir</th></tr></thead>
     <tbody id="history-body"><tr><td colspan="5" style="color:rgba(255,245,224,0.3);padding:24px 12px;">Loading ownership history…</td></tr></tbody>
   </table>
-</div>
-
-<div class="section" id="leaderboard">
-  <div class="section-header">
-    <div class="section-title">LEADERBOARD</div>
-    <div class="section-count" id="leaderboard-count">loading…</div>
-  </div>
-
-  <div class="lb-grid">
-    <div class="lb-panel">
-      <div class="lb-panel-title">⏱️ LONGEST HOLDS</div>
-      <div id="lb-longest">Loading…</div>
-    </div>
-    <div class="lb-panel">
-      <div class="lb-panel-title">🏆 LOYALTY LEADERS</div>
-      <div id="lb-loyalty">Loading…</div>
-    </div>
-  </div>
-
-  <div style="margin-top:28px;">
-    <div style="font-family:'Black Ops One',sans-serif;font-size:13px;color:var(--yellow);letter-spacing:1px;margin-bottom:4px;">🌟 HALL OF FAME — LEGENDARY HOLDERS</div>
-    <div style="font-size:12px;color:rgba(255,245,224,0.3);margin-bottom:12px;">Wallets that earned a Legendary souvenir by holding the potato long enough to reach myth status.</div>
-    <div class="hof-grid" id="hof-grid">
-      <div style="color:rgba(255,245,224,0.3);font-size:13px;grid-column:1/-1;padding:16px 0;">No Legendary holders yet — will you be the first?</div>
-    </div>
-  </div>
 </div>
 
 <footer>
@@ -1922,7 +1922,8 @@ async function loadGallery() {
         ? `${(s.holdDurationHours / 24).toFixed(1)}d`
         : `${s.holdDurationHours}h`;
       const priceStr   = parseFloat(s.pricePaid) > 0 ? `${parseFloat(s.pricePaid).toFixed(4)} ETH` : '—';
-      const playerName = getDisplayName(s.originalOwner);
+      const playerName  = getDisplayName(s.originalOwner);
+      const playerTaunt = getPlayerTaunt(s.originalOwner);
       const overpayPct = overpayMap[s.tokenId];
       const overpayStr = (overpayPct != null && overpayPct >= 1)
         ? `+${overpayPct < 10 ? overpayPct.toFixed(1) : Math.round(overpayPct)}% overpay`
@@ -1940,7 +1941,10 @@ async function loadGallery() {
           <span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:var(--yellow);">${priceStr}</span>
           ${overpayStr ? `<span style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:rgba(232,24,106,0.7);">${overpayStr}${boostStr ? ' ' + boostStr : ''}</span>` : ''}
         </div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:rgba(255,245,224,0.25);margin-bottom:8px;">${playerName}</div>`;
+        <div style="margin-bottom:8px;">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:rgba(255,245,224,0.35);">${playerName}</div>
+          ${playerTaunt ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-style:italic;color:rgba(255,245,224,0.2);">"${playerTaunt}"</div>` : ''}
+        </div>`;
 
       const cardStyle = isOwned ? ' style="border-color:var(--yellow);"' : '';
 
