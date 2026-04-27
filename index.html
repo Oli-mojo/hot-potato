@@ -669,7 +669,7 @@
     <div class="hero-tagline">
       <div class="tagline-main">Price only goes up. ↑</div>
       <div class="tagline-sub">
-        The NFT that's always for sale. <span>Pass it on — or hold on tight.</span><br>
+        Once you buy it, it's yours — until someone takes it. <span>And it will get hot.</span><br>
         Every transfer mints a souvenir. <span>Only strong hands get Legendary.</span>
       </div>
     </div>
@@ -724,6 +724,12 @@
 </div>
 
 <div class="section" id="rules">
+  <div style="text-align:center;margin-bottom:32px;padding:28px 20px;border:0.5px solid rgba(232,24,106,0.15);border-radius:12px;background:rgba(232,24,106,0.03);">
+    <div style="font-family:'Black Ops One',sans-serif;font-size:22px;color:var(--cream);line-height:1.3;margin-bottom:12px;">"Whoever said hell was hot<br>was wrong."</div>
+    <div style="display:inline-block;background:rgba(232,24,106,0.12);border:0.5px solid rgba(232,24,106,0.3);border-radius:20px;padding:5px 16px;">
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--pink);">⚠️ For strong hands only</span>
+    </div>
+  </div>
   <div class="section-header"><div class="section-title">THE RULES</div></div>
 
   <div class="rules-tabs">
@@ -754,7 +760,7 @@
       <div class="rule-card">
         <span class="rule-icon">👑</span>
         <div class="rule-title">Legends Pay to Play.</div>
-        <div class="rule-desc">Want a Legendary souvenir? <span class="rule-highlight">You have to earn it.</span> Hold longer, overpay on entry, burn a rival's souvenir. Legends aren't handed out.</div>
+        <div class="rule-desc">Want a Legendary souvenir? <span class="rule-highlight">You have to earn it.</span> Hold longer and overpay on entry. Legends aren't handed out.</div>
       </div>
     </div>
   </div>
@@ -1782,14 +1788,27 @@ async function loadGallery() {
     }
     const sorted = [...allSouvenirs].sort((a,b) => a.transferNumber - b.transferNumber);
     let biggestOverpayId = -1, biggestOverpayPct = 0;
-    for (let i = 0; i < sorted.length - 1; i++) {
+    // Also build per-card overpay map: tokenId → overpay %
+    const overpayMap = {};
+    const STARTING_PRICE = 0.001;
+    for (let i = 0; i < sorted.length; i++) {
       const paid    = parseFloat(sorted[i].pricePaid);
-      const nextPaid = parseFloat(sorted[i+1].pricePaid);
-      if (!paid || !nextPaid) continue;
-      const minAsk = paid * tieredBps(paid);
-      const overPct = ((nextPaid - minAsk) / minAsk) * 100;
-      if (overPct > biggestOverpayPct) { biggestOverpayPct = overPct; biggestOverpayId = sorted[i].tokenId; }
+      const prevPaid = i === 0 ? STARTING_PRICE : parseFloat(sorted[i-1].pricePaid);
+      if (!paid || !prevPaid) continue;
+      const minAsk = prevPaid * tieredBps(prevPaid);
+      const overPct = Math.max(0, ((paid - minAsk) / minAsk) * 100);
+      overpayMap[sorted[i].tokenId] = overPct;
+      // Biggest overpay uses the BUYER of the NEXT card (existing logic kept)
+      if (i < sorted.length - 1) {
+        const nextPaid = parseFloat(sorted[i+1].pricePaid);
+        const nextMin  = paid * tieredBps(paid);
+        const nextOver = ((nextPaid - nextMin) / nextMin) * 100;
+        if (nextOver > biggestOverpayPct) { biggestOverpayPct = nextOver; biggestOverpayId = sorted[i].tokenId; }
+      }
     }
+
+    // Pre-load profiles for all addresses on cards
+    await loadProfiles(allSouvenirs.map(s => s.originalOwner).filter(Boolean));
 
     gallery.innerHTML = data.souvenirs.map(s => {
       const tier       = s.rarityTier || 'common';
@@ -1839,21 +1858,30 @@ async function loadGallery() {
       if (s.tokenId === latestId && s.tokenId !== genesisId)      rankBadges.push(b('🔥','LATEST',          'rgba(232,24,106,0.12)','var(--pink)','rgba(232,24,106,0.3)'));
       const rankRow = rankBadges.length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;">${rankBadges.join('')}</div>` : '';
 
-      // Stats row: hold time + price paid + short address
+      // Stats row: hold time + price paid + overpay + player name
       const holdStr  = s.holdDurationHours >= 24
         ? `${(s.holdDurationHours / 24).toFixed(1)}d`
         : `${s.holdDurationHours}h`;
-      const priceStr = parseFloat(s.pricePaid) > 0 ? `${parseFloat(s.pricePaid).toFixed(4)} ETH` : '—';
-      const addrStr  = s.originalOwner ? s.originalOwner.slice(0,6) + '…' + s.originalOwner.slice(-4) : '';
+      const priceStr   = parseFloat(s.pricePaid) > 0 ? `${parseFloat(s.pricePaid).toFixed(4)} ETH` : '—';
+      const playerName = getDisplayName(s.originalOwner);
+      const overpayPct = overpayMap[s.tokenId];
+      const overpayStr = (overpayPct != null && overpayPct >= 1)
+        ? `+${overpayPct < 10 ? overpayPct.toFixed(1) : Math.round(overpayPct)}% overpay`
+        : null;
+      // Boost level derived from overpay %
+      const boostLevel = !overpayPct ? 0 : overpayPct >= 100 ? 4 : overpayPct >= 50 ? 3 : overpayPct >= 25 ? 2 : overpayPct >= 10 ? 1 : 0;
+      const boostStr   = boostLevel > 0 ? '⚡'.repeat(boostLevel) : null;
+
       const statsRow = `
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
           <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:rgba(255,245,224,0.3);">Hand #${s.transferNumber}</span>
           <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:rgba(255,245,224,0.3);">⏱ ${holdStr}</span>
         </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:var(--yellow);">${priceStr}</span>
-          <span style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:rgba(255,245,224,0.2);">${addrStr}</span>
-        </div>`;
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+          <span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:var(--yellow);">${priceStr}</span>
+          ${overpayStr ? `<span style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:rgba(232,24,106,0.7);">${overpayStr}${boostStr ? ' ' + boostStr : ''}</span>` : ''}
+        </div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:rgba(255,245,224,0.25);margin-bottom:8px;">${playerName}</div>`;
 
       const cardStyle = isOwned ? ' style="border-color:var(--yellow);"' : '';
 
