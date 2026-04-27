@@ -183,6 +183,37 @@
     color: rgba(255,245,224,0.75);
     font-weight: 500;
   }
+  .hero-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 0.5px solid rgba(255,245,224,0.08);
+  }
+  .hero-step {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .step-num {
+    font-family: 'Black Ops One', sans-serif;
+    font-size: 13px;
+    color: var(--pink);
+    opacity: 0.6;
+    flex-shrink: 0;
+    width: 22px;
+    padding-top: 1px;
+  }
+  .step-text {
+    font-size: 13px;
+    color: rgba(255,245,224,0.5);
+    line-height: 1.5;
+  }
+  .step-text strong {
+    color: rgba(255,245,224,0.8);
+    font-weight: 600;
+  }
 
   .hero-stats {
     display: grid;
@@ -726,6 +757,20 @@
         Every transfer mints a souvenir. <span>Only strong hands get Legendary.</span>
       </div>
     </div>
+    <div class="hero-steps">
+      <div class="hero-step">
+        <div class="step-num">01</div>
+        <div class="step-text"><strong>Buy the potato.</strong> Pay the current price and set your own asking price. Price only ever goes up.</div>
+      </div>
+      <div class="hero-step">
+        <div class="step-num">02</div>
+        <div class="step-text"><strong>Hold your nerve.</strong> Every hour you hold, your souvenir rarity improves — from Common all the way to Legendary.</div>
+      </div>
+      <div class="hero-step">
+        <div class="step-num">03</div>
+        <div class="step-text"><strong>Get bought out, cash in.</strong> Someone pays your asking price. You pocket the difference and keep your souvenir forever.</div>
+      </div>
+    </div>
   </div>
   <div class="hero-right">
     <div class="potato-wrap">
@@ -779,7 +824,10 @@
         <div class="brewing-odd"><span class="brewing-odd-label">👑 Legendary</span><span class="brewing-odd-val hi" id="bo-legendary">1%</span></div>
       </div>
       <div class="brewing-progress"><div class="brewing-progress-fill" id="brewing-progress-fill" style="width:5%"></div></div>
-      <div class="brewing-next" id="brewing-next">Hold 24h for Rare odds</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
+        <div id="brewing-steal" style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.05em;color:var(--pink);opacity:0.7;">Buy now → they get Common</div>
+        <div class="brewing-next" id="brewing-next" style="margin-top:0;">Hold 6h for Rare odds</div>
+      </div>
     </div>
   </div>
 </div>
@@ -787,7 +835,6 @@
 <div class="section" id="rules">
   <div class="section-header">
     <div class="section-title">THE RULES</div>
-    <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#FF3B3B;">⚠️ For strong hands only</div>
   </div>
 
   <div class="rules-tabs">
@@ -1268,6 +1315,14 @@ function updateBrewingPanel(holdHours) {
   // Next threshold label
   const nextEl = document.getElementById('brewing-next');
   if (nextEl) nextEl.textContent = tierData.nextLabel;
+
+  // Buyer's intel — shows what the current holder would receive if bought out NOW
+  const stealEl = document.getElementById('brewing-steal');
+  if (stealEl) {
+    const tierLabels = { common: 'Common', rare: 'Rare', epic: 'Epic', legendary: 'Legendary' };
+    const label = tierLabels[tier] || 'Common';
+    stealEl.textContent = `Buy now → they walk away with ${label} odds`;
+  }
 
   // Only update classes if tier changed (avoid jank)
   if (tier === _lastBrewingTier) return;
