@@ -192,7 +192,7 @@ const LOYALTY_ABI = [
 // Count how many times this wallet has previously held on-chain
 async function countOnChainHolds(walletAddress) {
   const rpcUrl = process.env.RPC_URL;
-  const contractAddress = process.env.CONTRACT_ADDRESS || '0x90Bfcf98282445B35e3ce48b9Eb21E532E603473';
+  const contractAddress = process.env.SOUVENIR_ADDRESS || process.env.CONTRACT_ADDRESS;
   if (!rpcUrl) return 0;
   const provider = new ethers.JsonRpcProvider(rpcUrl);
   const contract = new ethers.Contract(contractAddress, LOYALTY_ABI, provider);
