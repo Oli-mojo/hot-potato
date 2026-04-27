@@ -192,7 +192,7 @@
     border: 0.5px solid var(--border);
     border-radius: 8px;
     overflow: hidden;
-    margin-bottom: 28px;
+    width: 100%;
   }
   .stat { background: var(--card-bg); padding: 14px 16px; }
   .stat-val {
@@ -242,8 +242,9 @@
     overflow: hidden;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 10px;
-    width: fit-content;
+    width: 100%;
   }
   .buy-btn::after {
     content: '';
@@ -261,10 +262,10 @@
   .hero-right {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
     justify-content: center;
-    gap: 24px;
-    padding: 40px;
+    gap: 16px;
+    padding: 32px 40px;
     background: radial-gradient(ellipse at center, rgba(232,24,106,0.12) 0%, transparent 70%);
     position: relative;
   }
@@ -273,6 +274,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    align-self: center;
   }
   .potato-card {
     background: var(--pink);
@@ -592,12 +594,14 @@
   .footer-link:hover { color: var(--pink); }
 
   @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-  .hero-left > * { animation: fadeInUp 0.5s ease both; }
+  .hero-left > *, .hero-right > * { animation: fadeInUp 0.5s ease both; }
   .hero-eyebrow  { animation-delay: 0.05s; }
   .hero-title    { animation-delay: 0.12s; }
   .hero-tagline  { animation-delay: 0.18s; }
-  .hero-stats    { animation-delay: 0.24s; }
+  .potato-wrap   { animation-delay: 0.10s; }
+  .hero-stats    { animation-delay: 0.22s; }
   .buy-section   { animation-delay: 0.30s; }
+  .brewing-panel { animation-delay: 0.36s; }
 
   /* Timer drama */
   .hold-timer { transition: color .8s ease; }
@@ -722,6 +726,20 @@
         Every transfer mints a souvenir. <span>Only strong hands get Legendary.</span>
       </div>
     </div>
+  </div>
+  <div class="hero-right">
+    <div class="potato-wrap">
+      <div class="heat-meter">
+        <div class="heat-bar"><div class="heat-fill" id="heat-fill"></div></div>
+        <div class="heat-label">Heat</div>
+      </div>
+      <div class="potato-aura" id="potato-aura"></div>
+      <div class="potato-card" id="potato-card">
+        <div class="potato-badge">⚠️ For strong hands only</div>
+        <img class="potato-img" src="hero-potato.jpg" alt="Hot Potato">
+        <div class="potato-owner" id="potato-owner">Owner: 0x4f2a…8c3e</div>
+      </div>
+    </div>
     <div class="hero-stats">
       <div class="stat"><div class="stat-val" id="stat-price">…</div><div class="stat-lbl">ETH Price</div></div>
       <div class="stat"><div class="stat-val" id="stat-transfers">…</div><div class="stat-lbl">Transfers</div></div>
@@ -739,20 +757,6 @@
       </div>
       <button class="buy-btn" id="buy-btn" onclick="openModal()">🥔 BUY THE POTATO</button>
       <div class="buy-note">Minimum bid: … ETH</div>
-    </div>
-  </div>
-  <div class="hero-right">
-    <div class="potato-wrap">
-      <div class="heat-meter">
-        <div class="heat-bar"><div class="heat-fill" id="heat-fill"></div></div>
-        <div class="heat-label">Heat</div>
-      </div>
-      <div class="potato-aura" id="potato-aura"></div>
-      <div class="potato-card" id="potato-card">
-        <div class="potato-badge">⚠️ For strong hands only</div>
-        <img class="potato-img" src="hero-potato.jpg" alt="Hot Potato">
-        <div class="potato-owner" id="potato-owner">Owner: 0x4f2a…8c3e</div>
-      </div>
     </div>
     <!-- Souvenir brewing panel -->
     <div class="brewing-panel" id="brewing-panel">
