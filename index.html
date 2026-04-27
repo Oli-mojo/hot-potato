@@ -427,6 +427,49 @@
     font-family: 'Barlow Condensed', sans-serif; font-size: 10px;
     color: rgba(255,245,224,0.25); margin-top: 6px; text-align: right;
   }
+  .brewing-info-wrap {
+    position: relative; display: inline-flex; align-items: center; gap: 5px;
+  }
+  .brewing-info-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 13px; height: 13px; border-radius: 50%;
+    border: 1px solid rgba(255,245,224,0.2);
+    font-size: 8px; font-style: normal; font-weight: 700;
+    color: rgba(255,245,224,0.3); cursor: default; line-height: 1;
+    font-family: 'Barlow Condensed', sans-serif;
+    flex-shrink: 0;
+  }
+  .brewing-tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    width: 220px;
+    background: rgba(20,14,8,0.96);
+    border: 0.5px solid rgba(255,245,224,0.15);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    line-height: 1.5;
+    color: rgba(255,245,224,0.6);
+    z-index: 100;
+    pointer-events: none;
+  }
+  .brewing-tooltip strong {
+    display: block;
+    color: rgba(255,245,224,0.85);
+    font-size: 12px;
+    margin-bottom: 5px;
+  }
+  .brewing-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%; left: 12px;
+    border: 5px solid transparent;
+    border-top-color: rgba(255,245,224,0.15);
+  }
+  .brewing-info-wrap:hover .brewing-tooltip { display: block; }
 
   .section { padding: 48px 24px; border-bottom: 0.5px solid var(--border); }
   .section-header { display: flex; align-items: baseline; gap: 16px; margin-bottom: 24px; }
@@ -508,19 +551,19 @@
   .modal-overlay.open { display: flex; }
   .modal { background: var(--card-bg); border: 0.5px solid var(--border); border-radius: 16px; padding: 32px; width: 380px; position: relative; }
   .modal-title { font-family: 'Black Ops One', sans-serif; font-size: 22px; color: var(--cream); letter-spacing: 1px; margin-bottom: 6px; }
-  .modal-sub { font-size: 13px; color: rgba(255,245,224,0.4); margin-bottom: 24px; line-height: 1.5; }
+  .modal-sub { font-size: 13px; color: rgba(255,245,224,0.65); margin-bottom: 24px; line-height: 1.5; }
   .modal-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 0.5px solid var(--border); font-size: 13px; }
   .modal-row:last-of-type { border-bottom: none; }
-  .modal-key { color: rgba(255,245,224,0.4); }
+  .modal-key { color: rgba(255,245,224,0.6); }
   .modal-val { font-weight: 500; color: var(--cream); }
   .modal-val.yellow { color: var(--yellow); font-family: 'Black Ops One', sans-serif; }
-  .modal-input-label { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,245,224,0.4); margin-top: 20px; margin-bottom: 8px; }
+  .modal-input-label { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,245,224,0.6); margin-top: 20px; margin-bottom: 8px; }
   .modal-input { width: 100%; background: rgba(255,245,224,0.05); border: 0.5px solid var(--border); border-radius: 6px; padding: 12px 14px; font-family: 'Black Ops One', sans-serif; font-size: 18px; color: var(--cream); outline: none; transition: border-color .2s; }
   .modal-input:focus { border-color: var(--pink); }
-  .modal-input-note { font-size: 11px; color: rgba(255,245,224,0.25); margin-top: 6px; }
+  .modal-input-note { font-size: 11px; color: rgba(255,245,224,0.5); margin-top: 6px; }
   .modal-buy-btn { width: 100%; margin-top: 20px; font-family: 'Black Ops One', sans-serif; font-size: 16px; letter-spacing: 2px; background: var(--pink); color: #fff; border: none; padding: 16px; border-radius: 6px; cursor: pointer; transition: background .2s; }
   .modal-buy-btn:hover { background: var(--pink-light); }
-  .modal-close { position: absolute; top: 16px; right: 16px; background: transparent; border: none; color: rgba(255,245,224,0.3); font-size: 20px; cursor: pointer; transition: color .2s; }
+  .modal-close { position: absolute; top: 16px; right: 16px; background: transparent; border: none; color: rgba(255,245,224,0.4); font-size: 20px; cursor: pointer; transition: color .2s; }
   .modal-close:hover { color: var(--cream); }
 
   .promo-toggle { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,245,224,0.3); cursor: pointer; margin-top: 14px; display: inline-block; transition: color .2s; }
@@ -705,7 +748,7 @@
       </div>
       <div class="potato-aura" id="potato-aura"></div>
       <div class="potato-card" id="potato-card">
-        <div class="potato-badge">🔥 ALWAYS FOR SALE</div>
+        <div class="potato-badge">⚠️ For strong hands only</div>
         <img class="potato-img" src="hero-potato.jpg" alt="Hot Potato">
         <div class="potato-owner" id="potato-owner">Owner: 0x4f2a…8c3e</div>
       </div>
@@ -713,7 +756,15 @@
     <!-- Souvenir brewing panel -->
     <div class="brewing-panel" id="brewing-panel">
       <div class="brewing-header">
-        <span class="brewing-label">🎁 Souvenir brewing…</span>
+        <span class="brewing-info-wrap">
+          <span class="brewing-label">🎁 Souvenir brewing…</span>
+          <i class="brewing-info-icon">i</i>
+          <div class="brewing-tooltip">
+            <strong>What is this?</strong>
+            Every time someone buys the potato from you, you receive a souvenir NFT — a one-of-a-kind keepsake of your hold.<br><br>
+            These are the current odds for what rarity yours will be. The longer the current holder waits, the better the chances of landing something rare.
+          </div>
+        </span>
         <span class="brewing-tier-badge tier-common" id="brewing-tier-badge">COMMON</span>
       </div>
       <div class="brewing-odds" id="brewing-odds">
