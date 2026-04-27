@@ -603,6 +603,11 @@
   .lb-name  { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; color: rgba(255,245,224,0.85); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .lb-taunt { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; color: rgba(255,245,224,0.35); font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+  /* Overpay quick-select buttons */
+  .overpay-btn { background: rgba(255,245,224,0.05); border: 0.5px solid rgba(255,245,224,0.12); border-radius: 6px; padding: 8px 0; font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.05em; color: rgba(255,245,224,0.4); cursor: pointer; flex: 1; transition: all .15s; }
+  .overpay-btn:hover { border-color: rgba(232,24,106,0.4); color: var(--pink); }
+  .overpay-btn.active { background: rgba(232,24,106,0.12); border-color: rgba(232,24,106,0.45); color: var(--pink); }
+
   /* Leave Your Mark — buy modal profile section */
   .leave-mark-section { margin-top: 14px; padding: 12px; background: rgba(255,245,224,0.03); border: 0.5px solid rgba(255,245,224,0.08); border-radius: 8px; }
   .leave-mark-title { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,245,224,0.35); margin-bottom: 8px; }
@@ -725,10 +730,13 @@
 
 <div class="section" id="rules">
   <div style="text-align:center;margin-bottom:32px;padding:28px 20px;border:0.5px solid rgba(232,24,106,0.15);border-radius:12px;background:rgba(232,24,106,0.03);">
-    <div style="font-family:'Black Ops One',sans-serif;font-size:22px;color:var(--cream);line-height:1.3;margin-bottom:14px;">"Whoever told you hell was hot<br>was wrong."</div>
-    <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#FF3B3B;">⚠️ WARNING — For strong hands only</div>
+    <div style="font-family:'Black Ops One',sans-serif;font-size:22px;color:var(--cream);line-height:1.3;margin-bottom:8px;white-space:nowrap;">"Whoever told you hell was hot was wrong."</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:rgba(255,245,224,0.3);letter-spacing:0.05em;margin-bottom:14px;">— Salvador "Sal" Fuego, former Hot Potato holder</div>
   </div>
-  <div class="section-header"><div class="section-title">THE RULES</div></div>
+  <div class="section-header">
+    <div class="section-title">THE RULES</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#FF3B3B;">⚠️ For strong hands only</div>
+  </div>
 
   <div class="rules-tabs">
     <button class="rules-tab active" onclick="showRulesTab('how-it-works', this)">How It Works</button>
@@ -748,7 +756,7 @@
       <div class="rule-card">
         <span class="rule-icon">📈</span>
         <div class="rule-title">Price Only Goes Up</div>
-        <div class="rule-desc">Every buyer must set a new asking price above what they paid — <span class="rule-highlight">5–25% minimum</span>, scaling down as price rises. Enforced on-chain — no exceptions. <span class="rule-highlight">Overpay above the minimum</span> and you'll get a rarity boost on your souvenir when you're eventually bought out.</div>
+        <div class="rule-desc">Every buyer must set a new asking price above what they paid. At low prices the minimum is <span class="rule-highlight">+25%</span>. It scales down to +5% as price rises. Enforced on-chain — no exceptions. <span class="rule-highlight">Overpay above the minimum</span> and you'll bank a rarity boost on your future souvenir.</div>
       </div>
       <div class="rule-card">
         <span class="rule-icon">🎁</span>
@@ -936,7 +944,19 @@
     <button class="modal-close" onclick="closeModal()">✕</button>
     <div class="modal-title">BUY THE POTATO</div>
     <div class="modal-sub">You're entering an unstoppable game. Pay the price — the current holder cashes out and earns their souvenir. Set your ask price high: the next buyer pays <em>you</em> that amount. Hold longer for a rarer souvenir when your turn comes.</div>
-    <div class="modal-row"><span class="modal-key">Current price</span><span class="modal-val yellow">0.42 ETH</span></div>
+    <div class="modal-row"><span class="modal-key">Current price</span><span class="modal-val yellow" id="modal-current-price">0.42 ETH</span></div>
+
+    <div style="margin:12px 0 4px;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,245,224,0.3);margin-bottom:7px;">Overpay by — bank a rarity boost ⚡</div>
+      <div style="display:flex;gap:6px;">
+        <button class="overpay-btn active" onclick="setOverpay(0, this)">Exact</button>
+        <button class="overpay-btn" onclick="setOverpay(0.20, this)">+20% ⚡</button>
+        <button class="overpay-btn" onclick="setOverpay(0.30, this)">+30% ⚡⚡</button>
+        <button class="overpay-btn" onclick="setOverpay(0.50, this)">+50% ⚡⚡⚡</button>
+      </div>
+      <div id="overpay-summary" style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:rgba(255,245,224,0.3);margin-top:6px;min-height:16px;"></div>
+    </div>
+
     <div class="modal-input-label" id="modal-input-label">Your new asking price (min. 0.012 ETH)</div>
     <input class="modal-input" type="text" inputmode="decimal" id="new-price-input" value="0.50">
     <div class="modal-input-note">Set this higher to maximise your profit when the next buyer comes.</div>
@@ -1008,6 +1028,7 @@ let gameState = null;
 let walletAddress = null;
 let holdSeconds = 0;
 let playerProfiles = {}; // cache: lowercaseAddress → { name, taunt }
+let overpayMultiplier = 1.0; // 1.0 = exact price, 1.2 = +20%, etc.
 
 const rarityLabel = { common: 'Common', rare: 'Rare', epic: 'Epic', legendary: 'Legendary' };
 const rarityClass  = { common: 'r-common', rare: 'r-rare', epic: 'r-epic', legendary: 'r-legend' };
@@ -1393,7 +1414,34 @@ async function claimLoyalty() {
     if (btn) { btn.textContent = 'Claim Boost'; btn.disabled = false; }
   }
 }
-function closeModal() { document.getElementById('modal').classList.remove('open'); }
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  // Reset overpay to exact on close
+  overpayMultiplier = 1.0;
+  document.querySelectorAll('.overpay-btn').forEach((b, i) => {
+    b.classList.toggle('active', i === 0);
+  });
+  const summary = document.getElementById('overpay-summary');
+  if (summary) summary.textContent = '';
+}
+
+function setOverpay(pct, btn) {
+  overpayMultiplier = 1 + pct;
+  document.querySelectorAll('.overpay-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  const summary = document.getElementById('overpay-summary');
+  if (!summary) return;
+  if (pct === 0) { summary.textContent = ''; return; }
+
+  const baseEth = gameState ? parseFloat(gameState.currentPrice) : 0;
+  if (!baseEth) return;
+  const payEth   = baseEth * overpayMultiplier;
+  const boostPct = pct * 100;
+  const boostLvl = boostPct >= 100 ? 4 : boostPct >= 50 ? 3 : boostPct >= 25 ? 2 : boostPct >= 10 ? 1 : 0;
+  const stars    = '⚡'.repeat(boostLvl);
+  summary.textContent = `You'll pay ${payEth.toFixed(4)} ETH — boost level ${boostLvl} ${stars}`;
+}
 
 // ─── REFERRAL CODE ────────────────────────────────────────
 async function showReferralCode() {
@@ -1457,7 +1505,10 @@ async function confirmBuy() {
     return;
   }
 
-  const minPrice = gameState?._minNext || Math.ceil(currentPriceEth * 1.15 * 10000) / 10000;
+  // Min new ask is based on what you actually send (with overpay applied)
+  const effectiveSend = currentPriceEth * overpayMultiplier;
+  const tieredMult = effectiveSend < 0.1 ? 1.25 : effectiveSend < 1 ? 1.15 : effectiveSend < 10 ? 1.10 : effectiveSend < 100 ? 1.07 : 1.05;
+  const minPrice = Math.ceil(effectiveSend * tieredMult * 100000) / 100000;
   if (isNaN(newPriceEth) || newPriceEth < minPrice) {
     document.getElementById('new-price-input').style.borderColor = '#FF4444';
     showToast(`⚠️ New price must be ≥ ${minPrice.toFixed(4)} ETH`, '#FF6B00');
@@ -1471,10 +1522,9 @@ async function confirmBuy() {
     const signer = await provider.getSigner();
     const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
 
-    // Use exact wei value to avoid rounding errors on send
-    const sendValue = gameState?.currentPriceWei
-      ? BigInt(gameState.currentPriceWei)
-      : ethers.parseEther(currentPriceEth.toString());
+    // Apply overpay multiplier — default 1.0 (exact price)
+    const sendEth   = currentPriceEth * overpayMultiplier;
+    const sendValue = ethers.parseEther(sendEth.toFixed(8));
     const newAskingPrice = ethers.parseEther(newPriceEth.toFixed(6));
 
     btn.textContent = '⏳ Waiting for wallet...';
