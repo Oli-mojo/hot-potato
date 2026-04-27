@@ -604,16 +604,16 @@
   .modal-overlay.open { display: flex; }
   .modal { background: var(--card-bg); border: 0.5px solid var(--border); border-radius: 16px; padding: 32px; width: 380px; position: relative; }
   .modal-title { font-family: 'Black Ops One', sans-serif; font-size: 22px; color: var(--cream); letter-spacing: 1px; margin-bottom: 6px; }
-  .modal-sub { font-size: 13px; color: rgba(255,245,224,0.65); margin-bottom: 24px; line-height: 1.5; }
+  .modal-sub { font-size: 13px; color: rgba(255,245,224,0.85); margin-bottom: 24px; line-height: 1.5; }
   .modal-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 0.5px solid var(--border); font-size: 13px; }
   .modal-row:last-of-type { border-bottom: none; }
   .modal-key { color: rgba(255,245,224,0.6); }
   .modal-val { font-weight: 500; color: var(--cream); }
   .modal-val.yellow { color: var(--yellow); font-family: 'Black Ops One', sans-serif; }
-  .modal-input-label { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,245,224,0.6); margin-top: 20px; margin-bottom: 8px; }
+  .modal-input-label { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,245,224,0.8); margin-top: 20px; margin-bottom: 8px; }
   .modal-input { width: 100%; background: rgba(255,245,224,0.05); border: 0.5px solid var(--border); border-radius: 6px; padding: 12px 14px; font-family: 'Black Ops One', sans-serif; font-size: 18px; color: var(--cream); outline: none; transition: border-color .2s; }
   .modal-input:focus { border-color: var(--pink); }
-  .modal-input-note { font-size: 11px; color: rgba(255,245,224,0.5); margin-top: 6px; }
+  .modal-input-note { font-size: 11px; color: rgba(255,245,224,0.7); margin-top: 6px; }
   .modal-buy-btn { width: 100%; margin-top: 20px; font-family: 'Black Ops One', sans-serif; font-size: 16px; letter-spacing: 2px; background: var(--pink); color: #fff; border: none; padding: 16px; border-radius: 6px; cursor: pointer; transition: background .2s; }
   .modal-buy-btn:hover { background: var(--pink-light); }
   .modal-close { position: absolute; top: 16px; right: 16px; background: transparent; border: none; color: rgba(255,245,224,0.4); font-size: 20px; cursor: pointer; transition: color .2s; }
@@ -708,7 +708,7 @@
 
   /* Leave Your Mark — buy modal profile section */
   .leave-mark-section { margin-top: 14px; padding: 12px; background: rgba(255,245,224,0.03); border: 0.5px solid rgba(255,245,224,0.08); border-radius: 8px; }
-  .leave-mark-title { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,245,224,0.35); margin-bottom: 8px; }
+  .leave-mark-title { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,245,224,0.7); margin-bottom: 8px; }
   .profile-field { width: 100%; background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,245,224,0.12); border-radius: 6px; color: var(--cream); font-family: 'Barlow Condensed', sans-serif; font-size: 14px; padding: 8px 10px; box-sizing: border-box; outline: none; margin-bottom: 6px; }
   .profile-field:focus { border-color: rgba(255,245,224,0.3); }
   .profile-field::placeholder { color: rgba(255,245,224,0.35); }
@@ -721,12 +721,12 @@
 
   /* Referral display in modal */
   .referral-box { margin-top: 12px; padding: 10px 12px; background: rgba(255,214,0,0.05); border: 0.5px solid rgba(255,214,0,0.18); border-radius: 6px; }
-  .referral-label { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,245,224,0.35); margin-bottom: 5px; }
+  .referral-label { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,245,224,0.7); margin-bottom: 5px; }
   .referral-code-display { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .referral-code-val { font-family: 'Black Ops One', sans-serif; font-size: 14px; color: var(--yellow); letter-spacing: 2px; }
   .referral-copy-btn { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; background: rgba(255,214,0,0.12); border: 0.5px solid rgba(255,214,0,0.3); border-radius: 4px; color: var(--yellow); padding: 4px 10px; cursor: pointer; transition: background .2s; }
   .referral-copy-btn:hover { background: rgba(255,214,0,0.22); }
-  .referral-note { font-size: 11px; color: rgba(255,245,224,0.55); margin-top: 5px; }
+  .referral-note { font-size: 11px; color: rgba(255,245,224,0.75); margin-top: 5px; }
 </style>
 </head>
 <body>
@@ -1060,14 +1060,14 @@
         <button class="overpay-btn" onclick="setOverpay(0.30, this)">+30% ⚡⚡</button>
         <button class="overpay-btn" onclick="setOverpay(0.50, this)">+50% ⚡⚡⚡</button>
       </div>
-      <div id="overpay-summary" style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:rgba(255,245,224,0.55);margin-top:6px;min-height:16px;"></div>
+      <div id="overpay-summary" style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:rgba(255,245,224,0.75);margin-top:6px;min-height:16px;"></div>
     </div>
 
     <div class="modal-input-label" id="modal-input-label">Your new asking price</div>
     <input class="modal-input" type="text" inputmode="decimal" id="new-price-input" value="">
     <div class="modal-input-note">Set this higher to maximise your profit when the next buyer comes.</div>
 
-    <div id="loyalty-status" style="display:none;font-size:12px;color:rgba(255,245,224,0.65);margin-top:14px;padding:8px 10px;background:rgba(255,245,224,0.04);border-radius:6px;border:0.5px solid rgba(255,245,224,0.08);"></div>
+    <div id="loyalty-status" style="display:none;font-size:12px;color:rgba(255,245,224,0.85);margin-top:14px;padding:8px 10px;background:rgba(255,245,224,0.04);border-radius:6px;border:0.5px solid rgba(255,245,224,0.08);"></div>
     <div id="referral-box" class="referral-box" style="display:none;">
       <div class="referral-label">Your referral code — share this</div>
       <div class="referral-code-display">
@@ -1078,7 +1078,7 @@
     </div>
 
     <div style="margin-top:12px;padding:10px 12px;background:rgba(255,245,224,0.03);border:0.5px solid rgba(255,245,224,0.07);border-radius:6px;">
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,245,224,0.6);margin-bottom:6px;">Got a friend's referral or promo code?</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,245,224,0.8);margin-bottom:6px;">Got a friend's referral or promo code?</div>
       <div class="promo-row" style="margin-top:0;">
         <input class="promo-input" type="text" id="promo-input" placeholder="REF-XXXXXXXX or HP-XXXXXXXX">
         <button class="promo-apply-btn" onclick="applyPromoCode()">Apply</button>
