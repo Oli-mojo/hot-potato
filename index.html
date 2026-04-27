@@ -241,8 +241,8 @@
     color: rgba(255,245,224,0.55);
     margin-top: 4px;
   }
-  .buy-section { display: flex; flex-direction: column; gap: 10px; }
-  .price-tag { display: flex; align-items: baseline; gap: 10px; }
+  .buy-section { display: flex; flex-direction: column; gap: 10px; align-items: center; text-align: center; }
+  .price-tag { display: flex; align-items: baseline; gap: 10px; justify-content: center; }
   .price-eth { font-family: 'Black Ops One', sans-serif; font-size: 36px; color: var(--cream); }
   .price-usd { font-size: 14px; color: rgba(255,245,224,0.4); }
   .price-change { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; color: var(--orange); letter-spacing: 0.05em; }
@@ -429,7 +429,7 @@
   }
   .brewing-label {
     font-family: 'Barlow Condensed', sans-serif; font-size: 9px; font-weight: 700;
-    letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,245,224,0.3);
+    letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,245,224,0.55);
   }
   .brewing-tier-badge {
     font-family: 'Black Ops One', sans-serif; font-size: 10px; letter-spacing: 1px;
@@ -446,7 +446,7 @@
     display: flex; align-items: center; justify-content: space-between;
     font-family: 'Barlow Condensed', sans-serif; font-size: 11px;
   }
-  .brewing-odd-label { color: rgba(255,245,224,0.4); }
+  .brewing-odd-label { color: rgba(255,245,224,0.7); }
   .brewing-odd-val   { font-weight: 700; }
   .brewing-odd-val.hi { color: var(--yellow); }
   .brewing-progress {
@@ -459,7 +459,7 @@
   }
   .brewing-next {
     font-family: 'Barlow Condensed', sans-serif; font-size: 10px;
-    color: rgba(255,245,224,0.25); margin-top: 6px; text-align: right;
+    color: rgba(255,245,224,0.5); margin-top: 6px; text-align: right;
   }
   .brewing-info-wrap {
     position: relative; display: inline-flex; align-items: center; gap: 5px;
@@ -754,7 +754,7 @@
       <div class="tagline-main">Price only goes up. ↑</div>
       <div class="tagline-sub">
         Once you buy it, it's yours — until someone takes it.<br>
-        Every transfer mints a souvenir. <span>Only strong hands get Legendary.</span>
+        <span>If they take it — you profit and get a souvenir.</span>
       </div>
     </div>
     <div class="hero-stats">
@@ -784,7 +784,7 @@
       </div>
       <div class="brewing-progress"><div class="brewing-progress-fill" id="brewing-progress-fill" style="width:5%"></div></div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
-        <div id="brewing-steal" style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.05em;color:var(--pink);opacity:0.7;">Buy now → they get Common</div>
+        <div id="brewing-steal" style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.05em;color:var(--pink);">Buy now → they get Common</div>
         <div class="brewing-next" id="brewing-next" style="margin-top:0;">Hold 6h for Rare odds</div>
       </div>
     </div>
@@ -841,7 +841,7 @@
       <div class="rule-card">
         <span class="rule-icon">📈</span>
         <div class="rule-title">Price Only Goes Up</div>
-        <div class="rule-desc">Every buyer must set a new asking price above what they paid. At low prices the minimum is <span class="rule-highlight">+25%</span>. It scales down to +5% as price rises. Enforced on-chain — no exceptions. <span class="rule-highlight">Overpay above the minimum</span> and you'll bank a rarity boost on your future souvenir.</div>
+        <div class="rule-desc">Every buyer must set a new asking price above what they paid. Under 0.1 ETH the minimum is <span class="rule-highlight">+25%</span>. It scales down to +15%, +10%, +7%, +5% as price rises. Enforced on-chain — no exceptions. <span class="rule-highlight">Overpay above the minimum</span> and you bank a rarity boost on your future souvenir.</div>
       </div>
       <div class="rule-card">
         <span class="rule-icon">🎁</span>
@@ -859,8 +859,8 @@
   <!-- Panel 2: Rarity Boost -->
   <div class="rules-panel" id="panel-rarity-boost">
     <p class="boost-intro">
-      Your souvenir rarity starts from <b>how long you hold</b> — but four things can push it higher.
-      <b>Overpaying</b> above the minimum bumps your tier at purchase time.
+      Your souvenir rarity is determined by <b>how long you held</b> — but four things can push it higher.
+      <b>Overpaying</b> above the minimum when you buy stores a boost that applies to your souvenir when you eventually sell.
       <b>Promo codes</b> (from Discord, X, or community events) stack on top.
       <b>Trade in</b> a souvenir you already own to convert it into a single-use boost code.
       And <b>loyal holders</b> — wallets that have held the potato before — automatically get a bonus when they get bought out again. All boosts stack, capped at Legendary.
@@ -914,7 +914,7 @@
       <div class="rule-card">
         <span class="rule-icon">💸</span>
         <div class="rule-title">Overpay Boost</div>
-        <div class="rule-desc">Set your new ask price <span class="rule-highlight">higher than the minimum</span> when you buy. Pay 10–24% over min → +1 tier. 25–49% over → +2. 50–99% → +3. 100%+ → +4 (max).</div>
+        <div class="rule-desc">Pay <span class="rule-highlight">more than the asking price</span> when you buy — the contract stores a boost for your future souvenir. 10–24% over → +1 tier. 25–49% → +2. 50–99% → +3. 100%+ → +4 (max).</div>
       </div>
       <div class="rule-card">
         <span class="rule-icon">🎟️</span>
@@ -1132,7 +1132,9 @@ async function loadGameState() {
       ? parseFloat(gameState.minNextPayment)
       : parseFloat(gameState.currentPrice) * 1.15;
     const minNext = (Math.ceil(rawMin * 10000) / 10000).toFixed(4);
-    const minPct  = gameState.minIncreasePercent ?? 15;
+    // Calculate actual min % from contract-returned values (tiered: 25/15/10/7/5%)
+    const minPct = gameState.minIncreasePercent ??
+      Math.round(((parseFloat(gameState.minNextPayment) / parseFloat(gameState.currentPrice)) - 1) * 100);
     gameState._minNext = parseFloat(minNext); // store for confirmBuy validation
     const holder = gameState.currentOwner;
     const shortHolder = holder ? holder.slice(0, 6) + '...' + holder.slice(-4) : '…';
