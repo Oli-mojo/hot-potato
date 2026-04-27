@@ -1,0 +1,1851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hot Potato 🥔 — The Throne</title>
+<meta name="description" content="Hot Potato — a single NFT, a single throne, a single jackpot. Snipe it, sit on it, or watch it burn.">
+<meta property="og:title" content="Hot Potato — The Throne">
+<meta property="og:description" content="One potato. One throne. One growing pot. Snipe, sit, or spectate.">
+<meta property="og:image" content="hero-potato.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥔</text></svg>">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Barlow+Condensed:wght@400;500;600;700&family=Barlow:wght@400;500;600&display=swap');
+
+  :root {
+    --pink: #E8186A;
+    --pink-light: #FF4D9E;
+    --yellow: #FFD600;
+    --orange: #FF6B00;
+    --ember: #FF3300;
+    --cream: #FFF5E0;
+    --dark: #0F0800;
+    --darker: #07030A;
+    --card-bg: #1A0E05;
+    --card-bg-2: #221308;
+    --border: rgba(232,24,106,0.25);
+    --border-soft: rgba(255,245,224,0.08);
+    --success: #90EE90;
+    --violet: #C4B5F4;
+  }
+
+  /* Last-Supper state overrides entire palette */
+  body[data-state="last-supper"] {
+    --pink: #FF3300;
+    --pink-light: #FF6644;
+    --yellow: #FAC775;
+    --border: rgba(255,51,0,0.35);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--dark);
+    color: var(--cream);
+    font-family: 'Barlow', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    line-height: 1.5;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.4;
+  }
+  a { color: inherit; text-decoration: none; }
+
+  /* ───── TICKER ───── */
+  .ticker {
+    background: var(--pink);
+    padding: 8px 0;
+    overflow: hidden;
+    white-space: nowrap;
+    position: relative;
+    z-index: 2;
+  }
+  .ticker-inner {
+    display: inline-block;
+    animation: ticker 32s linear infinite;
+  }
+  @keyframes ticker {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  .ticker-item {
+    display: inline-block;
+    font-family: 'Black Ops One', sans-serif;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.9);
+    margin: 0 24px;
+  }
+  .ticker-item .tick-hi { color: var(--yellow); }
+  .ticker-sep { display: inline-block; color: rgba(255,255,255,0.4); margin: 0 8px; }
+
+  /* ───── NAV ───── */
+  nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 0.5px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: rgba(15,8,0,0.92);
+    backdrop-filter: blur(12px);
+    z-index: 100;
+  }
+  .nav-logo {
+    font-family: 'Black Ops One', sans-serif;
+    font-size: 22px;
+    color: var(--pink);
+    letter-spacing: 2px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .nav-logo span { color: var(--yellow); }
+  .nav-right { display: flex; align-items: center; gap: 22px; }
+  .nav-link {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,245,224,0.5);
+    cursor: pointer;
+    transition: color .2s;
+  }
+  .nav-link:hover { color: var(--cream); }
+  .nav-link.last-supper-pill { display: none; color: var(--ember); animation: pulse 1.5s ease-in-out infinite; }
+  body[data-state="last-supper"] .nav-link.last-supper-pill { display: inline-block; }
+  .connect-btn {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: var(--pink);
+    color: #fff;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background .2s, transform .1s;
+  }
+  .connect-btn:hover { background: var(--pink-light); }
+  .connect-btn:active { transform: scale(0.97); }
+
+  /* ───── HERO ───── */
+  .hero {
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap: 0;
+    min-height: 620px;
+    border-bottom: 0.5px solid var(--border);
+    position: relative;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(circle at 70% 50%, rgba(255,107,0,0.12) 0%, transparent 60%);
+    z-index: 0;
+  }
+  .hero-left {
+    padding: 56px 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-right: 0.5px solid var(--border);
+    position: relative;
+    z-index: 1;
+  }
+  .hero-eyebrow {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--pink);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .live-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--pink);
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: 0.5; transform: scale(1.4); }
+  }
+  .hero-title {
+    font-family: 'Black Ops One', sans-serif;
+    font-size: 68px;
+    line-height: 0.95;
+    margin-bottom: 6px;
+  }
+  .hero-title .hot { color: var(--pink); }
+  .hero-subtitle {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--yellow);
+    text-transform: uppercase;
+    margin-top: 14px;
+  }
+  .hero-tagline {
+    font-size: 14px;
+    color: rgba(255,245,224,0.58);
+    line-height: 1.7;
+    max-width: 440px;
+    margin-top: 10px;
+    margin-bottom: 30px;
+  }
+  .hero-tagline b { color: var(--cream); font-weight: 600; }
+
+  /* 3-cell stats row */
+  .hero-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+  .stat { background: var(--card-bg); padding: 14px 16px; }
+  .stat-val {
+    font-family: 'Black Ops One', sans-serif;
+    font-size: 24px;
+    color: var(--cream);
+    letter-spacing: 0.02em;
+  }
+  .stat.pot .stat-val { color: var(--yellow); }
+  .stat.stage .stat-val { font-size: 20px; }
+  .stat-lbl {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255,245,224,0.45);
+    margin-top: 4px;
+  }
+  .stat-delta {
+    font-family: 'Barlow', sans-serif;
+    font-size: 11px;
+    color: var(--success);
+    margin-top: 4px;
+  }
+  .stat-delta.warn { color: var(--orange); }
+
+  /* Sit-tier ladder */
+  .ladder {
+    margin-bottom: 22px;
+    padding: 16px 18px;
+    background: rgba(255,245,224,0.03);
+    border: 0.5px solid var(--border-soft);
+    border-radius: 8px;
+  }
+  .ladder-head {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255,245,224,0.45);
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .ladder-head .ladder-next { color: var(--yellow); font-weight: 600; }
+  .ladder-steps {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+  }
+  .ladder-step {
+    padding: 6px 4px;
+    text-align: center;
+    border-radius: 4px;
+    background: rgba(255,245,224,0.04);
+    border: 0.5px solid var(--border-soft);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255,245,224,0.4);
+    transition: all 0.3s ease;
+  }
+  .ladder-step .tier-name { display: block; font-size: 10px; }
+  .ladder-step .tier-pct { display: block; font-size: 10px; color: rgba(255,245,224,0.3); font-weight: 400; margin-top: 2px; }
+  .ladder-step.reached { background: rgba(232,24,106,0.15); border-color: var(--pink); color: var(--cream); }
+  .ladder-step.reached .tier-pct { color: var(--yellow); }
+  .ladder-step.current { background: var(--pink); border-color: var(--pink); color: #fff; box-shadow: 0 0 12px rgba(232,24,106,0.4); }
+  .ladder-step.current .tier-pct { color: var(--yellow); font-weight: 700; }
+
+  .snipe-btn {
+    font-family: 'Black Ops One', sans-serif;
+    font-size: 18px;
+    letter-spacing: 0.08em;
+    background: linear-gradient(135deg, var(--pink) 0%, var(--orange) 100%);
+    color: #fff;
+    border: none;
+    padding: 18px 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    box-shadow: 0 4px 24px rgba(232,24,106,0.3);
+    transition: transform 0.12s, box-shadow 0.2s;
+    width: 100%;
+  }
+  .snipe-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 32px rgba(232,24,106,0.5); }
+  .snipe-btn:active { transform: scale(0.98); }
+  .snipe-sub {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255,245,224,0.45);
+    text-align: center;
+    margin-top: 12px;
+  }
+  .snipe-sub span { color: var(--yellow); }
+
+  /* ───── HERO RIGHT — THE THRONE ───── */
+  .hero-right {
+    position: relative;
+    z-index: 1;
+    padding: 36px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 620px;
+    overflow: hidden;
+  }
+  .throne-stage {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    aspect-ratio: 1/1.1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .throne-stage::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 50% 55%, rgba(255,214,0,0.22) 0%, rgba(255,107,0,0.12) 35%, transparent 70%),
+      radial-gradient(circle at 50% 50%, rgba(232,24,106,0.15) 0%, transparent 50%);
+    filter: blur(4px);
+    animation: radiate 6s ease-in-out infinite;
+  }
+  @keyframes radiate {
+    0%, 100% { opacity: 0.7; transform: scale(1); }
+    50%      { opacity: 1.0; transform: scale(1.03); }
+  }
+  .throne-rays {
+    position: absolute;
+    inset: -10%;
+    background:
+      repeating-conic-gradient(from 0deg at 50% 58%,
+        rgba(255,214,0,0.0) 0deg 8deg,
+        rgba(255,214,0,0.07) 8deg 12deg,
+        rgba(255,214,0,0.0) 12deg 20deg);
+    animation: spin 80s linear infinite;
+    pointer-events: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .throne-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .throne-potato {
+    position: absolute;
+    left: 50%;
+    top: 49%;
+    transform: translate(-50%, -50%);
+    width: 58%;
+    aspect-ratio: 1/1;
+    border-radius: 50%;
+    overflow: hidden;
+    box-shadow:
+      0 0 0 6px rgba(15,8,0,0.9),
+      0 0 0 9px var(--yellow),
+      0 0 0 11px rgba(15,8,0,0.9),
+      0 0 60px rgba(255,214,0,0.35);
+    z-index: 3;
+    transition: opacity 0.5s;
+  }
+  .throne-potato img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .sprout-leaf {
+    position: absolute;
+    top: -8%;
+    left: 52%;
+    transform: translateX(-50%) rotate(-8deg);
+    font-size: 64px;
+    z-index: 4;
+    opacity: 0;
+    transition: opacity 0.6s, font-size 0.6s, top 0.6s;
+    filter: drop-shadow(0 4px 12px rgba(100,220,100,0.4));
+  }
+  .throne-stage[data-stage="1"] .sprout-leaf,
+  .throne-stage[data-stage="2"] .sprout-leaf,
+  .throne-stage[data-stage="3"] .sprout-leaf,
+  .throne-stage[data-stage="4"] .sprout-leaf,
+  .throne-stage[data-stage="5"] .sprout-leaf { opacity: 1; }
+  .throne-stage[data-stage="2"] .sprout-leaf { font-size: 80px; top: -12%; }
+  .throne-stage[data-stage="3"] .sprout-leaf { font-size: 96px; top: -16%; }
+  .throne-stage[data-stage="4"] .sprout-leaf { font-size: 110px; top: -20%; }
+  .throne-stage[data-stage="5"] .sprout-leaf { font-size: 120px; top: -22%; filter: drop-shadow(0 4px 16px var(--yellow)); }
+
+  .throne-crown {
+    position: absolute;
+    top: 6%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 54px;
+    z-index: 5;
+    filter: drop-shadow(0 4px 8px rgba(255,214,0,0.6));
+    animation: crownBob 4s ease-in-out infinite;
+  }
+  @keyframes crownBob {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50%      { transform: translateX(-50%) translateY(-4px); }
+  }
+
+  .throne-holder-chip {
+    position: absolute;
+    bottom: 2%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    z-index: 6;
+    white-space: nowrap;
+  }
+  .throne-holder-chip .hc-name { color: var(--cream); }
+  .throne-holder-chip .hc-addr { color: rgba(255,245,224,0.4); font-family: 'Courier New', monospace; font-weight: 400; margin-left: 6px; }
+
+  /* ───── POT WIDGET ───── */
+  .pot-section {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border-bottom: 0.5px solid var(--border);
+  }
+  .pot-card {
+    background: var(--card-bg);
+    padding: 36px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .pot-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 20% 0%, rgba(255,214,0,0.12) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .pot-head {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--orange);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+  }
+  .pot-head .live-dot { background: var(--orange); }
+  .pot-amount {
+    font-family: 'Black Ops One', sans-serif;
+    font-size: 72px;
+    line-height: 1;
+    color: var(--yellow);
+    letter-spacing: 0.01em;
+    text-shadow: 0 0 40px rgba(255,214,0,0.4);
+    position: relative;
+  }
+  .pot-amount .pot-unit { font-size: 32px; color: var(--cream); margin-left: 8px; }
+  .pot-usd {
+    font-family: 'Barlow', sans-serif;
+    font-size: 16px;
+    color: rgba(255,245,224,0.5);
+    margin-top: 4px;
+    margin-bottom: 20px;
+    position: relative;
+  }
+  .reserve-block {
+    position: relative;
+    margin: 4px 0 20px;
+    padding: 14px 18px;
+    background: rgba(197,156,255,0.06);
+    border: 1px solid rgba(197,156,255,0.25);
+    border-radius: 10px;
+  }
+  .reserve-head {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #C59CFF;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .reserve-head .reserve-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #C59CFF; box-shadow: 0 0 8px #C59CFF;
+  }
+  .reserve-amount {
+    font-family: 'Black Ops One', sans-serif;
+    font-size: 36px;
+    line-height: 1;
+    color: #E1C4FF;
+    letter-spacing: 0.01em;
+  }
+  .reserve-amount .reserve-unit { font-size: 16px; color: rgba(255,245,224,0.6); margin-left: 6px; }
+  .reserve-desc {
+    font-family: 'Barlow', sans-serif;
+    font-size: 12px;
+    color: rgba(255,245,224,0.55);
+    margin-top: 6px;
+  }
+  .reserve-desc .ok { color: #7DFFA8; }
+  .pot-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    position: relative;
+  }
+  .pot-slot {
+    padding: 12px 14px;
+    background: rgba(255,245,224,0.04);
+    border: 0.5px solid var(--border-soft);
+    border-radius: 6px;
+  }
+  .pot-slot-lbl {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255,245,224,0.4);
+    margin-bottom: 4px;
+  }
+  .pot-slot-val {
+    font-family: 'Black Ops One', sans-serif;
+    font-size: 18px;
+    color: var(--cream);
+  }
+  .pot-slot.current-holder .pot-slot-val { color: var(--yellow); }
+
+  .pot-spark {
+    margin-top: 20px;
+    position: relative;
+  }
+  .pot-spark-lbl {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255,245,224,0.35);
+    margin-bottom: 4px;
+  }
+  .pot-spark svg { width: 100%; height: 40px; }
+
+  .pot-feed {
+    background: var(--card-bg-2);
+    padding: 36px 32px;
+    overflow-y: auto;
+    max-height: 440px;
+  }
+  .pot-feed-head {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--pink);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .feed-item {
+    padding: 10px 0;
+    border-bottom: 0.5px dashed var(--border-soft);
+    font-size: 13px;
+    color: rgba(255,245,224,0.75);
+  }
+  .feed-item:last-child { border-bottom: none; }
+  .feed-time {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,245,224,0.4);
+    margin-bottom: 2px;
+  }
+  .feed-item b { color: var(--yellow); font-weight: 600; }
+  .feed-item .feed-amt { color: var(--success); font-family: 'Courier New', monospace; }
+  .feed-item.story {
+    padding: 12px 14px;
+    background: rgba(232,24,106,0.06);
+    border: 0.5px solid var(--border);
+    border-radius: 6px;
+    margin: 6px 0;
+    border-bottom: none;
+  }
+  .feed-item.story .feed-quote {
+    font-style: italic;
+    color: rgba(255,245,224,0.85);
+    margin-top: 4px;
+    font-size: 13px;
+  }
+
+  /* ───── SPROUTING CLOCK ───── */
+  .sprout-section {
+    padding: 60px 40px;
+    border-bottom: 0.5px solid var(--border);
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 40px;
+    align-items: center;
+  }
+  .sprout-left .section-eyebrow {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--success);
+    margin-bottom: 10px;
+  }
+  .sprout-title {
+    font-family: 'Black Ops One', sans-serif;
+    font-size: 40px;
+    line-height: 1;
+    margin-bottom: 14px;
+  }
+  .sprout-title .leaf { color: var(--success); }
+  .sprout-desc {
+    font-size: 14px;
+    color: rgba(255,245,224,0.6);
+    line-height: 1.7;
+    max-width: 440px;
+    margin-bottom: 24px;
+  }
+  .sprout-countdown-box {
+    padding: 20px 24px;
+    background: var(--card-bg);
+    border: 0.5px solid var(--border-soft);
+    border-left: 3px solid var(--success);
+    border-radius: 6px;
+    margin-bottom: 14px;
+  }
+  .sprout-countdown-lbl {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255,245,224,0.45);
+    margin-bottom: 4px;
+  }
+  .sprout-countdown-val {
+    font-family: 'Black Ops One', sans-serif;
+    font-size: 32px;
+    color: var(--cream);
+  }
+  .sprout-decay {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--orange);
+  }
+
+  .sprout-stages {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+  }
+  .sprout-stage {
+    padding: 14px 8px;
+    background: var(--card-bg);
+    border: 0.5px solid var(--border-soft);
+    border-radius: 6px;
+    text-align: center;
+    transition: all 0.3s;
+  }
+  .sprout-stage.reached { border-color: var(--success); background: rgba(100,220,100,0.05); }
+  .sprout-stage.current { border-color: var(--yellow); background: rgba(255,214,0,0.12); box-shadow: 0 0 20px rgba(255,214,0,0.2); }
+  .stage-emoji { font-size: 28px; display: block; margin-bottom: 6px; }
+  .stage-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,245,224,0.6);
+    display: block;
+  }
+  .sprout-stage.current .stage-name { color: var(--yellow); }
+  .stage-rate {
+    font-family: 'Courier New', monospace;
+    font-size: 9px;
+    color: rgba(255,245,224,0.35);
+    margin-top: 2px;
+    display: block;
+  }
+
+  /* ───── SECTION COMMONS ───── */
+  .section {
+    padding: 60px 40px;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 28px;
+  }
+  .section-title {
+    font-family: 'Black Ops One', sans-serif;
+    font-size: 28px;
+    letter-spacing: 0.04em;
+    color: var(--cream);
+  }
+  .section-title .accent { color: var(--pink); }
+  .section-count {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(255,245,224,0.4);
+  }
+
+  /* ───── RULES TABS ───── */
+  .rules-tabs {
+    display: flex;
+    gap: 2px;
+    border-bottom: 0.5px solid var(--border-soft);
+    margin-bottom: 24px;
+    overflow-x: auto;
+  }
+  .rules-tab {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 12px 18px;
+    color: rgba(255,245,224,0.5);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .rules-tab:hover { color: var(--cream); }
+  .rules-tab.active { color: var(--pink); border-bottom-color: var(--pink); }
+  .rules-panel { display: none; }
+  .rules-panel.active { display: block; }
+  .rules-panel h3 {
+    font-family: 'Black Ops One', sans-serif;
+    font-size: 18px;
+    color: var(--yellow);
+    margin: 20px 0 10px;
+    letter-spacing: 0.02em;
+  }
+  .rules-panel h3:first-child { margin-top: 0; }
+  .rules-panel p {
+    font-size: 14px;
+    color: rgba(255,245,224,0.78);
+    line-height: 1.7;
+    margin-bottom: 10px;
+    max-width: 720px;
+  }
+  .rules-panel ul {
+    margin-left: 22px;
+    margin-bottom: 12px;
+    max-width: 720px;
+  }
+  .rules-panel li {
+    font-size: 14px;
+    color: rgba(255,245,224,0.78);
+    margin-bottom: 6px;
+    line-height: 1.65;
+  }
+  .rules-panel b { color: var(--cream); font-weight: 600; }
+  .rules-panel .highlight-box {
+    padding: 14px 18px;
+    background: rgba(232,24,106,0.08);
+    border-left: 3px solid var(--pink);
+    border-radius: 0 6px 6px 0;
+    margin: 14px 0;
+    max-width: 720px;
+    font-size: 13.5px;
+  }
+  .rules-panel table {
+    width: 100%;
+    max-width: 720px;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin: 12px 0 20px;
+  }
+  .rules-panel th {
+    background: rgba(232,24,106,0.15);
+    color: var(--pink-light);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .rules-panel td {
+    padding: 8px 12px;
+    border-bottom: 0.5px solid var(--border-soft);
+    color: rgba(255,245,224,0.78);
+  }
+
+  /* ───── SPECTATOR HUB ───── */
+  .spec-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+  .spec-card {
+    padding: 20px 22px;
+    background: var(--card-bg);
+    border: 0.5px solid var(--border-soft);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+  .spec-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--pink);
+    opacity: 0.4;
+  }
+  .spec-card.root::before    { background: var(--success); }
+  .spec-card.glance::before  { background: var(--violet); }
+  .spec-card.limit::before   { background: var(--yellow); }
+  .spec-card.vote::before    { background: var(--orange); }
+  .spec-card .spec-emoji { font-size: 28px; margin-bottom: 10px; }
+  .spec-card .spec-name {
+    font-family: 'Black Ops One', sans-serif;
+    font-size: 15px;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+  }
+  .spec-card .spec-desc {
+    font-size: 13px;
+    color: rgba(255,245,224,0.6);
+    line-height: 1.55;
+    margin-bottom: 14px;
+    flex: 1;
+  }
+  .spec-card .spec-cta {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    background: transparent;
+    color: var(--pink);
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .spec-card .spec-cta:hover { background: var(--pink); color: #fff; }
+  .spec-card .spec-cta.disabled {
+    color: rgba(255,245,224,0.3);
+    border-color: var(--border-soft);
+    cursor: not-allowed;
+  }
+  .spec-card .spec-cta.disabled:hover { background: transparent; color: rgba(255,245,224,0.3); }
+  .spec-card .soon-badge {
+    display: inline-block;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--yellow);
+    background: rgba(255,214,0,0.12);
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+
+  /* ───── STORY STRIP ───── */
+  .story-strip {
+    padding: 32px 40px;
+    background: linear-gradient(90deg, rgba(232,24,106,0.08) 0%, rgba(255,107,0,0.08) 100%);
+    border-bottom: 0.5px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+  .story-strip-left { flex: 1; min-width: 280px; }
+  .story-strip-title {
+    font-family: 'Black Ops One', sans-serif;
+    font-size: 18px;
+    color: var(--cream);
+    letter-spacing: 0.04em;
+    margin-bottom: 4px;
+  }
+  .story-strip-title .flame { color: var(--pink); }
+  .story-strip-desc {
+    font-size: 13px;
+    color: rgba(255,245,224,0.6);
+  }
+  .story-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .story-btn {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    background: transparent;
+    color: var(--cream);
+    border: 1px solid var(--border);
+    padding: 10px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .story-btn:hover { background: var(--pink); border-color: var(--pink); }
+  .story-btn.primary { background: var(--pink); border-color: var(--pink); color: #fff; }
+  .story-btn.primary:hover { background: var(--pink-light); border-color: var(--pink-light); }
+
+  /* ───── HISTORY ───── */
+  .history-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .history-table th {
+    background: rgba(232,24,106,0.15);
+    color: var(--pink-light);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 10px 12px;
+    text-align: left;
+  }
+  .history-table td {
+    padding: 10px 12px;
+    border-bottom: 0.5px solid var(--border-soft);
+    color: rgba(255,245,224,0.8);
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+  }
+  .history-table td.from { color: var(--cream); }
+
+  /* ───── LEADERBOARD ───── */
+  .lb-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  .lb-card {
+    padding: 20px 22px;
+    background: var(--card-bg);
+    border: 0.5px solid var(--border-soft);
+    border-radius: 8px;
+  }
+  .lb-card h4 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--yellow);
+    margin-bottom: 12px;
+  }
+  .lb-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 6px 0;
+    border-bottom: 0.5px dashed var(--border-soft);
+    font-size: 12px;
+  }
+  .lb-row:last-child { border-bottom: none; }
+  .lb-addr { font-family: 'Courier New', monospace; color: rgba(255,245,224,0.75); }
+  .lb-val { color: var(--yellow); font-weight: 600; }
+
+  footer {
+    padding: 48px 40px 32px;
+    border-top: 0.5px solid var(--border);
+    text-align: center;
+    color: rgba(255,245,224,0.35);
+    font-size: 12px;
+  }
+  footer a { color: rgba(255,245,224,0.6); text-decoration: underline; }
+
+  /* ───── MODALS ───── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(7,3,10,0.85);
+    backdrop-filter: blur(8px);
+    z-index: 1001;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 32px;
+    max-width: 460px;
+    width: 100%;
+  }
+  .modal h2 {
+    font-family: 'Black Ops One', sans-serif;
+    font-size: 22px;
+    color: var(--pink);
+    letter-spacing: 0.04em;
+    margin-bottom: 8px;
+  }
+  .modal .modal-sub {
+    font-size: 13px;
+    color: rgba(255,245,224,0.6);
+    margin-bottom: 20px;
+  }
+  .modal-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255,245,224,0.5);
+    margin-bottom: 6px;
+  }
+  .modal-input {
+    width: 100%;
+    background: var(--darker);
+    border: 1px solid var(--border-soft);
+    color: var(--cream);
+    padding: 12px 14px;
+    border-radius: 6px;
+    font-family: 'Courier New', monospace;
+    font-size: 16px;
+    margin-bottom: 16px;
+  }
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+  }
+  .modal-btn {
+    flex: 1;
+    padding: 12px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    border-radius: 6px;
+    cursor: pointer;
+    border: none;
+  }
+  .modal-btn.primary { background: var(--pink); color: #fff; }
+  .modal-btn.secondary { background: transparent; color: var(--cream); border: 1px solid var(--border-soft); }
+
+  /* ───── RESPONSIVE ───── */
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; }
+    .hero-left { border-right: none; border-bottom: 0.5px solid var(--border); padding: 40px 24px; }
+    .hero-right { padding: 24px; min-height: 460px; }
+    .hero-title { font-size: 48px; }
+    .pot-section { grid-template-columns: 1fr; }
+    .pot-feed { max-height: 320px; }
+    .sprout-section { grid-template-columns: 1fr; padding: 40px 24px; }
+    .sprout-stages { grid-template-columns: repeat(3, 1fr); }
+    .section { padding: 40px 24px; }
+    .spec-grid { grid-template-columns: repeat(2, 1fr); }
+    .lb-grid { grid-template-columns: 1fr; }
+    .pot-amount { font-size: 52px; }
+    .ladder-step { font-size: 9px; padding: 6px 2px; }
+  }
+  @media (max-width: 520px) {
+    .hero-stats { grid-template-columns: 1fr; }
+    .stat { border-bottom: 1px solid var(--border); }
+    .spec-grid { grid-template-columns: 1fr; }
+    .hero-title { font-size: 40px; }
+    .pot-amount { font-size: 44px; }
+    .sprout-title { font-size: 30px; }
+    .section-title { font-size: 22px; }
+  }
+</style>
+</head>
+<body data-state="active">
+
+<div class="ticker">
+  <div class="ticker-inner" id="ticker-inner"></div>
+</div>
+
+<nav>
+  <div class="nav-logo">HOT <span>POTATO</span> 🥔</div>
+  <div class="nav-right">
+    <a class="nav-link" href="#pot">Pot</a>
+    <a class="nav-link" href="#sprout">Sprouting</a>
+    <a class="nav-link" href="#rules">Rules</a>
+    <a class="nav-link" href="#spectator">Spectate</a>
+    <a class="nav-link" href="#history">History</a>
+    <a class="nav-link last-supper-pill" href="#last-supper">◉ Last Supper</a>
+    <button class="connect-btn" id="connect-btn">Connect</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-left">
+    <div class="hero-eyebrow">
+      <span class="live-dot"></span>
+      <span id="hero-status">🔥 BOB IS ON THE THRONE — WARM TIER — 1% POT SLICE</span>
+    </div>
+    <h1 class="hero-title"><span class="hot">HOT</span> POTATO</h1>
+    <div class="hero-subtitle">ONE THRONE · ONE POT · ONE WINNER</div>
+    <p class="hero-tagline">
+      A single NFT. <b>Snipe the throne</b> to take it. Sit on it to earn a slice of the growing <b>Pot</b>.
+      The longer you hold, the more you <b>sprout</b> — each stage raises your price floor, fortifying the throne.
+      When the game ends, a tier-weighted share of the <b>Last Supper Reserve</b> pays out to whoever is still sitting.
+    </p>
+
+    <div class="hero-stats">
+      <div class="stat pot">
+        <div class="stat-val"><span id="stat-pot">3.842</span> ETH</div>
+        <div class="stat-lbl">The Pot</div>
+        <div class="stat-delta" id="stat-pot-delta">+0.12 today</div>
+      </div>
+      <div class="stat timer">
+        <div class="stat-val" id="stat-timer">2d 14h 33m</div>
+        <div class="stat-lbl">Throne Timer</div>
+        <div class="stat-delta" id="stat-timer-next">+21h → Hot</div>
+      </div>
+      <div class="stat stage">
+        <div class="stat-val" id="stat-stage">🌱 Leafing</div>
+        <div class="stat-lbl">Stage</div>
+        <div class="stat-delta ok" id="stat-stage-lift">floor +10% lifted</div>
+      </div>
+    </div>
+
+    <div class="ladder">
+      <div class="ladder-head">
+        <span>SIT-TIER LADDER · <span style="color:rgba(255,245,224,0.45);font-weight:400;">on-sale · reserve</span></span>
+        <span class="ladder-next" id="ladder-next">Hot in 21h</span>
+      </div>
+      <div class="ladder-steps" id="ladder-steps">
+        <div class="ladder-step reached" data-tier="0"><span class="tier-name">Cold</span><span class="tier-pct">0% · 0%</span></div>
+        <div class="ladder-step current" data-tier="1"><span class="tier-name">Warm</span><span class="tier-pct">0.5% · 0.5%</span></div>
+        <div class="ladder-step" data-tier="2"><span class="tier-name">Hot</span><span class="tier-pct">1.5% · 1.5%</span></div>
+        <div class="ladder-step" data-tier="3"><span class="tier-name">Blazing</span><span class="tier-pct">3.5% · 3.5%</span></div>
+        <div class="ladder-step" data-tier="4"><span class="tier-name">Legendary</span><span class="tier-pct">7.5% · 7.5%</span></div>
+      </div>
+    </div>
+
+    <button class="snipe-btn" onclick="openBuyModal()">
+      🥔 SNIPE THE THRONE — <span id="snipe-price">0.52</span> ETH
+    </button>
+    <div class="snipe-sub">
+      Next sprout in <span id="snipe-next-sprout">4h 12m</span> · Min next ask <span id="snipe-min-next">0.60 ETH</span>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <div class="throne-stage" id="throne-stage" data-stage="1">
+      <div class="throne-rays"></div>
+
+      <svg class="throne-svg" viewBox="0 0 400 440" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="throne-grad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stop-color="#FFD600" stop-opacity="1.0"/>
+            <stop offset="50%"  stop-color="#FF6B00" stop-opacity="0.9"/>
+            <stop offset="100%" stop-color="#7A2A00" stop-opacity="0.85"/>
+          </linearGradient>
+          <linearGradient id="throne-dark" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stop-color="#3A1D08"/>
+            <stop offset="100%" stop-color="#120704"/>
+          </linearGradient>
+          <radialGradient id="seat-glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"   stop-color="#FFD600" stop-opacity="0.6"/>
+            <stop offset="100%" stop-color="#FFD600" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+
+        <polygon points="40,400 360,400 400,440 0,440" fill="url(#throne-dark)" stroke="#FFD600" stroke-width="1" stroke-opacity="0.5"/>
+        <line x1="30" y1="418" x2="370" y2="418" stroke="#FFD600" stroke-width="0.6" stroke-opacity="0.3"/>
+
+        <path d="M 90,80 L 90,310 L 120,310 L 120,120 Q 120,100 140,100 L 260,100 Q 280,100 280,120 L 280,310 L 310,310 L 310,80 Z"
+              fill="url(#throne-grad)" stroke="#FFD600" stroke-width="1.5" stroke-opacity="0.9"/>
+
+        <path d="M 90,80 L 80,40 L 75,80 Z"   fill="#FFD600" opacity="0.95"/>
+        <path d="M 310,80 L 320,40 L 325,80 Z" fill="#FFD600" opacity="0.95"/>
+        <path d="M 200,80 L 200,20 L 210,55 L 220,20 L 220,80 L 210,80 Z" fill="#FFD600" opacity="0.95"/>
+        <circle cx="80"  cy="36" r="4" fill="#FF6B00"/>
+        <circle cx="320" cy="36" r="4" fill="#FF6B00"/>
+        <circle cx="210" cy="16" r="5" fill="#E8186A"/>
+
+        <path d="M 160,140 L 240,140 L 250,200 L 200,230 L 150,200 Z" fill="none" stroke="#FFD600" stroke-width="1.2" stroke-opacity="0.6"/>
+        <circle cx="200" cy="185" r="12" fill="none" stroke="#FFD600" stroke-width="1.2" stroke-opacity="0.7"/>
+        <text x="200" y="192" text-anchor="middle" font-family="Georgia, serif" font-size="18" fill="#FFD600" opacity="0.8">🥔</text>
+
+        <path d="M 50,260 L 90,260 L 90,340 L 50,340 Q 30,340 30,310 Q 30,270 50,260 Z" fill="url(#throne-grad)" stroke="#FFD600" stroke-width="1" stroke-opacity="0.7"/>
+        <path d="M 310,260 L 350,260 Q 370,270 370,310 Q 370,340 350,340 L 310,340 Z" fill="url(#throne-grad)" stroke="#FFD600" stroke-width="1" stroke-opacity="0.7"/>
+        <circle cx="40"  cy="270" r="8" fill="#E8186A" stroke="#FFD600" stroke-width="1"/>
+        <circle cx="360" cy="270" r="8" fill="#E8186A" stroke="#FFD600" stroke-width="1"/>
+
+        <rect x="90" y="300" width="220" height="40" fill="url(#throne-dark)" stroke="#FFD600" stroke-width="1" stroke-opacity="0.8"/>
+        <line x1="90" y1="310" x2="310" y2="310" stroke="#FFD600" stroke-width="0.6" stroke-opacity="0.5"/>
+
+        <ellipse cx="200" cy="320" rx="100" ry="14" fill="url(#seat-glow)"/>
+
+        <rect x="95"  y="340" width="14" height="60" fill="url(#throne-dark)" stroke="#FFD600" stroke-width="0.8" stroke-opacity="0.6"/>
+        <rect x="291" y="340" width="14" height="60" fill="url(#throne-dark)" stroke="#FFD600" stroke-width="0.8" stroke-opacity="0.6"/>
+      </svg>
+
+      <div class="throne-crown">👑</div>
+      <div class="sprout-leaf">🌱</div>
+
+      <div class="throne-potato" id="throne-potato">
+        <img id="throne-potato-img" src="hero-potato.jpg" alt="The Hot Potato">
+      </div>
+
+      <div class="throne-holder-chip">
+        <span class="hc-name" id="hc-name">BOB</span>
+        <span class="hc-addr" id="hc-addr">0x4f2a…8c3e</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- POT SECTION -->
+<section id="pot" class="pot-section">
+  <div class="pot-card">
+    <div class="pot-head">
+      <span class="live-dot"></span>
+      <span>THE POT — WINNER TAKES ALL</span>
+    </div>
+    <div class="pot-amount"><span id="pot-big">3.842</span><span class="pot-unit">ETH</span></div>
+    <div class="pot-usd">≈ $<span id="pot-usd">12,803</span> USD · live Pot (pays seller on each snipe)</div>
+
+    <div class="reserve-block">
+      <div class="reserve-head"><span class="reserve-dot"></span>LAST SUPPER RESERVE</div>
+      <div class="reserve-amount"><span id="reserve-big">1.247</span><span class="reserve-unit">ETH</span></div>
+      <div class="reserve-desc">Pays out tier-weighted to whoever sits at seal · <span class="ok">Bob would collect <span id="reserve-bob-share">0.312</span> ETH (25%)</span> · residual rolls to Season 2</div>
+    </div>
+
+    <div class="pot-split">
+      <div class="pot-slot current-holder">
+        <div class="pot-slot-lbl">Bob's slice if sniped now</div>
+        <div class="pot-slot-val">+<span id="holder-slice-eth">0.038</span> ETH <span style="opacity:0.5;font-size:12px;">(1%)</span></div>
+      </div>
+      <div class="pot-slot">
+        <div class="pot-slot-lbl">Pot funded from</div>
+        <div class="pot-slot-val" style="font-size:12px;font-family:'Barlow Condensed';letter-spacing:0.08em;">1% SALES · 50% OVERPAYS · GLANCES · ROOTERS</div>
+      </div>
+    </div>
+
+    <div class="pot-spark">
+      <div class="pot-spark-lbl">30-DAY POT GROWTH</div>
+      <svg viewBox="0 0 300 40" preserveAspectRatio="none">
+        <polyline id="pot-spark-line"
+          points="0,38 10,37 20,37 30,36 40,35 50,35 60,34 70,32 80,31 90,30 100,28 110,27 120,26 130,24 140,23 150,21 160,19 170,18 180,16 190,14 200,12 210,11 220,10 230,9 240,8 250,7 260,6 270,5 280,4 290,3 300,2"
+          fill="none" stroke="#FFD600" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+        <polyline
+          points="0,38 10,37 20,37 30,36 40,35 50,35 60,34 70,32 80,31 90,30 100,28 110,27 120,26 130,24 140,23 150,21 160,19 170,18 180,16 190,14 200,12 210,11 220,10 230,9 240,8 250,7 260,6 270,5 280,4 290,3 300,2 300,40 0,40"
+          fill="#FFD600" opacity="0.08"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="pot-feed" id="pot-feed">
+    <div class="pot-feed-head">
+      <span class="live-dot"></span>
+      <span>LIVE EVENTS</span>
+    </div>
+  </div>
+</section>
+
+<!-- STORY STRIP -->
+<section class="story-strip">
+  <div class="story-strip-left">
+    <div class="story-strip-title">🔥 <span class="flame">THE LEGEND</span> GROWS WITH EVERY SNIPE</div>
+    <div class="story-strip-desc">
+      Every throne change writes a line of the story. Share your moment, read the saga so far, or weigh in on what happens next.
+    </div>
+  </div>
+  <div class="story-actions">
+    <button class="story-btn" onclick="shareThroneCard()">📸 Share throne card</button>
+    <button class="story-btn" onclick="openSaga()">📜 Read the saga</button>
+    <button class="story-btn primary" onclick="openRivalries()">⚔️ Rivalries</button>
+  </div>
+</section>
+
+<!-- SPROUTING -->
+<section id="sprout" class="sprout-section">
+  <div class="sprout-left">
+    <div class="section-eyebrow">🌱 LIVING NFT · STAGE CLOCK</div>
+    <h2 class="sprout-title"><span class="leaf">SPROUTING</span> IS COMING</h2>
+    <p class="sprout-desc">
+      The longer you hold, the more you sprout. Each stage <b>raises your price floor</b> — snipers
+      must commit more to take the throne. Your artwork updates on-chain via ERC-4906, and whoever
+      sits at seal collects a tier-weighted share of the Last Supper Reserve.
+    </p>
+
+    <div class="sprout-countdown-box">
+      <div class="sprout-countdown-lbl">Next stage in</div>
+      <div class="sprout-countdown-val" id="sprout-countdown">04h 12m 33s</div>
+      <div class="sprout-decay" id="sprout-decay" style="color:var(--success);">Floor lifts to +25% cumulative at next stage</div>
+    </div>
+  </div>
+
+  <div class="sprout-right">
+    <div class="sprout-stages" id="sprout-stages">
+      <div class="sprout-stage reached" data-stage="0"><span class="stage-emoji">🥔</span><span class="stage-name">Fresh</span><span class="stage-rate">+0%</span></div>
+      <div class="sprout-stage current" data-stage="1"><span class="stage-emoji">🌱</span><span class="stage-name">Leafing</span><span class="stage-rate">+10%</span></div>
+      <div class="sprout-stage"         data-stage="2"><span class="stage-emoji">🌿</span><span class="stage-name">Sprouted</span><span class="stage-rate">+25%</span></div>
+      <div class="sprout-stage"         data-stage="3"><span class="stage-emoji">🌾</span><span class="stage-name">Bloomed</span><span class="stage-rate">+50%</span></div>
+      <div class="sprout-stage"         data-stage="4"><span class="stage-emoji">🌻</span><span class="stage-name">Harvest</span><span class="stage-rate">+100%</span></div>
+      <div class="sprout-stage"         data-stage="5"><span class="stage-emoji">✨</span><span class="stage-name">Eternal</span><span class="stage-rate">+200%</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- RULES -->
+<section id="rules" class="section">
+  <div class="section-header">
+    <div class="section-title">THE <span class="accent">RULES</span></div>
+  </div>
+  <div class="rules-tabs" id="rules-tabs">
+    <div class="rules-tab active" data-panel="how">How to Play</div>
+    <div class="rules-tab" data-panel="thepot">The Pot</div>
+    <div class="rules-tab" data-panel="spectator">Spectator Moves</div>
+    <div class="rules-tab" data-panel="lastsupper">Last Supper</div>
+    <div class="rules-tab" data-panel="faq">FAQ</div>
+  </div>
+
+  <div class="rules-panel active" id="panel-how">
+    <h3>The 60-second version</h3>
+    <p>One potato. One throne. One growing Pot. You <b>snipe the throne</b> from whoever's currently sitting on it by paying their asking price. You sit. You set a new (higher) asking price. Someone eventually snipes <i>you</i> — and when they do, you walk away with the ETH they paid <b>plus a slice of the Pot</b>, depending on how long you sat.</p>
+    <div class="highlight-box">
+      <b>The longer you sit, the bigger your Pot slice.</b> Cold = 0%. Warm = 1%. Hot = 3%. Blazing = 7%. Legendary = 15%.
+    </div>
+    <h3>What you actually get when you buy</h3>
+    <ul>
+      <li>The Hot Potato NFT — a single, one-of-one ERC-721 on Base.</li>
+      <li>The throne itself — a fresh timer starts ticking the moment you take it.</li>
+      <li>A chance to ride the sit-tier ladder up to Legendary for a 15% Pot slice when you're eventually sniped.</li>
+      <li>A <b>souvenir NFT</b> automatically minted to you when you're sniped, tagged with the potato's stage at that moment.</li>
+    </ul>
+    <h3>What "sprouting" means</h3>
+    <p>The longer you hold, the more you sprout — and each stage <b>raises your minimum ask floor</b>. Sprouting fortifies the throne: a Bloomed potato costs +50% more to snipe than a Fresh one, an Eternal potato costs +200% more. You're harder to dislodge the longer you sit. On top of that, every sale while you're holding also accrues into the <b>Last Supper Reserve</b>, which pays out to whoever is sitting at game-end — tier-weighted. Sprouting is the anticipation: fortify, survive, collect.</p>
+  </div>
+
+  <div class="rules-panel" id="panel-thepot">
+    <h3>Where the Pot comes from</h3>
+    <table>
+      <thead><tr><th>Source</th><th>Contribution</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td><b>Every sale</b></td><td>1%</td><td>Of every snipe price, automatically.</td></tr>
+        <tr><td><b>Overpayments</b></td><td>50%</td><td>Pay above asking? Half goes to the Pot, half is your Premium Boost.</td></tr>
+        <tr><td><b>Glance fees</b></td><td>100%</td><td>Spectators pay a tiny fee to reveal holder intent. All of it → Pot.</td></tr>
+        <tr><td><b>Rooter stakes (forfeited)</b></td><td>varies</td><td>Lost bets from rooters who backed holders that got sniped early.</td></tr>
+      </tbody>
+    </table>
+    <h3>Pot slice by sit-tier</h3>
+    <p style="color:rgba(255,245,224,0.6);font-size:13px;margin-bottom:8px;">Each sale pays the seller twice: an <b>on-sale slice</b> from the live Pot, plus an equal amount that accrues into the <b>Last Supper Reserve</b> for whoever's sitting at seal.</p>
+    <table>
+      <thead><tr><th>Tier</th><th>Time sat</th><th>On-sale slice</th><th>Reserve accrues</th><th>Final-seal share</th></tr></thead>
+      <tbody>
+        <tr><td>Cold</td><td>&lt; 6 hours</td><td>0%</td><td>0%</td><td>10%</td></tr>
+        <tr><td>Warm</td><td>6h – 48h</td><td>0.5%</td><td>0.5%</td><td>25%</td></tr>
+        <tr><td>Hot</td><td>2 – 7 days</td><td>1.5%</td><td>1.5%</td><td>50%</td></tr>
+        <tr><td>Blazing</td><td>7 – 30 days</td><td>3.5%</td><td>3.5%</td><td>75%</td></tr>
+        <tr><td>Legendary</td><td>30+ days</td><td>7.5%</td><td>7.5%</td><td>100%</td></tr>
+      </tbody>
+    </table>
+    <div class="highlight-box">
+      <b>Two pools, one game.</b> The live Pot pays you when you're sniped. The Reserve pays whoever's on the throne when the Last Supper seals. Tier-weighted: a Cold sitter at seal leaves 90% on the table.
+    </div>
+  </div>
+
+  <div class="rules-panel" id="panel-spectator">
+    <h3>Four things spectators can do</h3>
+    <p>Don't want to risk sniping the throne? You can still play.</p>
+    <h3>🌱 Root on a Holder</h3>
+    <p>Stake ETH on whoever's currently sitting. If they survive another tier upgrade, your stake earns a multiplier. If they get sniped before the next tier, your stake is forfeit (and goes to the Pot).</p>
+    <h3>👁 Glance</h3>
+    <p>Pay 0.001 ETH to reveal the current holder's recent asking-price trajectory — did they just raise, hold, or cut? Fee → Pot.</p>
+    <h3>🎯 Limit Buy</h3>
+    <p>Place a limit order: auto-snipe me in if the min-ask crosses X. A keeper bot executes for a small bounty paid out of your deposit. Useful for picking off fresh holders before their floor lifts.</p>
+    <h3>🗳 Vote to Seal</h3>
+    <p>Spectators can collectively stake glance-votes to force the Last Supper early. Once the stake pool crosses ~10% of the Reserve, <code style="color:var(--ember)">LAST_SUPPER</code> begins and a 48h window opens. Lets the crowd drain a squatter.</p>
+    <h3>🗳 Souvenir Vote</h3>
+    <p>Weekly community vote picks one trait for the next souvenir mint. Voting weight = your past activity.</p>
+  </div>
+
+  <div class="rules-panel" id="panel-lastsupper">
+    <h3>How the game ends</h3>
+    <p>The contract enters <code style="color:var(--ember)">LAST_SUPPER</code> state when either trigger fires, whichever comes first:</p>
+    <ul>
+      <li><b>Timer path</b> — 30 days without a transfer. A permanent squatter gets a natural death.</li>
+      <li><b>Spectator path</b> — glance-vote stakes cross ~10% of the Reserve. The crowd forces the endgame.</li>
+    </ul>
+    <p>Once in Last Supper, a <b>48-hour window</b> opens for one last round of snipes. At the end of the window, anyone can call <code>finalSeal()</code> and the Reserve pays out.</p>
+    <div class="highlight-box">
+      <b>Tier-weighted seal payout.</b> Whoever sits at seal collects 10% / 25% / 50% / 75% / 100% of the Reserve based on their final sit-tier. The residual rolls forward to Season 2 as its opening Reserve.
+    </div>
+    <h3>The Savior NFT</h3>
+    <p>If a single snipe during the 48h Last Supper window takes the throne from a Cold/Warm sitter and the new buyer climbs a tier before seal, the buyer gets a one-of-one <b>Savior NFT</b>. In-game medal, bragging rights only.</p>
+    <h3>After SEALED</h3>
+    <p>Once <code>finalSeal()</code> fires, the contract freezes in place. Souvenirs remain tradeable. Season 2 spawns with whatever residual rolled over.</p>
+  </div>
+
+  <div class="rules-panel" id="panel-faq">
+    <h3>Do I get the Pot when I buy?</h3>
+    <p>No. You get the throne and a fresh timer. Your Pot slice is earned when someone later snipes <i>you</i>.</p>
+    <h3>Can the current holder just sit forever?</h3>
+    <p>No — two things stop them. First, the 30-day no-transfer timer forces Last Supper automatically. Second, spectators can collectively stake glance-votes to trigger the endgame early. A squatter wins only if they stay sitting through the 48h Last Supper window, and even then only collects their tier-weighted share of the Reserve.</p>
+    <h3>Is everything on-chain?</h3>
+    <p>Yes. Pot balance, sit-tier payouts, sprouting stages, and Last Supper state all live on the contract. The website is a view layer — if we go offline, the game keeps running.</p>
+    <h3>What chain is this on?</h3>
+    <p>Base. Currently Base Sepolia testnet at <code>0x90Bf…3473</code>. Mainnet deployment is pending contract v4.</p>
+  </div>
+</section>
+
+<!-- SPECTATOR HUB -->
+<section id="spectator" class="section">
+  <div class="section-header">
+    <div class="section-title">SPECTATOR <span class="accent">HUB</span></div>
+    <div class="section-count">4 ways to play without sniping</div>
+  </div>
+  <div class="spec-grid">
+    <div class="spec-card root">
+      <span class="spec-emoji">🌱</span>
+      <div class="spec-name">Root on a Holder <span class="soon-badge">v4</span></div>
+      <div class="spec-desc">Stake ETH on the current throne-sitter. Win if they reach the next tier, lose if they're sniped first.</div>
+      <button class="spec-cta disabled">Coming v4</button>
+    </div>
+    <div class="spec-card glance">
+      <span class="spec-emoji">👁</span>
+      <div class="spec-name">Glance <span class="soon-badge">v4</span></div>
+      <div class="spec-desc">Pay 0.001 ETH to see the current holder's recent asking-price pattern. A market signal before a snipe.</div>
+      <button class="spec-cta disabled">Coming v4</button>
+    </div>
+    <div class="spec-card limit">
+      <span class="spec-emoji">🎯</span>
+      <div class="spec-name">Limit Buy <span class="soon-badge">v4</span></div>
+      <div class="spec-desc">Place a target price; a keeper bot auto-snipes for you when the market crosses it. Useful for picking off Fresh holders before their floor lifts.</div>
+      <button class="spec-cta disabled">Coming v4</button>
+    </div>
+    <div class="spec-card vote">
+      <span class="spec-emoji">🗳</span>
+      <div class="spec-name">Souvenir Vote <span class="soon-badge">v4</span></div>
+      <div class="spec-desc">Weekly community picks one trait for the next souvenir mint. Voting weight grows with activity.</div>
+      <button class="spec-cta disabled">Coming v4</button>
+    </div>
+  </div>
+</section>
+
+<!-- HISTORY -->
+<section id="history" class="section">
+  <div class="section-header">
+    <div class="section-title">OWNERSHIP <span class="accent">HISTORY</span></div>
+    <div class="section-count" id="history-count">loading…</div>
+  </div>
+  <table class="history-table">
+    <thead><tr><th>Hand</th><th>From</th><th>Price</th><th>Held</th><th>Rarity</th></tr></thead>
+    <tbody id="history-body">
+      <tr><td colspan="5" style="padding:24px 12px;color:rgba(255,245,224,0.3);">Loading ownership history…</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- LEADERBOARD -->
+<section id="leaderboard" class="section">
+  <div class="section-header">
+    <div class="section-title">LEADER<span class="accent">BOARD</span></div>
+    <div class="section-count">updated live</div>
+  </div>
+  <div class="lb-grid">
+    <div class="lb-card"><h4>🕰 LONGEST HOLDS</h4><div id="lb-longest">Loading…</div></div>
+    <div class="lb-card"><h4>♻️ LOYALTY (TIMES HELD)</h4><div id="lb-loyalty">Loading…</div></div>
+    <div class="lb-card"><h4>👑 HALL OF FAME</h4><div id="lb-hof">Loading…</div></div>
+  </div>
+</section>
+
+<footer>
+  <div style="margin-bottom:8px;">Hot Potato — a Harberger-style single-NFT game on Base.</div>
+  <div><a href="#rules">Rules</a> · <a href="#pot">The Pot</a> · <a href="#spectator">Spectate</a> · <a href="https://opensea.io" target="_blank" rel="noopener">OpenSea</a></div>
+  <div style="margin-top:14px;font-size:10px;opacity:0.5;">Contract v3: <code>0x90Bf…3473</code> (Base Sepolia) · v4 with Pot/Sprout/LastSupper pending</div>
+</footer>
+
+<!-- BUY MODAL -->
+<div class="modal-overlay" id="buy-modal" onclick="if(event.target===this) closeBuyModal()">
+  <div class="modal">
+    <h2>🥔 Snipe the Throne</h2>
+    <div class="modal-sub">
+      Current ask: <b id="modal-current-price">0.52 ETH</b>. Pay this or more.
+      Your new asking price must be at least <b id="modal-min-next">0.60 ETH</b> (tiered minimum).
+    </div>
+    <div class="modal-label">You pay</div>
+    <input class="modal-input" type="text" inputmode="decimal" id="pay-input" value="0.52">
+    <div class="modal-label">Your new asking price</div>
+    <input class="modal-input" type="text" inputmode="decimal" id="ask-input" value="0.65">
+    <div style="font-size:12px;color:rgba(255,245,224,0.5);margin-bottom:8px;">
+      Overpaying above asking earns a <b style="color:var(--yellow)">Premium Boost</b> on your future souvenir's rarity.
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn secondary" onclick="closeBuyModal()">Cancel</button>
+      <button class="modal-btn primary" onclick="confirmSnipe()">Confirm Snipe</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// HOT POTATO — Frontend v2
+// ============================================================
+// LIVE: v3 contract on Base Sepolia via backend for history/leaderboard.
+// MOCK: placeholder data for Pot/Sprout/LastSupper until v4 contract.
+// ============================================================
+
+const API_BASE = (window.location.hostname === 'localhost')
+  ? 'http://localhost:3001/api'
+  : 'https://hot-potato-backend.up.railway.app/api';
+
+// Tier-based reserve seal-share in % (Cold → Legendary)
+const TIER_SEAL_SHARE_PCT = [10, 25, 50, 75, 100];
+// Per-sale & per-accrual slice % by tier
+const TIER_SLICE_PCT       = [0, 0.5, 1.5, 3.5, 7.5];
+// Cumulative floor-lift % by sprout stage (Fresh → Eternal)
+const STAGE_FLOOR_LIFT_PCT = [0, 10, 25, 50, 100, 200];
+
+const mockState = {
+  pot:     { balanceEth: 3.842, usd: 12803, deltaToday: 0.12 },
+  reserve: { balanceEth: 1.247, usd: 4156 },
+  holder: {
+    name: 'BOB',
+    addr: '0x4f2a…8c3e',
+    heldSeconds: 2 * 86400 + 14 * 3600 + 33 * 60,
+    tierIndex: 1,
+  },
+  stage: {
+    index: 1, name: 'Leafing', emoji: '🌱',
+    secondsToNextStage: 4 * 3600 + 12 * 60 + 33,
+  },
+  price: { currentEth: 0.52, minNextEth: 0.60 },
+  feed: [
+    { time: '14m ago', kind: 'sale',   text: '<b>Alice</b> sniped <b>Bob</b>\'s throne', amt: '+0.008 ETH', story: null },
+    { time: '2h ago',  kind: 'root',   text: '<b>Dana</b> rooted 0.05 ETH on Bob', amt: null, story: null },
+    { time: '4h ago',  kind: 'glance', text: '<b>0x91…3a</b> peeked at Bob\'s asks', amt: '+0.001 ETH', story: null },
+    { time: '6h ago',  kind: 'story',  text: '<b>Bob</b> set a new ask of 0.52 ETH', amt: null, story: '"They\'ll never take me alive. This throne is mine until the Pot hits 5." — Bob' },
+    { time: '8h ago',  kind: 'sprout', text: 'Potato sprouted to <b>Leafing</b> — Bob\'s floor lifted +10%', amt: null, story: null },
+    { time: '1d ago',  kind: 'sale',   text: '<b>Bob</b> sniped <b>Charlie</b>', amt: '+0.004 ETH', story: null },
+    { time: '2d ago',  kind: 'root',   text: '<b>0xab…cd</b> rooted 0.02 ETH on Charlie', amt: null, story: null },
+  ],
+  ticker: [
+    'SNIPE THE THRONE',
+    'POT: <span class="tick-hi">3.84 ETH</span>',
+    'BOB HELD 2D 14H',
+    'LEAFING · FLOOR +10%',
+    'NEXT SPROUT IN 4H 12M',
+    'LIVE ON BASE SEPOLIA',
+  ],
+};
+
+function renderTicker() {
+  const host = document.getElementById('ticker-inner');
+  const items = mockState.ticker;
+  const html = [...items, ...items].map(t =>
+    `<span class="ticker-item">${t}</span><span class="ticker-sep">●</span>`
+  ).join('');
+  host.innerHTML = html;
+}
+
+function fmtDuration(seconds) {
+  const d = Math.floor(seconds / 86400);
+  const h = Math.floor((seconds % 86400) / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (d > 0) return `${d}d ${h}h ${m}m`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
+function fmtCountdown(seconds) {
+  const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
+  const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+  const s = Math.floor(seconds % 60).toString().padStart(2, '0');
+  return `${h}h ${m}m ${s}s`;
+}
+
+function renderHero() {
+  const s = mockState;
+  const onSaleSlice = TIER_SLICE_PCT[s.holder.tierIndex];
+  const sealShare   = TIER_SEAL_SHARE_PCT[s.holder.tierIndex];
+  const floorLift   = STAGE_FLOOR_LIFT_PCT[s.stage.index];
+
+  document.getElementById('hero-status').textContent =
+    `🔥 ${s.holder.name} IS ON THE THRONE — ${['COLD','WARM','HOT','BLAZING','LEGENDARY'][s.holder.tierIndex]} TIER — ${onSaleSlice}% ON-SALE SLICE`;
+  document.getElementById('stat-pot').textContent = s.pot.balanceEth.toFixed(3);
+  document.getElementById('stat-pot-delta').textContent = `+${s.pot.deltaToday.toFixed(2)} today`;
+  document.getElementById('stat-timer').textContent = fmtDuration(s.holder.heldSeconds);
+  document.getElementById('stat-stage').textContent = `${s.stage.emoji} ${s.stage.name}`;
+  const liftEl = document.getElementById('stat-stage-lift');
+  if (liftEl) liftEl.textContent = `floor +${floorLift}% lifted`;
+
+  document.getElementById('snipe-price').textContent = s.price.currentEth.toFixed(2);
+  document.getElementById('snipe-min-next').textContent = `${s.price.minNextEth.toFixed(2)} ETH`;
+  document.getElementById('snipe-next-sprout').textContent = fmtCountdown(s.stage.secondsToNextStage);
+
+  document.getElementById('hc-name').textContent = s.holder.name;
+  document.getElementById('hc-addr').textContent = s.holder.addr;
+
+  document.getElementById('pot-big').textContent = s.pot.balanceEth.toFixed(3);
+  document.getElementById('pot-usd').textContent = s.pot.usd.toLocaleString();
+  const slice = (s.pot.balanceEth * onSaleSlice / 100);
+  document.getElementById('holder-slice-eth').textContent = slice.toFixed(3);
+
+  // Reserve widget
+  const reserveBig = document.getElementById('reserve-big');
+  if (reserveBig) reserveBig.textContent = s.reserve.balanceEth.toFixed(3);
+  const reserveBobShare = document.getElementById('reserve-bob-share');
+  if (reserveBobShare) {
+    const bobShare = s.reserve.balanceEth * sealShare / 100;
+    reserveBobShare.textContent = bobShare.toFixed(3);
+  }
+}
+
+function renderLadder() {
+  const steps = document.querySelectorAll('.ladder-step');
+  steps.forEach((el, i) => {
+    el.classList.remove('reached', 'current');
+    if (i < mockState.holder.tierIndex) el.classList.add('reached');
+    else if (i === mockState.holder.tierIndex) el.classList.add('current');
+  });
+  const tiers = ['Warm','Hot','Blazing','Legendary','MAX'];
+  const nextTier = mockState.holder.tierIndex + 1;
+  if (nextTier <= 4) {
+    const tierThresholds = [6*3600, 48*3600, 7*86400, 30*86400];
+    const secondsToNext = tierThresholds[mockState.holder.tierIndex] - mockState.holder.heldSeconds;
+    document.getElementById('ladder-next').textContent =
+      `${tiers[mockState.holder.tierIndex]} in ${fmtDuration(Math.max(0, secondsToNext))}`;
+  } else {
+    document.getElementById('ladder-next').textContent = 'MAX TIER';
+  }
+}
+
+function renderThrone() {
+  const stage = document.getElementById('throne-stage');
+  stage.setAttribute('data-stage', mockState.stage.index);
+  document.querySelectorAll('.sprout-stage').forEach((el, i) => {
+    el.classList.remove('reached', 'current');
+    if (i < mockState.stage.index) el.classList.add('reached');
+    else if (i === mockState.stage.index) el.classList.add('current');
+  });
+  const lift = STAGE_FLOOR_LIFT_PCT[mockState.stage.index];
+  const nextLift = STAGE_FLOOR_LIFT_PCT[Math.min(mockState.stage.index + 1, 5)];
+  const el = document.getElementById('sprout-decay');
+  if (el) {
+    if (mockState.stage.index >= 5) {
+      el.textContent = `Eternal · floor +${lift}% locked in`;
+    } else {
+      el.textContent = `Floor currently +${lift}% · next stage lifts to +${nextLift}%`;
+    }
+  }
+}
+
+function renderFeed() {
+  const host = document.getElementById('pot-feed');
+  const items = mockState.feed.map(item => {
+    if (item.kind === 'story') {
+      return `<div class="feed-item story">
+        <div class="feed-time">${item.time}</div>
+        <div>${item.text}</div>
+        <div class="feed-quote">${item.story}</div>
+      </div>`;
+    }
+    const amt = item.amt ? `<span class="feed-amt">${item.amt}</span>` : '';
+    return `<div class="feed-item">
+      <div class="feed-time">${item.time}</div>
+      <div>${item.text} ${amt}</div>
+    </div>`;
+  }).join('');
+  host.insertAdjacentHTML('beforeend', items);
+}
+
+let sproutSeconds = mockState.stage.secondsToNextStage;
+function tickSproutClock() {
+  sproutSeconds = Math.max(0, sproutSeconds - 1);
+  document.getElementById('sprout-countdown').textContent = fmtCountdown(sproutSeconds);
+  document.getElementById('snipe-next-sprout').textContent = fmtCountdown(sproutSeconds);
+}
+setInterval(tickSproutClock, 1000);
+
+function tickHeldClock() {
+  mockState.holder.heldSeconds += 1;
+  document.getElementById('stat-timer').textContent = fmtDuration(mockState.holder.heldSeconds);
+}
+setInterval(tickHeldClock, 1000);
+
+document.querySelectorAll('.rules-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    const panel = tab.getAttribute('data-panel');
+    document.querySelectorAll('.rules-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.rules-panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(`panel-${panel}`).classList.add('active');
+  });
+});
+
+function openBuyModal() {
+  document.getElementById('modal-current-price').textContent = `${mockState.price.currentEth.toFixed(2)} ETH`;
+  document.getElementById('modal-min-next').textContent = `${mockState.price.minNextEth.toFixed(2)} ETH`;
+  document.getElementById('pay-input').value = mockState.price.currentEth.toFixed(2);
+  document.getElementById('ask-input').value = mockState.price.minNextEth.toFixed(2);
+  document.getElementById('buy-modal').classList.add('open');
+}
+function closeBuyModal() { document.getElementById('buy-modal').classList.remove('open'); }
+function confirmSnipe() {
+  alert('Snipe flow — wire to MetaMask / ethers.js. Call contract.buyPotato(newAsk) with value=pay.');
+  closeBuyModal();
+}
+
+function shareThroneCard() {
+  const text = encodeURIComponent(
+    `🥔 ${mockState.holder.name} is on the Hot Potato throne — ${['Cold','Warm','Hot','Blazing','Legendary'][mockState.holder.tierIndex]} tier · Pot ${mockState.pot.balanceEth.toFixed(2)} ETH · Stage ${mockState.stage.name}\n\nSnipe it: `
+  );
+  const url = encodeURIComponent(window.location.href);
+  window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
+}
+function openSaga() {
+  alert('Saga feed — coming v4. Will show every throne change as a narrative chapter, with the holder\'s optional "king\'s decree" quote from each reign.');
+}
+function openRivalries() {
+  alert('Rivalries — coming v4. Tracks repeat snipe wars between wallets ("0x4f2a has sniped 0x91e3 six times — a rivalry emerges").');
+}
+
+async function loadHistory() {
+  try {
+    const res = await fetch(`${API_BASE}/potato/history`);
+    if (!res.ok) throw new Error('history fetch failed');
+    const { history, total } = await res.json();
+    document.getElementById('history-count').textContent = `${total} hands`;
+    const rows = history.slice(0, 10).map(h => `
+      <tr>
+        <td>#${h.hand}</td>
+        <td class="from">${h.from.slice(0, 6)}…${h.from.slice(-4)}</td>
+        <td>${parseFloat(h.price).toFixed(4)} ETH</td>
+        <td>${(h.holdDurationSeconds / 3600).toFixed(1)}h</td>
+        <td style="color:var(--yellow);text-transform:uppercase;">${h.rarityTier}</td>
+      </tr>
+    `).join('');
+    document.getElementById('history-body').innerHTML = rows ||
+      `<tr><td colspan="5" style="padding:24px 12px;color:rgba(255,245,224,0.3);">No history yet — be the first to snipe!</td></tr>`;
+  } catch (e) {
+    document.getElementById('history-body').innerHTML =
+      `<tr><td colspan="5" style="padding:24px 12px;color:rgba(255,245,224,0.3);">History unavailable (backend offline)</td></tr>`;
+  }
+}
+
+async function loadLeaderboard() {
+  try {
+    const res = await fetch(`${API_BASE}/potato/leaderboard`);
+    if (!res.ok) throw new Error();
+    const { longestHolds, loyaltyBoard, hallOfFame } = await res.json();
+    const fmtRow = (addr, val) =>
+      `<div class="lb-row"><span class="lb-addr">${addr.slice(0,6)}…${addr.slice(-4)}</span><span class="lb-val">${val}</span></div>`;
+    document.getElementById('lb-longest').innerHTML =
+      longestHolds.slice(0,5).map(r => fmtRow(r.address, `${r.holdDurationHours}h`)).join('') || '—';
+    document.getElementById('lb-loyalty').innerHTML =
+      loyaltyBoard.slice(0,5).map(r => fmtRow(r.address, `×${r.timesHeld}`)).join('') || '—';
+    document.getElementById('lb-hof').innerHTML =
+      hallOfFame.slice(0,5).map(r => fmtRow(r.address, `${r.holdDurationHours}h`)).join('') || '—';
+  } catch (e) {
+    ['lb-longest','lb-loyalty','lb-hof'].forEach(id =>
+      document.getElementById(id).innerHTML = '<div style="color:rgba(255,245,224,0.3);font-size:12px;">Backend offline</div>'
+    );
+  }
+}
+
+function init() {
+  renderTicker();
+  renderHero();
+  renderLadder();
+  renderThrone();
+  renderFeed();
+  loadHistory();
+  loadLeaderboard();
+}
+init();
+
+// Demo Last-Supper state via ?state=last-supper
+if (new URLSearchParams(window.location.search).get('state') === 'last-supper') {
+  document.body.setAttribute('data-state', 'last-supper');
+}
+</script>
+</body>
+</html>

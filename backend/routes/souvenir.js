@@ -3,29 +3,55 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 
-const { getPotatoState, getRarityTier, rollRarity, setSouvenirURI } = require('../services/contract');
+const {
+  getPotatoState,
+  getSouvenirScore,
+  scoreToRarity,
+  applyScoreBoost,
+  setRarityScore,
+  setTokenURI,
+} = require('../services/contract');
 const { generateSouvenirImage } = require('../services/imageGen');
 const { uploadImageToIPFS, uploadMetadataToIPFS, buildMetadata } = require('../services/ipfs');
 const { announcePotatoPassed } = require('../services/social');
-const { createTradeInCode, getTradeInCodeForWallet, validateCode, storePendingBoost, consumePendingBoost, applyBoost, getLoyaltyStatus, claimLoyaltyBoost, registerReferral, applyReferral } = require('../services/promoCode');
+const {
+  createTradeInCode, getTradeInCodeForWallet, validateCode,
+  storePendingBoost, consumePendingBoost,
+  getLoyaltyStatus, claimLoyaltyBoost,
+  registerReferral, applyReferral,
+} = require('../services/promoCode');
 
 const { ethers } = require('ethers');
-const SOUVENIR_ABI = [
+
+const BURN_ADDRESS  = '0x000000000000000000000000000000000000dEaD';
+const IPFS_GATEWAY  = 'https://gateway.pinata.cloud/ipfs/';
+
+// ── V3 legacy helpers — used by gallery/owned/trade-in until V4 is deployed ──
+// TODO: after V4 deploy, replace these routes with SouvenirNFT V4 ABI calls.
+const CONTRACT_ADDRESS = process.env.SOUVENIR_ADDRESS || process.env.CONTRACT_ADDRESS || '0x90Bfcf98282445B35e3ce48b9Eb21E532E603473';
+const RPC_URL          = process.env.RPC_URL;
+const RARITY_MAP       = ['common', 'uncommon', 'rare', 'epic', 'legendary']; // 5-tier V4 mapping
+const SOUVENIR_ABI     = [
+  // V3 legacy ABI — kept for gallery/owned routes until V4 migration
   'function souvenirCount() view returns (uint256)',
   'function ownerOf(uint256 tokenId) view returns (address)',
   'function tokenURI(uint256 tokenId) view returns (string)',
   'function souvenirs(uint256 tokenId) view returns (uint256 transferNumber, uint256 pricePaid, uint256 holdDuration, uint8 rarityTier, address originalOwner)',
 ];
-const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || '0x90Bfcf98282445B35e3ce48b9Eb21E532E603473';
-const RPC_URL = process.env.RPC_URL;
-const BURN_ADDRESS = '0x000000000000000000000000000000000000dEaD';
-const IPFS_GATEWAY = 'https://gateway.pinata.cloud/ipfs/';
-const RARITY_MAP = ['common', 'rare', 'epic', 'legendary'];
 
 // POST /api/souvenir/generate
-// Body: { fromAddress, holdDurationSeconds, souvenirTokenId, rarityTier, promoCode? }
+// Body: { fromAddress, souvenirTokenId, holdDurationSeconds?, pricePaid?, newAskingPrice? }
+//
+// Rarity flow (single source of truth):
+//   1. Read rarityScore from the on-chain SouvenirNFT — the contract computed this
+//      deterministically from hold duration + stage + overpay at mint time.
+//   2. If this holder has a pending boost (promo / loyalty / referral / trade-in),
+//      add 20 points per boost level (one rarity tier per +1), capped at 99.
+//   3. If the score increased, write it back on-chain via setRarityScore() BEFORE
+//      setting the URI — so on-chain rarityScore and metadata rarity are always identical.
+//   4. Generate art, upload to IPFS, set the token URI.
 router.post('/generate', async (req, res) => {
-  const { fromAddress, holdDurationSeconds, souvenirTokenId, rarityTier } = req.body;
+  const { fromAddress, souvenirTokenId } = req.body;
   if (!fromAddress || souvenirTokenId === undefined) {
     return res.status(400).json({ error: 'fromAddress and souvenirTokenId are required' });
   }
@@ -34,37 +60,47 @@ router.post('/generate', async (req, res) => {
 
   (async () => {
     try {
-      const holdDurationHours = (Number(holdDurationSeconds) || 0) / 3600;
-      // Always roll — hold duration determines probability weights, not outcome directly
-      const baseRarity = rollRarity(getRarityTier(holdDurationHours).weights);
-      const state = await getPotatoState();
+      const tokenId = Number(souvenirTokenId);
+      const holdDurationHours = (Number(req.body.holdDurationSeconds) || 0) / 3600;
+      const state   = await getPotatoState();
       const edition = state.totalSouvenirs;
 
-      // Apply pending promo/loyalty/referral boost (loyalty must be claimed explicitly)
-      const pendingBoost = consumePendingBoost(fromAddress);
-      const totalBoost   = Math.min(pendingBoost, 4);
-      const finalRarity  = applyBoost(baseRarity, totalBoost);
+      // ── Step 1: read on-chain base score ────────────────────────────────
+      const baseScore  = await getSouvenirScore(tokenId);
+      const baseRarity = scoreToRarity(baseScore);
 
-      console.log(`\n🥔 Generating souvenir #${souvenirTokenId} for ${fromAddress}`);
-      console.log(`   Hold time: ${holdDurationHours.toFixed(1)}h → Base: ${baseRarity} | Pending boost: +${pendingBoost} → Final: ${finalRarity}`);
+      // ── Step 2: apply any pending boost ─────────────────────────────────
+      const pendingBoost   = consumePendingBoost(fromAddress);
+      const clampedBoost   = Math.min(pendingBoost, 4); // max +4 tiers
+      const boostedScore   = applyScoreBoost(baseScore, clampedBoost);
+      const finalRarity    = scoreToRarity(boostedScore);
 
-      const imageUrl = await generateSouvenirImage(finalRarity, holdDurationHours, fromAddress);
-      const { cid: imageCid } = await uploadImageToIPFS(imageUrl, `hot-potato-souvenir-${edition}.png`);
-      const metadata = buildMetadata({ rarity: finalRarity, holdDurationHours, holderAddress: fromAddress, imageCid, edition });
-      const { url: tokenURI } = await uploadMetadataToIPFS(metadata);
+      console.log(`\n🥔 Generating souvenir #${tokenId} for ${fromAddress}`);
+      console.log(`   On-chain score: ${baseScore} (${baseRarity}) | Boost: +${clampedBoost} → ${boostedScore} (${finalRarity})`);
 
-      await setSouvenirURI(Number(souvenirTokenId), tokenURI);
-      console.log(`✅ Souvenir #${souvenirTokenId} complete — ${finalRarity} — ${tokenURI}`);
+      // ── Step 3: write boosted score back on-chain if it changed ─────────
+      if (boostedScore > baseScore) {
+        await setRarityScore(tokenId, boostedScore);
+      }
 
-      const ipfsImageUrl = `https://gateway.pinata.cloud/ipfs/${imageCid}`;
+      // ── Step 4: generate art + upload metadata ───────────────────────────
+      const imageUrl          = await generateSouvenirImage(finalRarity, holdDurationHours, fromAddress);
+      const { cid: imageCid } = await uploadImageToIPFS(imageUrl, `jackpotato-souvenir-${edition}.png`);
+      const metadata          = buildMetadata({ rarity: finalRarity, holdDurationHours, holderAddress: fromAddress, imageCid, edition });
+      const { url: tokenUri } = await uploadMetadataToIPFS(metadata);
+
+      await setTokenURI(tokenId, tokenUri);
+      console.log(`✅ Souvenir #${tokenId} complete — ${finalRarity} — ${tokenUri}`);
+
+      const ipfsImageUrl = `${IPFS_GATEWAY}${imageCid}`;
       await announcePotatoPassed({
         hand: edition,
         fromAddress,
         holdDurationHours,
-        pricePaid: req.body.pricePaid || '?',
-        rarity: finalRarity,
+        pricePaid:      req.body.pricePaid      || '?',
+        rarity:         finalRarity,
         newAskingPrice: req.body.newAskingPrice || '?',
-        imageUrl: ipfsImageUrl,
+        imageUrl:       ipfsImageUrl,
       });
     } catch (err) {
       console.error('Background souvenir generation failed:', err.message);

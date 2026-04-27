@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hot Potato — Economy Sandbox</title>
+<style>
+  :root {
+    --bg: #0a0e0c;
+    --panel: #141a17;
+    --panel-2: #0f1411;
+    --border: #1f2a24;
+    --text: #e8f0eb;
+    --muted: #8a9a91;
+    --accent: #7FE84C;
+    --accent-dim: #4fa830;
+    --purple: #C59CFF;
+    --purple-dim: #8a5fd4;
+    --gold: #F5C542;
+    --danger: #ff6b6b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: radial-gradient(ellipse at top, #0f1714 0%, #0a0e0c 60%);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+    padding: 24px;
+    line-height: 1.5;
+  }
+  .container { max-width: 1400px; margin: 0 auto; }
+  header { margin-bottom: 24px; }
+  h1 {
+    font-size: 28px;
+    margin-bottom: 4px;
+    background: linear-gradient(90deg, var(--accent), var(--purple));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+  .subtitle { color: var(--muted); font-size: 14px; }
+  .grid { display: grid; grid-template-columns: 380px 1fr; gap: 20px; }
+  @media (max-width: 920px) { .grid { grid-template-columns: 1fr; } }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .panel h2 {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+  .input-group { margin-bottom: 14px; }
+  .input-group label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .input-group label span {
+    color: var(--accent);
+    font-family: 'SF Mono', Menlo, monospace;
+    font-size: 13px;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  input[type="range"] {
+    width: 100%;
+    accent-color: var(--accent);
+    height: 4px;
+  }
+  .section-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--purple);
+    margin: 20px 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+  }
+  .section-label:first-child { margin-top: 0; }
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .stat {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .stat .label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+  .stat .value {
+    font-size: 20px;
+    font-family: 'SF Mono', Menlo, monospace;
+    font-weight: 600;
+  }
+  .stat.pot .value { color: var(--accent); }
+  .stat.reserve .value { color: var(--purple); }
+  .stat.price .value { color: var(--gold); }
+  .prize-box {
+    background:
+      linear-gradient(135deg, rgba(127,232,76,0.08), rgba(197,156,255,0.1));
+    border: 1px solid rgba(197,156,255,0.4);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-bottom: 20px;
+  }
+  .prize-box h3 {
+    font-size: 11px;
+    color: var(--purple);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+  .prize-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    font-family: 'SF Mono', Menlo, monospace;
+    font-size: 13px;
+  }
+  .prize-row.winner {
+    color: var(--accent);
+    font-size: 18px;
+    font-weight: 700;
+    padding-top: 10px;
+    margin-top: 6px;
+    border-top: 1px solid var(--border);
+  }
+  .prize-row .lbl {
+    color: var(--muted);
+    font-weight: 400;
+    font-size: 12px;
+    letter-spacing: 0.3px;
+  }
+  .prize-row.winner .lbl {
+    color: var(--accent);
+    font-size: 13px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .table-wrap {
+    max-height: 380px;
+    overflow-y: auto;
+    margin-top: 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'SF Mono', Menlo, monospace;
+    font-size: 12px;
+  }
+  thead { position: sticky; top: 0; background: var(--panel); z-index: 1; }
+  th, td {
+    padding: 7px 10px;
+    text-align: right;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    color: var(--muted);
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 1px;
+    font-weight: 500;
+  }
+  th:first-child, td:first-child { text-align: left; }
+  tbody tr:hover { background: rgba(127,232,76,0.03); }
+  tbody tr.holdout-row { background: rgba(245, 197, 66, 0.07); }
+  tbody tr.holdout-row:hover { background: rgba(245, 197, 66, 0.12); }
+  tbody tr.holdout-row td:nth-child(2) { color: var(--gold); font-weight: 600; }
+  .note {
+    background: rgba(245, 197, 66, 0.06);
+    border-left: 3px solid var(--gold);
+    padding: 10px 14px;
+    border-radius: 0 4px 4px 0;
+    font-size: 13px;
+    margin-top: 16px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .note.good {
+    background: rgba(127,232,76,0.06);
+    border-left-color: var(--accent);
+  }
+  .note.warn {
+    background: rgba(255,107,107,0.06);
+    border-left-color: var(--danger);
+    color: #ffb4b4;
+  }
+  .locked-badge {
+    display: inline-block;
+    background: rgba(127,232,76,0.15);
+    color: var(--accent);
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .split-display {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-top: 4px;
+  }
+  .split-display .chunk {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    text-align: center;
+  }
+  .split-display .chunk .pct {
+    font-family: 'SF Mono', Menlo, monospace;
+    font-size: 20px;
+    font-weight: 600;
+  }
+  .split-display .chunk.winner .pct { color: var(--accent); }
+  .split-display .chunk.seed .pct { color: var(--purple); }
+  .split-display .chunk.creator .pct { color: var(--gold); }
+  .split-display .chunk .who {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 4px;
+  }
+  .footer-hint {
+    margin-top: 20px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Hot Potato — Economy Sandbox</h1>
+    <p class="subtitle">Drag the sliders. Watch the arc. Confirm the pot is always worth chasing.</p>
+  </header>
+
+  <div class="grid">
+    <!-- INPUTS -->
+    <div class="panel">
+      <h2>Parameters</h2>
+
+      <div class="section-label">Launch</div>
+      <div class="input-group">
+        <label>Seed (to Reserve) <span id="seedVal">$1,000</span></label>
+        <input type="range" id="seed" min="0" max="5000" value="1000" step="100">
+      </div>
+      <div class="input-group">
+        <label>Starting price <span id="startPriceVal">$50</span></label>
+        <input type="range" id="startPrice" min="10" max="500" value="50" step="10">
+      </div>
+
+      <div class="section-label">Per-sale dynamics</div>
+      <div class="input-group">
+        <label>Base markup (min price bump) <span id="markupVal">10%</span></label>
+        <input type="range" id="markup" min="5" max="30" value="10" step="1">
+      </div>
+      <div class="input-group">
+        <label>Avg overpay above minimum <span id="overpayVal">20%</span></label>
+        <input type="range" id="overpay" min="0" max="100" value="20" step="5">
+      </div>
+      <div class="input-group">
+        <label>Pool contribution per sale <span id="poolPctVal">5%</span></label>
+        <input type="range" id="poolPct" min="0" max="15" value="5" step="0.5">
+      </div>
+
+      <div class="section-label">Volume</div>
+      <div class="input-group">
+        <label>Regular sales <span id="salesVal">30</span></label>
+        <input type="range" id="sales" min="1" max="200" value="30" step="1">
+      </div>
+      <div class="input-group">
+        <label>Hold-out sales (pot frozen) <span id="holdoutSalesVal">2</span></label>
+        <input type="range" id="holdoutSales" min="0" max="10" value="2" step="1">
+      </div>
+
+      <div class="section-label">Seal split <span class="locked-badge">locked</span></div>
+      <div class="split-display">
+        <div class="chunk winner"><div class="pct">85%</div><div class="who">Winner</div></div>
+        <div class="chunk seed"><div class="pct">10%</div><div class="who">Next pot</div></div>
+        <div class="chunk creator"><div class="pct">5%</div><div class="who">Creator*</div></div>
+      </div>
+      <p style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5;">
+        *1% of the creator fee is donated to the Internet Archive.
+      </p>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="panel">
+      <h2>Live state</h2>
+
+      <div class="stats">
+        <div class="stat price">
+          <div class="label">Final sale price</div>
+          <div class="value" id="finalPrice">$0</div>
+        </div>
+        <div class="stat pot">
+          <div class="label">Live pot (churn)</div>
+          <div class="value" id="potTotal">$0</div>
+        </div>
+        <div class="stat reserve">
+          <div class="label">Reserve at seal</div>
+          <div class="value" id="reserveTotal">$0</div>
+        </div>
+      </div>
+
+      <div class="prize-box">
+        <h3>Seal payout — when timer expires</h3>
+        <div class="prize-row"><span class="lbl">Seed contribution</span><span id="seedDisplay">$1,000</span></div>
+        <div class="prize-row"><span class="lbl">Accumulated from sales</span><span id="accumDisplay">$0</span></div>
+        <div class="prize-row"><span class="lbl">Total Reserve</span><span id="totalReserve">$0</span></div>
+        <div class="prize-row winner"><span class="lbl">Final holder wins</span><span id="winnerPrize">$0</span></div>
+        <div class="prize-row"><span class="lbl">Seeds next season's pot</span><span id="newPotSeed">$0</span></div>
+        <div class="prize-row"><span class="lbl">Creator fee (incl. 1% → Internet Archive)</span><span id="creatorFee">$0</span></div>
+      </div>
+
+      <div class="section-label" style="color:var(--muted);margin-top:20px;">Sale-by-sale breakdown</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Phase</th>
+              <th>Sale price</th>
+              <th>Pool in</th>
+              <th>Pot</th>
+              <th>Reserve</th>
+              <th>Seller gets</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+
+      <div class="note" id="healthNote">Adjust parameters to see the arc.</div>
+    </div>
+  </div>
+
+  <div class="footer-hint">price can only go up · only one exit: the seal</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const fmt = n => '$' + Math.round(n).toLocaleString();
+
+function simulate() {
+  const seed = +$('seed').value;
+  const startPrice = +$('startPrice').value;
+  const markup = +$('markup').value / 100;
+  const overpay = +$('overpay').value / 100;
+  const poolPct = +$('poolPct').value / 100;
+  const sales = +$('sales').value;
+  const holdoutSales = +$('holdoutSales').value;
+
+  // Update input value displays
+  $('seedVal').textContent = fmt(seed);
+  $('startPriceVal').textContent = fmt(startPrice);
+  $('markupVal').textContent = $('markup').value + '%';
+  $('overpayVal').textContent = $('overpay').value + '%';
+  $('poolPctVal').textContent = $('poolPct').value + '%';
+  $('salesVal').textContent = sales;
+  $('holdoutSalesVal').textContent = holdoutSales;
+
+  let price = startPrice;
+  let pot = 0;
+  let reserve = seed;
+  const rows = [];
+
+  // Regular phase
+  for (let i = 1; i <= sales; i++) {
+    const minAsk = price * (1 + markup);
+    const actualPrice = minAsk * (1 + overpay);
+    const poolIn = actualPrice * poolPct;
+    pot += poolIn / 2;
+    reserve += poolIn / 2;
+    const sellerGets = actualPrice - poolIn;
+    price = actualPrice;
+    rows.push({
+      n: i, phase: 'Regular',
+      price: actualPrice, poolIn, pot, reserve, sellerGets
+    });
+  }
+
+  // Hold-out phase — pool frozen
+  for (let i = 1; i <= holdoutSales; i++) {
+    const minAsk = price * (1 + markup);
+    const actualPrice = minAsk * (1 + overpay);
+    // No pool contribution — seller gets 100%
+    price = actualPrice;
+    rows.push({
+      n: sales + i, phase: 'Hold-out',
+      price: actualPrice, poolIn: 0, pot, reserve, sellerGets: actualPrice
+    });
+  }
+
+  const accum = reserve - seed;
+  const winnerPrize = reserve * 0.85;
+  const newSeed = reserve * 0.10;
+  const creator = reserve * 0.05;
+
+  $('finalPrice').textContent = fmt(price);
+  $('potTotal').textContent = fmt(pot);
+  $('reserveTotal').textContent = fmt(reserve);
+  $('seedDisplay').textContent = fmt(seed);
+  $('accumDisplay').textContent = fmt(accum);
+  $('totalReserve').textContent = fmt(reserve);
+  $('winnerPrize').textContent = fmt(winnerPrize);
+  $('newPotSeed').textContent = fmt(newSeed);
+  $('creatorFee').textContent = fmt(creator);
+
+  // Table render
+  $('tableBody').innerHTML = rows.map(r => `
+    <tr class="${r.phase === 'Hold-out' ? 'holdout-row' : ''}">
+      <td>${r.n}</td>
+      <td>${r.phase}</td>
+      <td>${fmt(r.price)}</td>
+      <td>${r.poolIn > 0 ? fmt(r.poolIn) : '—'}</td>
+      <td>${fmt(r.pot)}</td>
+      <td>${fmt(r.reserve)}</td>
+      <td>${fmt(r.sellerGets)}</td>
+    </tr>
+  `).join('');
+
+  // Health note
+  const note = $('healthNote');
+  note.classList.remove('good', 'warn');
+  const multiplier = seed > 0 ? (winnerPrize / seed).toFixed(1) : '∞';
+
+  if (winnerPrize < 500) {
+    note.classList.add('warn');
+    note.textContent = `Final prize only ${fmt(winnerPrize)} — probably not worth a months-long hold. Try more sales, higher overpay, or a larger seed.`;
+  } else if (winnerPrize < 2000) {
+    note.textContent = `Final prize ${fmt(winnerPrize)} (${multiplier}× seed). Viable but modest. Ok for a quiet pilot season.`;
+  } else if (winnerPrize < 10000) {
+    note.classList.add('good');
+    note.textContent = `Healthy arc: ${fmt(winnerPrize)} final prize, ${multiplier}× return on seed. This is the sweet spot — the seed primed the pump and the volume did the heavy lifting.`;
+  } else {
+    note.classList.add('good');
+    note.textContent = `Viral arc — ${fmt(winnerPrize)} final prize. The seed is essentially noise at this volume; the game is self-funding.`;
+  }
+}
+
+document.querySelectorAll('input').forEach(el => el.addEventListener('input', simulate));
+simulate();
+</script>
+</body>
+</html>

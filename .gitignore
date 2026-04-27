@@ -2,3 +2,7 @@
 node_modules/
 training-images.zip
 Training images/
+*.rtf
+*.pdf
+.DS_Store
+proton-recovery-kit.pdf

@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hot Potato — Website v2 Redesign Plan</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Georgia', serif; background: #0f0800; color: #ffe8c0; line-height: 1.7; padding: 40px 24px; }
+  .page { max-width: 960px; margin: 0 auto; }
+  h1 { font-family: 'Arial Black', sans-serif; font-size: 30px; letter-spacing: 2px; color: #FAC775; margin-bottom: 6px; }
+  h2 { font-family: 'Arial Black', sans-serif; font-size: 16px; letter-spacing: 1px; color: #FF6B00; margin: 44px 0 12px; text-transform: uppercase; border-bottom: 1px solid rgba(255,107,0,0.3); padding-bottom: 8px; }
+  h3 { font-family: 'Arial Black', sans-serif; font-size: 14px; color: #FAC775; margin: 26px 0 10px; letter-spacing: 0.5px; }
+  h4 { font-family: 'Arial Black', sans-serif; font-size: 12px; color: #FF8C42; margin: 16px 0 6px; letter-spacing: 0.4px; text-transform: uppercase; }
+  p { font-size: 14px; color: rgba(255,232,192,0.85); margin-bottom: 12px; }
+  ul, ol { margin: 0 0 14px 22px; }
+  li { font-size: 14px; color: rgba(255,232,192,0.8); margin-bottom: 6px; line-height: 1.65; }
+  .meta { font-size: 12px; color: rgba(255,232,192,0.35); margin-bottom: 36px; border-top: 1px solid rgba(255,232,192,0.08); padding-top: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 14px 0 22px; }
+  th { background: rgba(255,107,0,0.15); color: #FF8C42; font-family: 'Arial', sans-serif; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; padding: 8px 12px; text-align: left; border-bottom: 1px solid rgba(255,107,0,0.3); }
+  td { padding: 10px 12px; border-bottom: 1px solid rgba(255,232,192,0.06); color: rgba(255,232,192,0.82); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .hi { color: #FAC775; font-weight: bold; }
+  .ok { color: #90EE90; }
+  .warn { color: #FF8C42; }
+  .bad { color: #FF5555; }
+  .dim { color: rgba(255,232,192,0.45); }
+  code { background: rgba(255,232,192,0.08); padding: 1px 5px; border-radius: 3px; font-size: 12px; font-family: 'Courier New', monospace; color: #FAC775; }
+  pre { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,232,192,0.1); border-radius: 6px; padding: 14px 16px; margin: 14px 0; overflow-x: auto; font-family: 'Courier New', monospace; font-size: 11.5px; color: #ffe8c0; line-height: 1.55; }
+  pre.wireframe { font-size: 11px; line-height: 1.45; color: #FAC775; background: rgba(0,0,0,0.5); border-color: rgba(250,199,117,0.15); }
+  pre.wireframe .accent { color: #FF6B00; }
+  .callout { background: rgba(255,107,0,0.07); border-left: 3px solid #FF6B00; padding: 13px 16px; margin: 16px 0 20px; border-radius: 0 8px 8px 0; }
+  .callout.gold { background: rgba(250,199,117,0.07); border-color: #FAC775; }
+  .callout.blue { background: rgba(55,138,221,0.07); border-color: #85B7EB; }
+  .callout.red { background: rgba(255,85,85,0.07); border-color: #FF5555; }
+  .callout.green { background: rgba(100,220,100,0.07); border-color: #90EE90; }
+  .callout p { margin: 0 0 6px; font-size: 13px; }
+  .callout p:last-child { margin-bottom: 0; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 10px; font-family: 'Arial Black', sans-serif; letter-spacing: 0.08em; text-transform: uppercase; margin-right: 6px; vertical-align: middle; }
+  .badge.new { background: rgba(100,220,100,0.18); color: #90EE90; border: 1px solid rgba(100,220,100,0.4); }
+  .badge.rewrite { background: rgba(255,107,0,0.18); color: #FF8C42; border: 1px solid rgba(255,107,0,0.4); }
+  .badge.tweak { background: rgba(133,183,235,0.18); color: #85B7EB; border: 1px solid rgba(133,183,235,0.4); }
+  .badge.keep { background: rgba(255,232,192,0.12); color: rgba(255,232,192,0.7); border: 1px solid rgba(255,232,192,0.25); }
+  .badge.remove { background: rgba(255,85,85,0.15); color: #FF5555; border: 1px solid rgba(255,85,85,0.4); }
+  .badge.p1 { background: rgba(255,85,85,0.2); color: #FF7777; border: 1px solid rgba(255,85,85,0.4); }
+  .badge.p2 { background: rgba(255,107,0,0.2); color: #FF8C42; border: 1px solid rgba(255,107,0,0.4); }
+  .badge.p3 { background: rgba(250,199,117,0.15); color: #FAC775; border: 1px solid rgba(250,199,117,0.4); }
+  .badge.p4 { background: rgba(133,183,235,0.15); color: #85B7EB; border: 1px solid rgba(133,183,235,0.4); }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 14px 0; }
+  .col { background: rgba(255,232,192,0.03); border: 1px solid rgba(255,232,192,0.08); border-radius: 8px; padding: 14px 18px; }
+  .col h4 { margin-top: 0; }
+  .col.before { border-left: 3px solid rgba(255,85,85,0.4); }
+  .col.after { border-left: 3px solid rgba(100,220,100,0.4); }
+  .tier-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; font-size: 13px; }
+  .tier-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .state-diagram { background: rgba(0,0,0,0.4); border: 1px solid rgba(250,199,117,0.2); border-radius: 8px; padding: 22px; margin: 16px 0; text-align: center; font-family: 'Courier New', monospace; font-size: 12px; color: #FAC775; line-height: 1.7; }
+  hr { border: none; border-top: 1px solid rgba(255,232,192,0.08); margin: 40px 0; }
+  .toc { background: rgba(255,232,192,0.03); border: 1px solid rgba(255,232,192,0.08); border-radius: 8px; padding: 16px 22px; margin: 20px 0 32px; }
+  .toc h4 { margin-top: 0; color: #FF8C42; }
+  .toc ol { margin-left: 18px; }
+  .toc li { font-size: 13px; margin-bottom: 4px; }
+  .toc a { color: #FAC775; text-decoration: none; }
+  .toc a:hover { color: #ffdd99; text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<h1>HOT POTATO — WEBSITE v2 REDESIGN</h1>
+<div class="meta">Rebuild plan for <code>index.html</code> to surface the Pot, sit-tier ladder, sprouting, Last Supper, and spectator mechanics. Companion to the mechanics specs.</div>
+
+<div class="toc">
+  <h4>Contents</h4>
+  <ol>
+    <li><a href="#why">Why v2</a></li>
+    <li><a href="#map">Section-by-section change map</a></li>
+    <li><a href="#hero">Hero rebuild — the new center of gravity</a></li>
+    <li><a href="#pot">The Pot widget</a></li>
+    <li><a href="#sprout">Sprouting clock &amp; the living NFT</a></li>
+    <li><a href="#rules">Rules section rewrite</a></li>
+    <li><a href="#spectator">Spectator hub (new)</a></li>
+    <li><a href="#lastsupper">Last Supper conditional UI</a></li>
+    <li><a href="#gallery">Souvenirs, history, leaderboards</a></li>
+    <li><a href="#pages">New standalone pages</a></li>
+    <li><a href="#backend">Backend &amp; indexer changes</a></li>
+    <li><a href="#phases">Phased rollout</a></li>
+    <li><a href="#open">Open questions</a></li>
+  </ol>
+</div>
+
+<h2 id="why">1. Why v2 — not an incremental patch</h2>
+
+<p>The current site is built around the v1 mental model: <em>buy the potato, hold for rarity, generate a souvenir when sold</em>. The mechanics we've added since — the Pot, sit-tier ladder, sprouting/decay, Last Supper endgame, rooters, glances, limit buys, souvenir votes — each shift the player's core incentive loop. Trying to layer those onto the current UI would end up as a cluttered dashboard where nothing reads as the <em>headline</em>.</p>
+
+<p>The right move is to rebuild the hero and rules surfaces around the new headline — <span class="hi">the Pot is the center of gravity</span> — while keeping souvenir gallery, history, and leaderboard mostly intact. Call the existing file <code>index_v1.html</code> archival, develop <code>index_v2.html</code> in parallel, and cutover once the contract mechanics go live on testnet.</p>
+
+<div class="callout gold">
+  <p><strong>Design thesis:</strong> the Pot balance is the new price anchor. Current price tells you cost-to-enter. Pot tells you prize-to-win. Players scan for "is the pot juicy?" before asking "can I afford a snipe?" — that ordering has to be visually true on the page.</p>
+</div>
+
+<h2 id="map">2. Section-by-section change map</h2>
+
+<table>
+  <thead>
+    <tr><th style="width:210px;">Section</th><th style="width:120px;">Treatment</th><th>What changes</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Nav bar</td><td><span class="badge tweak">Tweak</span></td><td>Add <em>Spectator Hub</em>, <em>Last Supper</em> (conditional), <em>Almanac</em> links.</td></tr>
+    <tr><td>Hero eyebrow + stats</td><td><span class="badge rewrite">Rewrite</span></td><td>Stats become <strong>Pot ETH / Throne Timer / Stage</strong>. Eyebrow lines up as a live dramatic ticker ("Bob is on the throne — Warm tier — 3% Pot slice").</td></tr>
+    <tr><td>Heat bar → Sit-tier ladder</td><td><span class="badge rewrite">Rewrite</span></td><td>Replace rarity-building bar with a 5-step ladder: Cold → Warm → Hot → Blazing → Legendary.</td></tr>
+    <tr><td>Potato image</td><td><span class="badge rewrite">Rewrite</span></td><td>Hook to <code>stageURIs[currentStage]</code>. Renders Fresh → Leafing → Sprouted → Bloomed → Harvest → Eternal.</td></tr>
+    <tr><td>Pot widget</td><td><span class="badge new">New</span></td><td>Central card with Pot balance, holder's live payout slice, 30-day sparkline, "last sale added X ETH" feed.</td></tr>
+    <tr><td>Sprouting panel</td><td><span class="badge new">New</span></td><td>Countdown to next stage, decay-rate tag once active, visual of next stage silhouette.</td></tr>
+    <tr><td>Brewing panel (rarity odds)</td><td><span class="badge remove">Remove</span></td><td>Rarity-roll model being retired in favour of stage-linked souvenirs (parent-stage trait).</td></tr>
+    <tr><td>Rules tabs</td><td><span class="badge rewrite">Rewrite</span></td><td>New tabs: <em>How to Play</em>, <em>The Pot</em>, <em>Spectator Moves</em>, <em>Last Supper</em>, <em>FAQ</em>.</td></tr>
+    <tr><td>Spectator Hub</td><td><span class="badge new">New</span></td><td>Root / Glance / Limit Buy / Souvenir Vote — four interactive components.</td></tr>
+    <tr><td>Last Supper mode</td><td><span class="badge new">New</span></td><td>Conditional whole-site palette shift when <code>GameState.LAST_SUPPER</code>; jackpot countdown replaces hero eyebrow.</td></tr>
+    <tr><td>Souvenir gallery</td><td><span class="badge tweak">Tweak</span></td><td>Each card gets a <em>parent stage</em> badge (Fresh / Sprouted / Bloomed / etc.).</td></tr>
+    <tr><td>Ownership history</td><td><span class="badge tweak">Tweak</span></td><td>Add hold-tier-reached column + Pot slice paid out.</td></tr>
+    <tr><td>Leaderboards</td><td><span class="badge rewrite">Rewrite</span></td><td>Existing three get extended; add <em>Top Rooters</em>, <em>Snipe Kings</em>, <em>Pot Contributors</em>, <em>Tier Ladder</em>.</td></tr>
+    <tr><td>Footer / modals</td><td><span class="badge tweak">Tweak</span></td><td>Add Last Supper disclaimers, rooters terms, keeper bounty explainer.</td></tr>
+  </tbody>
+</table>
+
+<h2 id="hero">3. Hero rebuild — the new center of gravity</h2>
+
+<h3>Before (current <code>index.html</code>)</h3>
+
+<pre class="wireframe">
+┌──────────────────────────────────────────────────────────────┐
+│   [NAV]  Home  Rules  Souvenirs  History  Leaderboard       │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│   HOT POTATO — pass it, hold it, earn rarity               │
+│                                                              │
+│   ETH Price         Transfers        Souvenirs              │
+│   0.52              217              184                     │
+│                                                              │
+│          ┌────────────────┐                                  │
+│          │                │   Current holder: 2d 14h 33m     │
+│          │   🥔 potato    │   — rarity building 🔥           │
+│          │                │                                  │
+│          │  0x4f2a…8c3e   │   [▓▓▓▓░░░░░] heat               │
+│          └────────────────┘                                  │
+│                                                              │
+│          [ 🥔 BUY THE POTATO ]                               │
+│                                                              │
+│   Brewing:  85% Common · 12% Rare · 2% Epic · 1% Legendary  │
+└──────────────────────────────────────────────────────────────┘
+</pre>
+
+<h3>After (v2 proposal)</h3>
+
+<pre class="wireframe">
+┌──────────────────────────────────────────────────────────────┐
+│   [NAV]  Play  Pot  Spectator  Almanac   (LAST SUPPER ◉)    │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│   🔥 Bob is on the throne — WARM tier — 3% Pot slice        │
+│                                                              │
+│   POT                THRONE TIMER         STAGE              │
+│   3.84 ETH           2d 14h 33m           🌱 Leafing         │
+│   (+0.12 today)      (+21h → Hot)         (decay −0.5%/d)    │
+│                                                              │
+│          ┌────────────────┐                                  │
+│          │                │   SIT-TIER LADDER                │
+│          │   🌱 potato    │   ● Cold  ● Warm  ○ Hot          │
+│          │   (Leafing)    │   ○ Blazing  ○ Legendary         │
+│          │  0x4f2a…8c3e   │   ── holder locks +3% now,       │
+│          └────────────────┘      7% at Hot (in 21h)          │
+│                                                              │
+│          [ 🥔 SNIPE THE THRONE — 0.52 ETH ]                  │
+│          Next sprout in 4h 12m →                             │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+</pre>
+
+<div class="callout">
+  <p><strong>What changed and why:</strong></p>
+  <ul>
+    <li><strong>Stats row flips from price-anchored to Pot-anchored.</strong> Pot is the first thing a spectator reads. Price moves down to the CTA.</li>
+    <li><strong>The "rarity building" heat bar is gone.</strong> It maps to an old incentive. The sit-tier ladder is the replacement and it tells a story: "you're Warm, you get there at Hot, and Legendary is a real thing other players have reached."</li>
+    <li><strong>Sprouting is surfaced up here, not buried.</strong> The countdown to next stage is the second-most-watched number (after Pot) because it triggers visible change.</li>
+    <li><strong>CTA wording.</strong> "Snipe the throne" is more aligned with the throne metaphor than "Buy the potato." It hints at drama and implies a loser (the current holder).</li>
+  </ul>
+</div>
+
+<h2 id="pot">4. The Pot widget</h2>
+
+<p>This is the single most important new component. It needs to be prominent, live-updating, and <em>emotionally evocative</em> — a number that's going up.</p>
+
+<pre class="wireframe">
+┌─────────────── THE POT ──────────────────────────────────────┐
+│                                                              │
+│                   3.842 ETH                                  │
+│                   ~$12,800                                   │
+│                                                              │
+│   Your payout if you snipe now:   ── nothing (no seat yet)   │
+│   Bob's payout if sniped now:     +0.115 ETH (3% slice)      │
+│                                                              │
+│   30-day growth  ▁▂▂▃▃▄▅▅▆▆▇▇▇█                              │
+│                                                              │
+│   · 0.008 ETH added 14min ago  — Alice → Bob sale           │
+│   · 0.021 ETH added 2h ago     — Dana → Alice sale          │
+│   · 0.004 ETH added 6h ago     — rooter stake               │
+│                                                              │
+│   [ Root on Bob → earn if he survives ]                      │
+└──────────────────────────────────────────────────────────────┘
+</pre>
+
+<h3>Data model / implementation notes</h3>
+<ul>
+  <li><code>pot.balance()</code> — on-chain view. Poll every 15s or refresh on <code>PotatoSold</code>, <code>RooterStaked</code>, <code>PotDistributed</code> events.</li>
+  <li><code>currentHolder.payoutSlice</code> — computed client-side from <code>holdDuration</code> → tier → <code>potSlicePct[tier]</code>.</li>
+  <li>Sparkline: 30-day daily closes from indexer. Just a tiny SVG, no chart library needed.</li>
+  <li>"Last events" feed: the indexer's last 5 Pot-affecting events, live-streamed via SSE or a 15s poll.</li>
+</ul>
+
+<h2 id="sprout">5. Sprouting clock &amp; the living NFT</h2>
+
+<p>The single most <em>shareable</em> visual in the whole game. When the potato changes, screenshots go out on X and Discord. The UI has to capture that moment cleanly.</p>
+
+<pre class="wireframe">
+┌─────────────── SPROUTING ────────────────────────────────────┐
+│                                                              │
+│   CURRENT STAGE                NEXT STAGE                    │
+│   🌱 Leafing  (reached 2d ago) 🌿 Sprouted  (in 4h 12m)      │
+│                                                              │
+│   [ big image: current potato ] → [ silhouette: next stage ] │
+│                                                              │
+│   Decay active: −0.5% / day off the asking price             │
+│   Sprout history: Fresh ✓ · Leafing ◉ · Sprouted · Bloomed   │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+</pre>
+
+<h3>Stage-change animation</h3>
+<p>When <code>pokeStage()</code> is keeper-called and <code>MetadataUpdate(tokenId)</code> fires, the site should:</p>
+<ol>
+  <li>Play a 2-second crossfade on the hero image from old stage → new stage.</li>
+  <li>Flash the "🌱 Leafing" chip into "🌿 Sprouted" and pulse gold for 3 seconds.</li>
+  <li>Post a Discord/X bot message with the before/after image.</li>
+  <li>Add a system message to the Pot events feed: "Potato sprouted to Sprouted stage — decay now −1.0% / day".</li>
+</ol>
+
+<h2 id="rules">6. Rules section rewrite</h2>
+
+<p>Current tabs: How It Works / Rarity Boost / Boosts Guide / Terms. Nothing survives unchanged.</p>
+
+<div class="grid-2">
+  <div class="col before">
+    <h4>Before</h4>
+    <ul>
+      <li>How It Works — buy, hold, rarity fills</li>
+      <li>Rarity Boost — 4-tier roll, weights</li>
+      <li>Boosts Guide — stacking +1/+2/+3 boosts</li>
+      <li>Terms — legal fine print</li>
+    </ul>
+  </div>
+  <div class="col after">
+    <h4>After</h4>
+    <ul>
+      <li><strong>How to Play</strong> — throne metaphor, 90-sec read</li>
+      <li><strong>The Pot</strong> — funding + payout tiers table</li>
+      <li><strong>Spectator Moves</strong> — rooting, glancing, limits, votes</li>
+      <li><strong>Last Supper</strong> — endgame, Eternal Holder, Savior NFT</li>
+      <li><strong>FAQ</strong> — common confusions (what do I get? where does pot go? etc.)</li>
+    </ul>
+  </div>
+</div>
+
+<p>Content for the first four is already written in <code>hot-potato-how-to-play.html</code>, <code>hot-potato-pot-sprout-spectator-spec.html</code>, and <code>hot-potato-endgame-last-supper.html</code>. Job is to port, trim for skimmability, and wrap in the existing tab component.</p>
+
+<h2 id="spectator">7. Spectator Hub (new section)</h2>
+
+<p>Today 99%+ of wallets that touch the contract are spectators with no meaningful action available. This section flips that. Four components, stacked.</p>
+
+<h3>7.1 Root on a Holder</h3>
+<pre class="wireframe">
+┌─────────────── ROOT ON A HOLDER ─────────────────────────────┐
+│                                                              │
+│   Current throne: Bob  (Warm tier, 2d 14h held)              │
+│   Rooting pool for Bob: 0.47 ETH from 8 rooters              │
+│                                                              │
+│   Your stake:  [ 0.02 ETH ▾ ]    Potential reward: 0.031 ETH │
+│                                                              │
+│   [ ROOT ON BOB ]                                            │
+│                                                              │
+│   Your rooters / 2 active:                                   │
+│     · Bob (0.02 ETH)   potential 0.031 ETH   (Warm, 2d held) │
+│     · Alice (0.01 ETH) settled  +0.008 ETH   (sniped)        │
+└──────────────────────────────────────────────────────────────┘
+</pre>
+
+<h3>7.2 Glance</h3>
+<p>Tiny-fee (0.001 ETH) reveal of the current holder's asking-price <em>intent</em> — i.e., the slope of their last 3 price changes. Useful to market-makers and drama-watchers. Acts as a mini-revenue stream to the Pot.</p>
+
+<h3>7.3 Limit Buy</h3>
+<pre class="wireframe">
+┌─────────────── LIMIT BUY ────────────────────────────────────┐
+│   Buy the throne automatically when price drops to…          │
+│                                                              │
+│   Target price:    [ 0.35 ETH ▾ ]                            │
+│   Deposit:         [ 0.36 ETH ▾ ] (price + 0.01 gas buffer)  │
+│   Expires:         [ 7 days ▾ ]                              │
+│                                                              │
+│   Keeper bounty:   0.003 ETH (paid from deposit on fill)    │
+│                                                              │
+│   [ PLACE LIMIT ORDER ]                                      │
+└──────────────────────────────────────────────────────────────┘
+</pre>
+
+<h3>7.4 Souvenir Vote</h3>
+<p>Community picks one trait for the next souvenir mint (color, accessory, pose). Low stakes, high engagement. Weekly cadence, weighted by past activity (snipes, roots, held-seconds).</p>
+
+<h2 id="lastsupper">8. Last Supper conditional UI</h2>
+
+<p>When <code>GameState</code> transitions from <code>ACTIVE</code> → <code>LAST_SUPPER</code>, the whole site has to feel different. This is the climax. Players should reach for their phones when they see it.</p>
+
+<div class="state-diagram">
+  <strong>GameState transitions</strong><br><br>
+  [ ACTIVE ]  ──(treasury depleted + no snipe in N days)──▶  [ LAST_SUPPER ]<br>
+  [ LAST_SUPPER ]  ──(final window expires)──▶  [ SEALED ]<br>
+  <span class="dim">↑ site palette shifts at each edge</span>
+</div>
+
+<h3>Visual changes in LAST_SUPPER state</h3>
+<ul>
+  <li>Palette shifts from warm-gold to deep-red / ember. Add an animated ember-glow behind the hero image.</li>
+  <li>Hero eyebrow becomes a <strong>giant jackpot countdown</strong>: "⏳ FINAL WINDOW CLOSES IN 23h 04m 11s — POT: 4.12 ETH — WINNER TAKES ALL."</li>
+  <li>Nav gets a pulsing "◉ LAST SUPPER" indicator.</li>
+  <li>Every new snipe triggers a full-screen takeover animation: "Dana has taken the throne — 4.12 ETH at stake."</li>
+  <li>Share-card generator button appears in hero: generates a PNG suitable for X with current holder + pot + countdown.</li>
+  <li>Rooting pool closes. UI greys out that component with "Rooting closed for the Last Supper."</li>
+</ul>
+
+<h3>SEALED state</h3>
+<p>Once finalized, the whole site becomes a permanent monument. Hero shows the Eternal Holder, the final pot (100% to them), and a "Savior NFT" claim flow if applicable. Spectator hub becomes read-only archives. The site is still useful — it's a shrine.</p>
+
+<div class="callout red">
+  <p><strong>Engineering note:</strong> the LAST_SUPPER palette switch should be driven by a single CSS root-variable flip based on the on-chain <code>gameState</code> enum. Don't fork the codebase — just add <code>body[data-state="last-supper"]</code> selectors.</p>
+</div>
+
+<h2 id="gallery">9. Souvenirs, history, leaderboards</h2>
+
+<p>These surfaces are already good. Keep the structure, extend the data.</p>
+
+<h3>Souvenir gallery</h3>
+<p>Each card gets a new trait badge showing the <em>parent potato stage</em> at the moment the souvenir was minted: <code>Fresh</code>, <code>Leafing</code>, <code>Sprouted</code>, <code>Bloomed</code>, <code>Harvest</code>, <code>Eternal</code>. This is a built-in scarcity signal — Eternal-parent souvenirs are provably one-of-a-few.</p>
+
+<h3>Ownership history</h3>
+<p>Add two columns to the table: <em>Tier reached</em> (Cold / Warm / Hot / Blazing / Legendary) and <em>Pot slice earned</em> (ETH paid on exit).</p>
+
+<h3>Leaderboards</h3>
+<table>
+  <thead>
+    <tr><th>Board</th><th>Status</th><th>What it ranks</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Longest Hold</td><td><span class="badge keep">Keep</span></td><td>Unchanged.</td></tr>
+    <tr><td>Loyalty</td><td><span class="badge keep">Keep</span></td><td>Unchanged.</td></tr>
+    <tr><td>Hall of Fame</td><td><span class="badge keep">Keep</span></td><td>Unchanged.</td></tr>
+    <tr><td>Top Rooters</td><td><span class="badge new">New</span></td><td>Cumulative rooter profits.</td></tr>
+    <tr><td>Snipe Kings</td><td><span class="badge new">New</span></td><td>Most throne takeovers.</td></tr>
+    <tr><td>Pot Contributors</td><td><span class="badge new">New</span></td><td>Biggest cumulative Pot feeds (sales + overpays + stakes).</td></tr>
+    <tr><td>Tier Ladder</td><td><span class="badge new">New</span></td><td>Who reached Legendary seat, when, for how long.</td></tr>
+  </tbody>
+</table>
+
+<h2 id="pages">10. New standalone pages</h2>
+
+<table>
+  <thead>
+    <tr><th style="width:160px;">Route</th><th style="width:100px;">Status</th><th>Purpose</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>/play</code></td><td><span class="badge new">New</span></td><td>Standalone How to Play — shareable URL for onboarding.</td></tr>
+    <tr><td><code>/almanac</code></td><td><span class="badge new">New</span></td><td>Full historical throne log with provenance, sprouts, Pot events.</td></tr>
+    <tr><td><code>/wallet/:address</code></td><td><span class="badge new">New</span></td><td>Wallet profile: souvenirs, rooting positions, snipe history, tiers reached.</td></tr>
+    <tr><td><code>/last-supper</code></td><td><span class="badge new">New</span></td><td>Dedicated endgame page — goes live only when <code>gameState = LAST_SUPPER</code>.</td></tr>
+    <tr><td><code>/</code></td><td><span class="badge rewrite">Rewrite</span></td><td>The main page described above.</td></tr>
+  </tbody>
+</table>
+
+<p>All routes can live in a single SPA if that's easier, but each needs its own OG meta for share-previews. The <code>/wallet/:address</code> page in particular should have a rich preview card (souvenirs thumbnail + stats) — wallets will share their own profile URLs.</p>
+
+<h2 id="backend">11. Backend &amp; indexer changes</h2>
+
+<h3>Event indexer</h3>
+<p>Listen for and persist these new events (all on-chain, triggered by the contract):</p>
+<pre>event PotatoSold(address from, address to, uint256 price, uint8 holdTier, uint256 potPayout);
+event StageChanged(uint8 oldStage, uint8 newStage);
+event RooterStaked(address rooter, address holder, uint256 amount);
+event RooterSettled(address rooter, uint256 payout, bool holderSurvived);
+event LimitOrderPlaced(address buyer, uint256 target, uint256 deposit);
+event LimitOrderFilled(address buyer, address keeper, uint256 price);
+event GlanceSent(address spectator, uint256 fee);
+event SouvenirMinted(uint256 tokenId, uint8 parentStage);
+event LastSupperBegan(uint256 timestamp, address holder);
+event GameSealed(uint256 timestamp, address eternalHolder, uint256 finalPot);
+event MetadataUpdate(uint256 tokenId);  // ERC-4906</pre>
+
+<h3>Metadata endpoint</h3>
+<p>The existing <code>/metadata/:id</code> route has to return the correct <code>image</code> URI based on <code>currentStage</code>. When <code>MetadataUpdate</code> fires, invalidate the OpenSea cache via their refresh API, so stage changes propagate visibly on external marketplaces too.</p>
+
+<h3>Discord / X bots</h3>
+<p>New triggers:</p>
+<ul>
+  <li>Throne change → post before/after holder + price + Pot slice earned</li>
+  <li>Sprout event → post before/after potato image</li>
+  <li>Rooter settled → post top 3 winners</li>
+  <li>Last Supper began → pinned announcement, countdown sticker</li>
+  <li>Game sealed → final results thread with Eternal Holder</li>
+</ul>
+
+<h3>Persistence</h3>
+<p>The Railway in-memory state issue that bit us on <code>pendingBoosts</code> has to be fully resolved before v2. All game state lives on-chain; the backend is a <em>cache</em> and an <em>event bus</em>, never a source of truth. If the backend falls over, the site should still render from direct RPC reads (degraded, but functional).</p>
+
+<h2 id="phases">12. Phased rollout</h2>
+
+<table>
+  <thead>
+    <tr><th style="width:90px;">Phase</th><th style="width:180px;">Scope</th><th>Why this first</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><span class="badge p1">P1</span></td><td>Hero rebuild + Pot widget + living NFT</td><td>These three compound. Without the Pot widget the whole new mental model is invisible; without the living NFT there's nothing shareable.</td></tr>
+    <tr><td><span class="badge p2">P2</span></td><td>Rules rewrite + How to Play page</td><td>Players will ask "what changed?" — need the answer ready when P1 ships. Low engineering cost since content is already written.</td></tr>
+    <tr><td><span class="badge p3">P3</span></td><td>Spectator Hub (Root + Glance + Limit Buy + Vote)</td><td>Highest net-new engagement lift. But also highest contract-surface-area, so wait for mechanics to stabilize on testnet.</td></tr>
+    <tr><td><span class="badge p4">P4</span></td><td>Last Supper UI + Wallet pages + Almanac + new leaderboards</td><td>Last Supper only matters when the game's been running a while; wallet pages and almanac are nice-to-haves that reward retention.</td></tr>
+  </tbody>
+</table>
+
+<p>Rough sizing: <strong>P1 ~1 week</strong>, <strong>P2 ~2-3 days</strong>, <strong>P3 ~2 weeks</strong> (depends heavily on contract iteration), <strong>P4 ~1 week</strong>. Total ~5 weeks front-end work assuming you're the single dev, or ~3 weeks with a second person.</p>
+
+<h2 id="open">13. Open questions</h2>
+
+<ol>
+  <li><strong>Pot widget placement — above or beside the potato image?</strong> Above reads more dramatic, beside is more dashboard-like. Lean: above on mobile, beside on desktop.</li>
+  <li><strong>Does the sit-tier ladder replace the heat bar entirely, or sit alongside it?</strong> Lean: replace. The heat bar communicated the same axis (time held) but attached to a now-retired concept (rarity roll). Keeping both would confuse.</li>
+  <li><strong>Glance fee — tiny and to the Pot, or tiny and to the holder?</strong> To the Pot makes it a clean spectator-funds-the-game mechanic. To the holder gives it a "you're watching me, pay up" flavor that's also fun. Both work; pick one and stick with it.</li>
+  <li><strong>Rooter pool funded from Pot or separate?</strong> Spec says separate pool. The UI here assumes that. If separate, need a clear label so it's not confused with the main Pot.</li>
+  <li><strong>Do limit buys count as snipes for leaderboard purposes?</strong> Lean yes — the keeper is just an executor, the buyer's wallet is the one taking the throne.</li>
+  <li><strong>Should the share-card generator work in ACTIVE state too, or only during Last Supper?</strong> Probably all states but with a different template per state. More viral potential than you'd think.</li>
+</ol>
+
+<hr>
+
+<div class="callout gold">
+  <p><strong>Bottom line:</strong> this is a v2 redesign, not a patch. The hero and rules surfaces need full rebuilds; souvenir gallery, history, and leaderboard extend gracefully. Ship P1 (hero + Pot + living NFT) first — it carries 70% of the new story by itself. The rest compounds from there.</p>
+</div>
+
+</div>
+</body>
+</html>

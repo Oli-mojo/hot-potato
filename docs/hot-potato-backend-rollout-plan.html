@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hot Potato — Backend &amp; Contract Rollout Plan</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Georgia', serif; background: #0f0800; color: #ffe8c0; line-height: 1.7; padding: 40px 24px; }
+  .page { max-width: 960px; margin: 0 auto; }
+  h1 { font-family: 'Arial Black', sans-serif; font-size: 30px; letter-spacing: 2px; color: #FAC775; margin-bottom: 6px; }
+  h2 { font-family: 'Arial Black', sans-serif; font-size: 16px; letter-spacing: 1px; color: #FF6B00; margin: 44px 0 12px; text-transform: uppercase; border-bottom: 1px solid rgba(255,107,0,0.3); padding-bottom: 8px; }
+  h3 { font-family: 'Arial Black', sans-serif; font-size: 14px; color: #FAC775; margin: 26px 0 10px; letter-spacing: 0.5px; }
+  h4 { font-family: 'Arial Black', sans-serif; font-size: 12px; color: #FF8C42; margin: 18px 0 6px; letter-spacing: 0.4px; text-transform: uppercase; }
+  p { font-size: 14px; color: rgba(255,232,192,0.85); margin-bottom: 12px; }
+  ul, ol { margin: 0 0 14px 22px; }
+  li { font-size: 14px; color: rgba(255,232,192,0.8); margin-bottom: 6px; line-height: 1.65; }
+  .meta { font-size: 12px; color: rgba(255,232,192,0.35); margin-bottom: 36px; border-top: 1px solid rgba(255,232,192,0.08); padding-top: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 14px 0 22px; }
+  th { background: rgba(255,107,0,0.15); color: #FF8C42; font-family: 'Arial', sans-serif; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; padding: 8px 12px; text-align: left; border-bottom: 1px solid rgba(255,107,0,0.3); }
+  td { padding: 9px 12px; border-bottom: 0.5px solid rgba(255,232,192,0.06); color: rgba(255,232,192,0.82); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .hi { color: #FAC775; font-weight: bold; }
+  .ok { color: #90EE90; }
+  .warn { color: #FF8C42; }
+  .bad { color: #FF5555; }
+  code { background: rgba(255,232,192,0.08); padding: 1px 5px; border-radius: 3px; font-size: 12px; font-family: 'Courier New', monospace; color: #FAC775; }
+  pre { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,232,192,0.1); border-radius: 6px; padding: 14px 16px; margin: 14px 0; overflow-x: auto; font-family: 'Courier New', monospace; font-size: 12px; color: #ffe8c0; line-height: 1.55; }
+  .callout { background: rgba(255,107,0,0.07); border-left: 3px solid #FF6B00; padding: 13px 16px; margin: 16px 0 20px; border-radius: 0 8px 8px 0; }
+  .callout.gold { background: rgba(250,199,117,0.07); border-color: #FAC775; }
+  .callout.red { background: rgba(255,85,85,0.07); border-color: #FF5555; }
+  .callout.green { background: rgba(100,220,100,0.07); border-color: #90EE90; }
+  .callout p { margin: 0 0 6px; font-size: 13px; }
+  .callout p:last-child { margin-bottom: 0; }
+  .step { background: rgba(255,232,192,0.03); border: 1px solid rgba(255,232,192,0.08); border-radius: 8px; padding: 16px 20px; margin: 12px 0 18px; position: relative; padding-left: 60px; }
+  .step-n { position: absolute; left: 14px; top: 16px; font-family: 'Arial Black', sans-serif; font-size: 22px; color: #FAC775; letter-spacing: 0.05em; }
+  .step h4 { margin-top: 0; }
+  .step ul { margin-top: 6px; }
+  .checklist li { list-style: none; padding-left: 22px; position: relative; margin-bottom: 4px; }
+  .checklist li::before { content: "☐"; position: absolute; left: 0; color: #FAC775; font-size: 14px; }
+  .checklist li.done::before { content: "☑"; color: #90EE90; }
+  .tag { display: inline-block; padding: 1px 7px; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 10px; font-family: 'Arial', sans-serif; margin-right: 4px; vertical-align: middle; }
+  .tag.contract { background: rgba(255,107,0,0.2); color: #FF8C42; }
+  .tag.backend  { background: rgba(133,183,235,0.2); color: #85B7EB; }
+  .tag.frontend { background: rgba(100,220,100,0.2); color: #90EE90; }
+  .tag.infra    { background: rgba(196,181,244,0.2); color: #C4B5F4; }
+  .tag.manual   { background: rgba(250,199,117,0.15); color: #FAC775; }
+  hr { border: none; border-top: 1px solid rgba(255,232,192,0.08); margin: 40px 0; }
+  .toc { background: rgba(255,232,192,0.03); border: 1px solid rgba(255,232,192,0.08); border-radius: 8px; padding: 16px 22px; margin: 20px 0 32px; }
+  .toc h4 { margin-top: 0; color: #FF8C42; }
+  .toc ol { margin-left: 18px; }
+  .toc li { font-size: 13px; margin-bottom: 4px; }
+  .toc a { color: #FAC775; text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<h1>HOT POTATO — BACKEND &amp; CONTRACT ROLLOUT</h1>
+<div class="meta">
+  Step-by-step plan to ship v2 frontend + v4 contract + extended backend, from current state to Base mainnet.
+  Current state: contract v3 at <code>0x90Bf…3473</code> on Base Sepolia. Backend on Railway. Frontend v2 shell already built at <code>index_v2.html</code>.
+  <br><br>
+  <strong>Canonical parameters live in <a href="hot-potato-v4-mechanic-spec.html">hot-potato-v4-mechanic-spec.html</a></strong> (locked 2026-04-20, direction A + partial C — sprouting raises floor, Last Supper Reserve pays out tier-weighted at seal). This plan reflects those numbers; if they change, update the spec first, then propagate here.
+</div>
+
+<div class="toc">
+  <h4>Contents</h4>
+  <ol>
+    <li><a href="#snapshot">Where we are today</a></li>
+    <li><a href="#target">Where v2 needs to get us</a></li>
+    <li><a href="#phase-a">Phase A — Frontend v2 shell live (mock data)</a></li>
+    <li><a href="#phase-b">Phase B — Contract v4 drafted + tested</a></li>
+    <li><a href="#phase-c">Phase C — Backend extended for v4</a></li>
+    <li><a href="#phase-d">Phase D — Frontend wired to v4 data</a></li>
+    <li><a href="#phase-e">Phase E — Keeper bots + social bots</a></li>
+    <li><a href="#phase-f">Phase F — Mainnet cutover</a></li>
+    <li><a href="#risks">Risks &amp; watch-outs</a></li>
+    <li><a href="#appendix">Appendix: v4 contract event schema</a></li>
+  </ol>
+</div>
+
+<h2 id="snapshot">1. Where we are today</h2>
+
+<table>
+  <thead>
+    <tr><th>Layer</th><th>Status</th><th>Notes</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Contract (<code>HotPotato.sol</code> v3)</td><td class="ok">Deployed on Base Sepolia</td><td>At <code>0x90Bf…3473</code>. 5% creator fee + 95% seller, tiered min-increase, souvenir minting, premium boost. <b>No Pot, no sit-tier payouts, no sprouting, no Last Supper.</b></td></tr>
+    <tr><td>Backend (<code>backend/server.js</code>)</td><td class="ok">Running on Railway</td><td>3 routes: <code>/api/potato</code>, <code>/api/potato/history</code>, <code>/api/potato/leaderboard</code>, plus souvenir routes. Services: contract.js, imageGen.js, ipfs.js, social.js, promoCode.js.</td></tr>
+    <tr><td>Frontend (<code>index.html</code>)</td><td class="warn">v1 — outdated model</td><td>Still showing rarity-odds / heat-bar / premium-boost language. Needs cutover to v2.</td></tr>
+    <tr><td>Frontend (<code>index_v2.html</code>)</td><td class="ok">Just built</td><td>New throne hero, Pot widget, sit-tier ladder, sprouting clock, 5-tab rules, story hooks. Mock data for Pot/Sprout, live history+leaderboard via existing backend endpoints.</td></tr>
+    <tr><td>Infra</td><td class="ok">Working</td><td>Pinata IPFS, fal.ai/FLUX for souvenir generation, Railway backend, Vercel frontend. Railway persistence is the weak link — in-memory state lost on redeploy.</td></tr>
+  </tbody>
+</table>
+
+<h2 id="target">2. Where v2 needs to get us</h2>
+
+<p>The v2 story depends on <b>three new capabilities</b> that don't exist in v3:</p>
+<ol>
+  <li><b>Two pools — live Pot + Last Supper Reserve.</b> The live Pot pays the outgoing seller a small tier-slice on each sale. The Reserve accrues an equal amount per sale and only pays out at <code>finalSeal()</code>, tier-weighted to whoever is sitting. See <a href="hot-potato-v4-mechanic-spec.html">v4 mechanic spec</a> for locked numbers.</li>
+  <li><b>Sprouting stages — floor-lifting, not decay.</b> A stage index 0–5 that the contract advances based on elapsed hold time. Each stage <b>raises the minimum next ask</b> by a cumulative % (Fresh +0%, Leafing +10%, Sprouted +25%, Bloomed +50%, Harvest +100%, Eternal +200%). Emits <code>MetadataUpdate</code> (ERC-4906) so marketplaces refresh the artwork.</li>
+  <li><b>Last Supper / game ending</b> — state machine <code>ACTIVE → LAST_SUPPER → SEALED</code>. Last Supper triggered by <b>30 days without a transfer</b> OR by <b>spectator vote stake crossing ~10% of Reserve</b>. 48-hour window, then anyone can call <code>finalSeal()</code>. Reserve pays the sitter 10%/25%/50%/75%/100% based on final tier; residual rolls to Season 2.</li>
+</ol>
+
+<p>Spectator mechanics (rooting, glance, limit buys, souvenir votes) are on the roadmap but <b>not in the P1 scope</b>, except for the minimal <code>voteLastSupper()</code> hook — needed for the spectator-triggered endgame path. Full Hub ships as v4.1 / v4.2.</p>
+
+<div class="callout gold">
+  <p><strong>P1 scope for contract v4:</strong> Pot + Reserve accounting, sit-tier on-sale slice, sprouting stage machine with <b>floor lift</b> (no decay), Last Supper state transitions (timer + vote triggers), tier-weighted seal payout. Everything else (rooting pool, limit-order contract, glance fees, souvenir votes) is out of P1.</p>
+</div>
+
+<h2 id="phase-a">3. Phase A — Frontend v2 shell live (mock data)</h2>
+<p>Goal: get <code>index_v2.html</code> rendering with mock data for Pot/Sprout/LastSupper so we can share it, iterate copy, and not block on contract work.</p>
+
+<div class="step">
+  <div class="step-n">A1</div>
+  <h4><span class="tag frontend">FE</span> Deploy v2 to a staging URL</h4>
+  <p>Push <code>index_v2.html</code> to Vercel alongside <code>index.html</code> — don't swap yet. Test the throne page is accessible at <code>https://hotpotato.xyz/v2</code> (or similar).</p>
+  <ul class="checklist">
+    <li>Add <code>vercel.json</code> rewrite for <code>/v2</code> → <code>/index_v2.html</code>.</li>
+    <li>Verify hero renders with throne SVG + potato image centered.</li>
+    <li>Verify Pot widget, sprouting clock, rules tabs, history table all render.</li>
+    <li>Verify <code>?state=last-supper</code> URL param flips the palette.</li>
+    <li>Check mobile breakpoints at 520px and 900px.</li>
+  </ul>
+</div>
+
+<div class="step">
+  <div class="step-n">A2</div>
+  <h4><span class="tag manual">MAN</span> Share with 3–5 trusted reviewers</h4>
+  <p>Before building anything server-side, get 3–5 people to open the v2 page and give 10 minutes of feedback. Specifically check: does the Pot read as the center of gravity? Does the sit-tier ladder make sense without explanation? Is the throne imagery satisfying?</p>
+</div>
+
+<div class="step">
+  <div class="step-n">A3</div>
+  <h4><span class="tag frontend">FE</span> Commission or generate the throne hero artwork</h4>
+  <p>The SVG throne + circular <code>hero-potato.jpg</code> is a solid placeholder but not the final vision. When you have time, generate a proper "hot potato sitting on a throne" image via fal.ai/FLUX (your existing LoRA fine-tune works here). Replace the <code>src="hero-potato.jpg"</code> and potentially drop the SVG frame entirely.</p>
+  <ul class="checklist">
+    <li>Prompt suggestion: <code>"hot potato wearing a golden crown, sitting on an ornate baroque throne, photoreal, dark dramatic lighting, steam rising, volumetric light, ember particles, rich warm palette with pink and gold accents, centered composition, cinematic"</code></li>
+    <li>Generate 6 variants: one per sprouting stage (Fresh / Leafing / Sprouted / Bloomed / Harvest / Eternal). Reuse the first as the hero, use all 6 for the v4 <code>stageURIs[6]</code>.</li>
+    <li>Upload each to IPFS via Pinata.</li>
+    <li>Save the 6 CIDs — they're the input to <code>setStageURI()</code> in contract v4.</li>
+  </ul>
+</div>
+
+<h2 id="phase-b">4. Phase B — Contract v4 drafted + tested</h2>
+<p>Goal: ship <code>HotPotato_v4.sol</code> on Base Sepolia with the three new capabilities.</p>
+
+<div class="step">
+  <div class="step-n">B1</div>
+  <h4><span class="tag contract">CTR</span> Draft the v4 Solidity changes</h4>
+  <p>Extending <code>contract/HotPotato.sol</code> v3. Net-new state and functions:</p>
+<pre>// ───── v4 ADDITIONS ────────────────────────────────────────
+
+// State machine
+enum GameState { ACTIVE, LAST_SUPPER, SEALED }
+GameState public gameState;
+uint256 public lastSupperStartedAt;
+uint256 public lastTransferAt;                           // squat-killer clock
+uint256 public constant LAST_SUPPER_WINDOW   = 48 hours;
+uint256 public constant NO_TRANSFER_TIMEOUT  = 30 days;
+
+// Two pools
+uint256 public pot;                                      // live Pot — pays seller on each sale
+uint256 public reserve;                                  // Last Supper Reserve — pays out at seal
+uint256 public constant POT_SALE_BPS         = 50;       // 0.5% of sale to Pot
+uint256 public constant RESERVE_SALE_BPS     = 50;       // 0.5% of sale to Reserve (equal split)
+uint256 public constant POT_OVERPAY_BPS      = 2500;     // 25% of overpay to Pot
+uint256 public constant RESERVE_OVERPAY_BPS  = 2500;     // 25% of overpay to Reserve
+
+// Sit-tier on-sale slice (paid from Pot to outgoing seller)
+// Cold 0% · Warm 0.5% · Hot 1.5% · Blazing 3.5% · Legendary 7.5%
+uint16[5] public tierSaleSliceBps = [0, 50, 150, 350, 750];
+
+// Last Supper final-seal share of Reserve (tier-weighted to current sitter)
+// Cold 10% · Warm 25% · Hot 50% · Blazing 75% · Legendary 100% — residual rolls to Season 2
+uint16[5] public tierFinalShareBps = [1000, 2500, 5000, 7500, 10000];
+
+// Sprouting — each stage raises the minimum next ask (NOT decay)
+enum Stage { FRESH, LEAFING, SPROUTED, BLOOMED, HARVEST, ETERNAL }
+Stage public currentStage;
+uint256 public stageEnteredAt;
+string[6] public stageURIs;                              // IPFS URIs per stage
+
+// Cumulative floor-lift on top of base min-increase (in BPS)
+// Fresh +0% · Leafing +10% · Sprouted +25% · Bloomed +50% · Harvest +100% · Eternal +200%
+uint16[6] public stageFloorLiftBps = [0, 1000, 2500, 5000, 10000, 20000];
+
+// Stage advance thresholds (time since potato last changed hands)
+uint256[6] public stageThresholds = [0, 3 days, 7 days, 14 days, 30 days, 60 days];
+
+// Spectator vote-to-seal pool
+mapping(address =&gt; uint256) public voteStake;
+uint256 public totalVoteStake;
+
+// Events
+event PotFunded(uint256 amount, string source);     // source = "sale"|"overpay"|"glance"|"stake"
+event ReserveFunded(uint256 amount, string source);
+event PotPaidOut(address indexed to, uint256 amount, uint8 tier);
+event ReservePaidOut(address indexed to, uint256 amount, uint8 tier, uint256 residual);
+event StageChanged(uint8 oldStage, uint8 newStage);
+event LastSupperBegan(uint256 timestamp, address holder, string trigger);
+event VoteStaked(address indexed voter, uint256 amount, uint256 totalStake);
+event GameSealed(uint256 timestamp, address eternalHolder, uint256 reservePaid, uint256 residualForSeason2);
+event MetadataUpdate(uint256 _tokenId);             // ERC-4906
+
+// Keeper-callable — anyone can poke the stage forward
+function pokeStage() public {
+    require(gameState == GameState.ACTIVE, "game over");
+    uint256 held = block.timestamp - holderInfo.purchaseTimestamp;
+    uint8 newStage = uint8(currentStage);
+    while (newStage &lt; 5 &amp;&amp; held &gt;= stageThresholds[newStage + 1]) {
+        newStage++;
+    }
+    if (newStage != uint8(currentStage)) {
+        emit StageChanged(uint8(currentStage), newStage);
+        currentStage = Stage(newStage);
+        stageEnteredAt = block.timestamp;
+        emit MetadataUpdate(POTATO_TOKEN_ID);
+    }
+}
+
+// Minimum next ask — tiered base increase, then floor-lifted by current stage
+function minNextAsk() public view returns (uint256) {
+    uint256 baseBps = _minIncreaseBps(currentPrice);                      // from v3: 25/15/10/7/5%
+    uint256 liftBps = uint256(stageFloorLiftBps[uint8(currentStage)]);
+    // combine multiplicatively: base * (1 + liftBps/10000)
+    uint256 baseFloor = (currentPrice * baseBps) / 10000;
+    return (baseFloor * (10000 + liftBps)) / 10000;
+}
+
+// Spectator path to trigger Last Supper early
+function voteLastSupper() external payable {
+    require(gameState == GameState.ACTIVE, "game over");
+    require(msg.value &gt; 0, "zero stake");
+    voteStake[msg.sender] += msg.value;
+    totalVoteStake += msg.value;
+    emit VoteStaked(msg.sender, msg.value, totalVoteStake);
+
+    // Threshold: 10% of current reserve, or 0.1 ETH floor if reserve is small
+    uint256 threshold = reserve / 10 &gt; 0.1 ether ? reserve / 10 : 0.1 ether;
+    if (totalVoteStake &gt;= threshold) {
+        _beginLastSupper("spectator-vote");
+    }
+}
+
+// Timer path — anyone can poke if 30 days with no transfer
+function pokeLastSupperTimer() external {
+    require(gameState == GameState.ACTIVE, "game over");
+    require(block.timestamp &gt;= lastTransferAt + NO_TRANSFER_TIMEOUT, "too soon");
+    _beginLastSupper("no-transfer-timeout");
+}
+
+function _beginLastSupper(string memory trigger) internal {
+    gameState = GameState.LAST_SUPPER;
+    lastSupperStartedAt = block.timestamp;
+    // The vote-stake pool folds into the reserve at transition
+    reserve += totalVoteStake;
+    emit ReserveFunded(totalVoteStake, "vote-pool");
+    totalVoteStake = 0;
+    emit LastSupperBegan(block.timestamp, ownerOf(POTATO_TOKEN_ID), trigger);
+}
+
+// Seal — callable by anyone after the 48h Last Supper window closes
+function finalSeal() external nonReentrant {
+    require(gameState == GameState.LAST_SUPPER, "not in last supper");
+    require(block.timestamp &gt;= lastSupperStartedAt + LAST_SUPPER_WINDOW, "window still open");
+    gameState = GameState.SEALED;
+
+    address sitter = ownerOf(POTATO_TOKEN_ID);
+    uint8 finalTier = _currentSitTier();                   // 0..4
+    uint256 shareBps = tierFinalShareBps[finalTier];
+    uint256 sitterPayout = (reserve * shareBps) / 10000;
+    uint256 residual = reserve - sitterPayout;             // rolls to Season 2 contract
+    reserve = residual;                                    // leave residual on-chain for Season 2 transfer
+
+    (bool ok,) = sitter.call{value: sitterPayout}("");
+    require(ok, "payout failed");
+
+    emit ReservePaidOut(sitter, sitterPayout, finalTier, residual);
+    emit GameSealed(block.timestamp, sitter, sitterPayout, residual);
+}</pre>
+  <p>And modify <code>buyPotato()</code> to:</p>
+  <ol>
+    <li>Reject if <code>gameState == SEALED</code>. If <code>LAST_SUPPER</code>, still allow buys during the 48h window.</li>
+    <li>Call <code>pokeStage()</code> at entry so every sale self-heals the stage (no reliance on external keeper).</li>
+    <li>Use <code>minNextAsk()</code> as the price floor check — this is tiered base + sprout floor-lift, never below the current floor.</li>
+    <li>Compute the outgoing seller's <b>sit-tier</b> from hold duration, look up <code>tierSaleSliceBps[tier]</code>, carve that slice off the live Pot, and pay it to them on top of the 95% sale proceeds.</li>
+    <li>Split Pot-funding across both pools: <b>0.5% of sale → pot</b>, <b>0.5% of sale → reserve</b>; <b>25% of overpay → pot</b>, <b>25% of overpay → reserve</b>. Emit <code>PotFunded</code> and <code>ReserveFunded</code> with sources.</li>
+    <li>Update <code>lastTransferAt = block.timestamp</code> — resets the 30-day squat-killer clock.</li>
+    <li>Reset <code>currentStage = FRESH</code>, <code>stageEnteredAt = block.timestamp</code>, emit <code>StageChanged</code> + <code>MetadataUpdate</code>.</li>
+  </ol>
+  <div class="callout gold">
+    <p><b>No decay anywhere.</b> <code>effectivePrice()</code> from earlier drafts is removed — the price a sniper must pay equals <code>max(seller's ask, minNextAsk())</code>, which is monotonically non-decreasing within a hold. Fortification, not erosion.</p>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-n">B2</div>
+  <h4><span class="tag contract">CTR</span> Write Foundry / Hardhat tests</h4>
+  <p>Add a <code>test/</code> folder. Critical test cases:</p>
+  <ul>
+    <li>A seller who held &lt; 6 hours gets 0% of Pot on exit (Cold tier).</li>
+    <li>A seller who held 7 days gets exactly <code>tierSaleSliceBps[3]</code> = 3.5% of Pot balance at time of exit.</li>
+    <li>Every sale splits 50/50 between pot and reserve: assert both grow equally.</li>
+    <li>Overpayment of 2× minimum routes 25% of overpay to pot AND 25% to reserve (not 100%, not 0%).</li>
+    <li><code>pokeStage()</code> advances correctly when held duration crosses thresholds.</li>
+    <li><code>minNextAsk()</code> returns base floor × (1 + floorLiftBps/10000) for current stage. Test all 6 stages.</li>
+    <li><code>minNextAsk()</code> is monotonically non-decreasing within a single hold.</li>
+    <li><code>buyPotato()</code> resets stage to FRESH and updates <code>lastTransferAt</code> on sale.</li>
+    <li><code>pokeLastSupperTimer()</code> reverts if &lt; 30 days since last transfer; succeeds at exactly 30 days.</li>
+    <li><code>voteLastSupper()</code> accumulates stake correctly; triggers <code>_beginLastSupper("spectator-vote")</code> when threshold crossed; folds vote pool into reserve at transition.</li>
+    <li>Cannot buy after <code>SEALED</code>. CAN buy during <code>LAST_SUPPER</code> (48h window).</li>
+    <li><code>finalSeal()</code> pays tier-weighted share to current sitter: Cold → 10%, Legendary → 100%.</li>
+    <li>Residual (what didn't pay out) stays in the contract as <code>reserve</code>, ready for Season 2 transfer.</li>
+    <li>Re-entrancy: both <code>buyPotato</code> and <code>finalSeal</code> wrapped in <code>nonReentrant</code>. Test with <code>ReentrancyAttacker</code> on both paths.</li>
+  </ul>
+  <p>Target &gt;95% line coverage on the new code.</p>
+</div>
+
+<div class="step">
+  <div class="step-n">B3</div>
+  <h4><span class="tag contract">CTR</span> Deploy v4 to Base Sepolia</h4>
+  <p>Same Remix flow as v3 (see <code>contract/DEPLOY.md</code>), but after deployment:</p>
+  <ul class="checklist">
+    <li>Call <code>setPotatoURI()</code> with the dynamic metadata endpoint URL (see C5) — not a static IPFS CID, since the living-NFT art changes per stage.</li>
+    <li>Call <code>setStageURI(0..5)</code> for each sprouting-stage artwork CID.</li>
+    <li>Initialise <code>lastTransferAt = block.timestamp</code> in the constructor so the 30-day squat clock starts at deploy.</li>
+    <li>Record the new address in <code>contract/DEPLOY.md</code> under "v4 Base Sepolia".</li>
+    <li>Update <code>CONTRACT_ADDRESS</code> in Railway env vars + <code>backend/services/contract.js</code> default.</li>
+  </ul>
+</div>
+
+<h2 id="phase-c">5. Phase C — Backend extended for v4</h2>
+<p>Goal: backend exposes new v4 data shapes to the frontend, and fixes the Railway persistence gap.</p>
+
+<div class="step">
+  <div class="step-n">C1</div>
+  <h4><span class="tag backend">BE</span> Fix Railway persistence</h4>
+  <p>The in-memory state issue (lost on redeploy) must be resolved before v4 data depends on it. Three options, pick one:</p>
+  <ol>
+    <li><b>Add a Postgres add-on on Railway.</b> Cheap (~$5/mo), migration-friendly. Use <code>prisma</code> or <code>knex</code>. Persist rooter stakes, souvenir cache, event log.</li>
+    <li><b>Go stateless.</b> Every request rebuilds from on-chain reads + a public RPC. Slow but bulletproof. Fine for v4 launch since we don't expect huge traffic.</li>
+    <li><b>Use a managed KV (Upstash Redis).</b> Good middle ground if state is simple.</li>
+  </ol>
+  <p>Recommendation: go with option 2 (stateless) for launch, add Postgres later when we need rooter bookkeeping.</p>
+</div>
+
+<div class="step">
+  <div class="step-n">C2</div>
+  <h4><span class="tag backend">BE</span> Update the ABI in <code>backend/services/contract.js</code></h4>
+  <p>Add v4 view functions and events:</p>
+<pre>const ABI_V4 = [
+  // v3 retained
+  'function getGameState() external view returns (address currentOwner, uint256 price, uint256 timeHeld, uint256 totalTransfers)',
+  'function souvenirCount() view returns (uint256)',
+  'function buyPotato(uint256 newAskingPrice) external payable',
+  'function setSouvenirURI(uint256 tokenId, string memory uri) external',
+
+  // v4 additions — state & pools
+  'function pot() view returns (uint256)',
+  'function reserve() view returns (uint256)',
+  'function gameState() view returns (uint8)',
+  'function lastTransferAt() view returns (uint256)',
+  'function lastSupperStartedAt() view returns (uint256)',
+  'function totalVoteStake() view returns (uint256)',
+  'function voteStake(address) view returns (uint256)',
+
+  // v4 additions — sprouting (floor-lift, not decay)
+  'function currentStage() view returns (uint8)',
+  'function stageEnteredAt() view returns (uint256)',
+  'function stageFloorLiftBps(uint256) view returns (uint16)',
+  'function stageThresholds(uint256) view returns (uint256)',
+  'function stageURIs(uint256) view returns (string)',
+  'function minNextAsk() view returns (uint256)',
+
+  // v4 additions — tier tables
+  'function tierSaleSliceBps(uint256) view returns (uint16)',
+  'function tierFinalShareBps(uint256) view returns (uint16)',
+
+  // v4 writes
+  'function pokeStage() external',
+  'function pokeLastSupperTimer() external',
+  'function voteLastSupper() external payable',
+  'function finalSeal() external',
+
+  // v4 events
+  'event PotatoPassed(address indexed from, address indexed to, uint256 price, uint256 holdDuration, uint256 souvenirTokenId, uint8 rarityTier, uint8 buyerBoostLevel)',
+  'event PotFunded(uint256 amount, string source)',
+  'event ReserveFunded(uint256 amount, string source)',
+  'event PotPaidOut(address indexed to, uint256 amount, uint8 tier)',
+  'event ReservePaidOut(address indexed to, uint256 amount, uint8 tier, uint256 residual)',
+  'event StageChanged(uint8 oldStage, uint8 newStage)',
+  'event VoteStaked(address indexed voter, uint256 amount, uint256 totalStake)',
+  'event LastSupperBegan(uint256 timestamp, address holder, string trigger)',
+  'event GameSealed(uint256 timestamp, address eternalHolder, uint256 reservePaid, uint256 residualForSeason2)',
+  'event MetadataUpdate(uint256 _tokenId)',
+];</pre>
+</div>
+
+<div class="step">
+  <div class="step-n">C3</div>
+  <h4><span class="tag backend">BE</span> Add new API routes</h4>
+<pre>// backend/routes/pot.js  — live Pot (pays seller on each sale)
+GET  /api/pot                   — { balanceEth, usd, deltaToday, sparkline7d, sparkline30d }
+GET  /api/pot/events?limit=20   — recent PotFunded + PotPaidOut events
+GET  /api/pot/slice/:addr       — "if sniped now, this address earns X ETH" (on-sale slice only)
+
+// backend/routes/reserve.js  — Last Supper Reserve (pays at seal)
+GET  /api/reserve               — { balanceEth, usd, accruedToday, sitterPreviewShareEth, sitterPreviewPct }
+GET  /api/reserve/events?limit=20 — recent ReserveFunded events
+
+// backend/routes/sprout.js
+GET  /api/sprout                — { currentStage, stageEnteredAt, nextStageAt,
+                                    currentFloorLiftPct, nextFloorLiftPct, minNextAsk }
+POST /api/sprout/poke           — wraps pokeStage() for UI-triggered advance (rate-limit by IP; the contract self-heals on each sale anyway)
+
+// backend/routes/state.js
+GET  /api/state                 — { gameState, lastTransferAt, lastSupperStartedAt?, sealDeadline?,
+                                    noTransferCountdownSeconds, voteStake: { total, threshold, crossed } }
+POST /api/state/poke-timer      — wraps pokeLastSupperTimer() when the 30-day countdown expires
+
+// backend/routes/potato.js (extend existing)
+GET  /api/potato/extended       — include sit-tier, on-sale slice preview, reserve final-share preview</pre>
+  <p>Keep all responses small and cached (15s TTL on reads) since they'll be polled from the browser every few seconds.</p>
+</div>
+
+<div class="step">
+  <div class="step-n">C4</div>
+  <h4><span class="tag backend">BE</span> Event indexer — just listen, don't store (yet)</h4>
+  <p>Add <code>backend/services/indexer.js</code> that subscribes to v4 events via WebSocket provider. For P1 purposes, its only jobs are:</p>
+  <ol>
+    <li>Fire a Discord webhook on every <code>PotatoPassed</code>, <code>StageChanged</code>, <code>LastSupperBegan</code>, <code>GameSealed</code>.</li>
+    <li>Fire a Twitter/X post on same events (use existing <code>services/social.js</code>).</li>
+    <li>Trigger OpenSea metadata refresh on <code>MetadataUpdate</code>.</li>
+    <li>When <code>souvenirCount</code> increments, hand off to existing <code>services/imageGen.js</code> + <code>services/ipfs.js</code> to mint the souvenir image.</li>
+  </ol>
+  <p>Do NOT try to build a full historical event database yet. Rebuild history on request from <code>souvenirs()</code> struct reads, as <code>routes/potato.js</code> already does. This is the stateless approach from C1.</p>
+</div>
+
+<div class="step">
+  <div class="step-n">C5</div>
+  <h4><span class="tag backend">BE</span> Metadata endpoint for the living NFT</h4>
+  <p>Currently <code>setPotatoURI()</code> is called once with a fixed URI. In v4 the URI must change per stage. Two patterns:</p>
+  <ol>
+    <li><b>Rewrite URI on every <code>pokeStage()</code>.</b> Cleanest for OpenSea but spends gas on every stage change.</li>
+    <li><b>Serve a dynamic URL.</b> Set <code>potatoURI = https://api.hotpotato.xyz/metadata/potato</code>, and the backend responds with JSON pointing at the correct <code>stageURIs[currentStage]</code> image. Zero gas cost per change, just needs the backend up.</li>
+  </ol>
+  <p>Recommendation: option 2 (dynamic URL). Add <code>backend/routes/metadata.js</code>:</p>
+<pre>GET /api/metadata/potato → {
+  "name": "Hot Potato",
+  "description": "One potato. One throne. One winner.",
+  "image": "ipfs://&lt;stageURIs[currentStage]&gt;",
+  "attributes": [
+    { "trait_type": "Stage", "value": "Leafing" },
+    { "trait_type": "Hold Duration", "value": "2d 14h" },
+    { "trait_type": "Pot Slice", "value": "1%" }
+  ]
+}</pre>
+  <p>On <code>MetadataUpdate</code> event, POST to OpenSea's refresh API so the change propagates to their cache.</p>
+</div>
+
+<h2 id="phase-d">6. Phase D — Frontend wired to v4 data</h2>
+
+<div class="step">
+  <div class="step-n">D1</div>
+  <h4><span class="tag frontend">FE</span> Replace mock state with API calls</h4>
+  <p>In <code>index_v2.html</code>, replace the <code>mockState</code> object with:</p>
+<pre>async function loadState() {
+  const [pot, reserve, sprout, state, potato] = await Promise.all([
+    fetch(`${API_BASE}/pot`).then(r =&gt; r.json()),
+    fetch(`${API_BASE}/reserve`).then(r =&gt; r.json()),
+    fetch(`${API_BASE}/sprout`).then(r =&gt; r.json()),
+    fetch(`${API_BASE}/state`).then(r =&gt; r.json()),
+    fetch(`${API_BASE}/potato/extended`).then(r =&gt; r.json()),
+  ]);
+  return { pot, reserve, sprout, state, potato };
+}</pre>
+  <p>Poll every 15s. On <code>state.gameState === 'LAST_SUPPER'</code>, flip <code>document.body.dataset.state</code> to trigger the palette shift.</p>
+</div>
+
+<div class="step">
+  <div class="step-n">D2</div>
+  <h4><span class="tag frontend">FE</span> Wire MetaMask / ethers.js for snipes</h4>
+  <p>The Connect button and Buy modal currently stub out. Add:</p>
+<pre>async function confirmSnipe() {
+  if (!window.ethereum) { alert('Install MetaMask'); return; }
+  const provider = new ethers.BrowserProvider(window.ethereum);
+  const signer = await provider.getSigner();
+  const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI_V4, signer);
+  const pay = ethers.parseEther(document.getElementById('pay-input').value);
+  const ask = ethers.parseEther(document.getElementById('ask-input').value);
+  const tx = await contract.buyPotato(ask, { value: pay });
+  // … show pending UI, wait for confirmation, success animation, refresh state
+}</pre>
+  <p>Reuse patterns from the v1 <code>index.html</code> which already has this wired up — lift the MetaMask glue code directly.</p>
+</div>
+
+<div class="step">
+  <div class="step-n">D3</div>
+  <h4><span class="tag frontend">FE</span> Cutover — swap <code>index.html</code></h4>
+  <ul class="checklist">
+    <li>Rename current <code>index.html</code> to <code>index_v1.html</code>.</li>
+    <li>Rename <code>index_v2.html</code> to <code>index.html</code>.</li>
+    <li>Keep <code>/v1</code> accessible via <code>vercel.json</code> rewrite for archival.</li>
+    <li>Push to main → Vercel redeploys.</li>
+  </ul>
+</div>
+
+<h2 id="phase-e">7. Phase E — Keeper bots + social bots</h2>
+
+<div class="step">
+  <div class="step-n">E1</div>
+  <h4><span class="tag infra">INF</span> Stage-advance keeper</h4>
+  <p><code>pokeStage()</code> is permissionless — anyone can call it when the threshold is crossed. To guarantee timely advances, run a keeper that polls every 10 minutes and calls <code>pokeStage()</code> if the contract is past a threshold. Gas is cheap on Base (~$0.01 per call) so this costs &lt;$5/month.</p>
+  <p>Add <code>backend/services/keeper.js</code>. Run it as a Railway cron service (separate from the API) with its own wallet + small ETH float.</p>
+</div>
+
+<div class="step">
+  <div class="step-n">E2</div>
+  <h4><span class="tag infra">INF</span> Discord + X announcement bots</h4>
+  <p>You already have <code>backend/services/social.js</code>. Extend it to post for the new event types:</p>
+  <ul>
+    <li><code>StageChanged</code> → "🌱 The potato sprouted to &lt;Stage&gt;! &lt;holder&gt;'s floor is now +&lt;X&gt;% harder to take."</li>
+    <li><code>PotFunded(&gt; 0.01 ETH)</code> → "🔥 The live Pot just grew by &lt;X&gt; ETH — now at &lt;Y&gt; ETH."</li>
+    <li><code>ReserveFunded(&gt; 0.01 ETH)</code> → "💎 The Last Supper Reserve grew by &lt;X&gt; ETH — tier-weighted payout at seal."</li>
+    <li><code>PotPaidOut</code> → "👑 &lt;holder&gt; cashed out with a &lt;tier&gt; tier payout of &lt;X&gt; ETH from the Pot!"</li>
+    <li><code>VoteStaked</code> (threshold crossed) → "🗳 Spectators have voted — Last Supper begins!"</li>
+    <li><code>LastSupperBegan</code> → pinned announcement, hourly countdown updates for the full 48h window. Include the current sitter's tier so viewers know the payout at stake.</li>
+    <li><code>ReservePaidOut</code> / <code>GameSealed</code> → final results thread: sitter, tier, Reserve collected, residual that rolls to Season 2.</li>
+  </ul>
+  <p>For X, generate an OG image per event (reuse fal.ai or a simpler Canvas template). The share-card generator in the frontend uses the same template so there's visual consistency between "I shared this" and "the bot posted this."</p>
+</div>
+
+<h2 id="phase-f">8. Phase F — Mainnet cutover</h2>
+
+<div class="step">
+  <div class="step-n">F1</div>
+  <h4><span class="tag manual">MAN</span> Pre-mainnet checklist</h4>
+  <ul class="checklist">
+    <li>Contract v4 has been running on Base Sepolia for at least 2 weeks.</li>
+    <li>You've personally run all edge cases: advance through every stage, hit Last Supper, seal the game.</li>
+    <li>At least one external security review — <a href="https://code4rena.com" target="_blank">Code4rena</a>, <a href="https://solodit.xyz" target="_blank">Solodit</a>, or a solo auditor (~$2-5k for a contract this size).</li>
+    <li>Rotate the PAT / API keys that were exposed in the <code>Hot Potato Notes .rtf</code> file earlier.</li>
+    <li>Counsel has reviewed the Pot mechanics with respect to US securities law (Howey test).</li>
+    <li>Discord server ready, X account warm, press list sorted.</li>
+  </ul>
+</div>
+
+<div class="step">
+  <div class="step-n">F2</div>
+  <h4><span class="tag contract">CTR</span> Deploy to Base mainnet</h4>
+  <ul class="checklist">
+    <li>Switch MetaMask to Base mainnet (chain ID 8453).</li>
+    <li>Ensure the deployer wallet has ~0.05 ETH for deployment gas.</li>
+    <li>Deploy the same compiled bytecode that has been on testnet.</li>
+    <li>Call <code>setPotatoURI()</code> and <code>setStageURI(0..5)</code> immediately after.</li>
+    <li>Verify the contract on BaseScan (Etherscan-compatible).</li>
+    <li>Record the mainnet address in <code>contract/DEPLOY.md</code>.</li>
+  </ul>
+</div>
+
+<div class="step">
+  <div class="step-n">F3</div>
+  <h4><span class="tag backend">BE</span> <span class="tag frontend">FE</span> Flip environment variables</h4>
+  <ul class="checklist">
+    <li>Railway → update <code>CONTRACT_ADDRESS</code> + <code>RPC_URL</code> (Base mainnet RPC, e.g. <code>https://mainnet.base.org</code> or Alchemy).</li>
+    <li>Frontend → update <code>CONTRACT_ADDRESS</code> constant and chain check.</li>
+    <li>Keeper service → same.</li>
+    <li>Redeploy backend + frontend.</li>
+    <li>Smoke-test: the site reads live mainnet state.</li>
+  </ul>
+</div>
+
+<div class="step">
+  <div class="step-n">F4</div>
+  <h4><span class="tag manual">MAN</span> Launch announcement</h4>
+  <p>Go time. Share the throne card, the Last Supper concept, the market-research angle (genre has pedigree but few live competitors). Don't bury the lede — lead with the Pot, not the price.</p>
+</div>
+
+<h2 id="risks">9. Risks &amp; watch-outs</h2>
+
+<div class="callout red">
+  <p><strong>Re-entrancy on Pot + Reserve payouts.</strong> The new <code>buyPotato()</code> and <code>finalSeal()</code> both send ETH externally. Both must be wrapped in <code>nonReentrant</code>, and both must follow CEI — update <code>pot</code>, <code>reserve</code>, <code>gameState</code>, and stage state BEFORE the external <code>.call{value:}()</code>. The malicious-seller attack vector is real; test it explicitly.</p>
+</div>
+
+<div class="callout red">
+  <p><strong>Pot-drain via sit-tier gaming.</strong> Because Legendary is reached at 30 days, an early holder can time the market and take 7.5% of a small Pot + 100% share of a small Reserve at <code>finalSeal()</code> despite barely contributing. Mitigation: require a minimum Pot/Reserve balance (e.g. 1 ETH combined) before the highest tier pays out, OR anneal <code>tierSaleSliceBps</code> during the first 30 days of a season, OR make the 30-day no-transfer trigger a min-Pot-size check as well.</p>
+</div>
+
+<div class="callout">
+  <p><strong>Metadata URL fragility.</strong> If the backend goes down, the dynamic <code>/api/metadata/potato</code> URL breaks, and OpenSea shows a broken image. Mitigation: cache the stage metadata JSON to Pinata after every stage change, so there's always an IPFS fallback. Ship this in C5.</p>
+</div>
+
+<div class="callout">
+  <p><strong>Keeper downtime.</strong> If the stage-advance keeper dies, the contract still works but artwork stays stale. Mitigation: <code>pokeStage()</code> is public — anyone can call it, including the snipe flow itself. Call it at the top of <code>buyPotato()</code> so every sale self-heals the stage.</p>
+</div>
+
+<div class="callout">
+  <p><strong>Last Supper timing.</strong> 48h is the locked default — balances urgency with timezone fairness. If telemetry says it's too tight post-launch, expose <code>LAST_SUPPER_WINDOW</code> as a governance variable (not a constant) so you can retune without redeploying.</p>
+</div>
+
+<div class="callout">
+  <p><strong>Legal/regulatory (US).</strong> A contract that pays users based on how long they hold an NFT has shades of an investment contract. This is not the same as a yield-bearing token — no passive return, you must actively take and hold the potato — but counsel should weigh in before mainnet. Base's L2 position helps but does not eliminate risk.</p>
+</div>
+
+<h2 id="appendix">10. Appendix — v4 contract event schema (for the indexer)</h2>
+
+<pre>event PotatoPassed(
+    address indexed from,
+    address indexed to,
+    uint256 price,
+    uint256 holdDuration,
+    uint256 souvenirTokenId,
+    uint8   rarityTier,
+    uint8   buyerBoostLevel,
+    // v4 additions
+    uint8   sellerSitTier,
+    uint256 sellerPotSlice,          // from live Pot
+    uint256 sellerReserveAccrued,    // what this sale added to the Reserve (informational)
+    uint8   sellerStageAtSale
+);
+
+event PotFunded(uint256 amount, string source);        // "sale" | "overpay" | "glance" | "stake-forfeit"
+event ReserveFunded(uint256 amount, string source);    // "sale" | "overpay" | "vote-pool"
+event PotPaidOut(address indexed to, uint256 amount, uint8 tier);
+event ReservePaidOut(address indexed to, uint256 amount, uint8 tier, uint256 residual);
+event StageChanged(uint8 oldStage, uint8 newStage);
+event VoteStaked(address indexed voter, uint256 amount, uint256 totalStake);
+event LastSupperBegan(uint256 timestamp, address holder, string trigger); // trigger: "no-transfer-timeout" | "spectator-vote"
+event GameSealed(uint256 timestamp, address eternalHolder, uint256 reservePaid, uint256 residualForSeason2);
+event MetadataUpdate(uint256 _tokenId);                // ERC-4906</pre>
+
+<p>These are the events the backend indexer (C4) listens for. Every one of them should have a Discord + X announcement template ready before mainnet.</p>
+
+<hr>
+
+<div class="callout gold">
+  <p><strong>Minimum viable path:</strong> A1 → A2 → B1 → B2 → B3 → C2 → C3 → D1 → D2 → D3 → F1 → F2 → F3 → F4.</p>
+  <p>That's the critical path. Everything else (C1 Postgres, C4 indexer, C5 dynamic metadata, E1 keeper, E2 bots) can be deferred 1–2 weeks past mainnet launch if needed — the contract is self-sufficient without them.</p>
+</div>
+
+</div>
+</body>
+</html>

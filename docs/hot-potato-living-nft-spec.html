@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hot Potato — The Living NFT (Sprouting Visual Spec)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Georgia', serif; background: #0f0800; color: #ffe8c0; line-height: 1.7; padding: 40px 24px; }
+  .page { max-width: 920px; margin: 0 auto; }
+  h1 { font-family: 'Arial Black', sans-serif; font-size: 30px; letter-spacing: 2px; color: #FAC775; margin-bottom: 6px; }
+  h2 { font-family: 'Arial Black', sans-serif; font-size: 16px; letter-spacing: 1px; color: #FF6B00; margin: 44px 0 12px; text-transform: uppercase; border-bottom: 1px solid rgba(255,107,0,0.3); padding-bottom: 8px; }
+  h3 { font-family: 'Arial Black', sans-serif; font-size: 14px; color: #FAC775; margin: 26px 0 10px; letter-spacing: 0.5px; }
+  p { font-size: 14px; color: rgba(255,232,192,0.85); margin-bottom: 12px; }
+  ul, ol { margin: 0 0 14px 22px; }
+  li { font-size: 14px; color: rgba(255,232,192,0.8); margin-bottom: 6px; line-height: 1.65; }
+  .meta { font-size: 12px; color: rgba(255,232,192,0.35); margin-bottom: 36px; border-top: 1px solid rgba(255,232,192,0.08); padding-top: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 14px 0 22px; }
+  th { background: rgba(255,107,0,0.15); color: #FF8C42; font-family: 'Arial', sans-serif; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; padding: 8px 12px; text-align: left; border-bottom: 1px solid rgba(255,107,0,0.3); }
+  td { padding: 10px 12px; border-bottom: 1px solid rgba(255,232,192,0.06); color: rgba(255,232,192,0.82); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .hi { color: #FAC775; font-weight: bold; }
+  .ok { color: #90EE90; }
+  .warn { color: #FF8C42; }
+  .bad { color: #FF5555; }
+  code { background: rgba(255,232,192,0.08); padding: 1px 5px; border-radius: 3px; font-size: 12px; font-family: 'Courier New', monospace; color: #FAC775; }
+  pre { background: rgba(0,0,0,0.35); border: 1px solid rgba(255,232,192,0.08); border-radius: 6px; padding: 14px 16px; margin: 14px 0; overflow-x: auto; font-family: 'Courier New', monospace; font-size: 12px; color: #ffe8c0; line-height: 1.5; }
+  .callout { background: rgba(255,107,0,0.07); border-left: 3px solid #FF6B00; padding: 13px 16px; margin: 16px 0 20px; border-radius: 0 8px 8px 0; }
+  .callout.gold { background: rgba(250,199,117,0.07); border-color: #FAC775; }
+  .callout.green { background: rgba(100,220,100,0.07); border-color: #90EE90; }
+  .callout p { margin: 0 0 6px; font-size: 13px; }
+  .callout p:last-child { margin-bottom: 0; }
+  .stage-row { display: grid; grid-template-columns: 80px 1fr; gap: 18px; background: rgba(255,232,192,0.03); border: 1px solid rgba(255,232,192,0.08); border-radius: 10px; padding: 16px 20px; margin: 12px 0; align-items: start; }
+  .stage-art { aspect-ratio: 1; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 34px; border: 2px solid rgba(255,232,192,0.12); }
+  .s-fresh    { background: linear-gradient(135deg, #8B4513, #CD853F); }
+  .s-leafing  { background: linear-gradient(135deg, #8B4513, #9FAA4F); }
+  .s-sprouted { background: linear-gradient(135deg, #5B7B2F, #9FAA4F); }
+  .s-bloomed  { background: linear-gradient(135deg, #2F5B3F, #BFD87F); }
+  .s-harvest  { background: linear-gradient(135deg, #3F2F5B, #BFD87F); }
+  .s-eternal  { background: linear-gradient(135deg, #1A0E05, #FAC775); }
+  .stage-body h3 { margin: 0 0 6px; font-size: 13px; color: #FAC775; }
+  .stage-body .day { font-family: 'Arial', sans-serif; font-size: 11px; letter-spacing: 0.1em; color: rgba(255,232,192,0.45); }
+  .stage-body p { font-size: 13px; margin: 6px 0 4px; color: rgba(255,232,192,0.82); }
+  .stage-body .art-brief { font-size: 12px; color: rgba(255,232,192,0.55); font-style: italic; margin-top: 4px; }
+  .traits-demo { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,232,192,0.1); border-radius: 8px; padding: 14px 18px; margin: 12px 0; font-family: 'Arial', sans-serif; font-size: 12px; }
+  .traits-demo .trait { display: inline-block; background: rgba(255,232,192,0.06); border: 1px solid rgba(255,232,192,0.12); border-radius: 6px; padding: 6px 10px; margin: 3px; }
+  .traits-demo .trait-key { color: rgba(255,232,192,0.4); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; display: block; }
+  .traits-demo .trait-val { color: #FAC775; font-weight: bold; font-size: 12px; }
+  hr { border: none; border-top: 1px solid rgba(255,232,192,0.08); margin: 40px 0; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>🥔 HOT POTATO</h1>
+  <h1 style="font-size:20px;color:#FF6B00;margin-bottom:4px;">The Living NFT — Sprouting Visual Spec</h1>
+  <div class="meta">Dynamic metadata design · ERC-4906 compliant · OpenSea-visible · April 2026</div>
+
+  <div style="background:rgba(255,85,85,0.1); border:1px solid rgba(255,85,85,0.35); border-left:4px solid #FF5555; border-radius:6px; padding:14px 18px; margin:12px 0 28px; font-family:'Arial',sans-serif;">
+    <div style="font-family:'Arial Black',sans-serif; font-size:11px; letter-spacing:0.15em; color:#FF5555; text-transform:uppercase; margin-bottom:6px;">Partially Superseded · 2026-04-20</div>
+    <p style="font-size:13px; color:rgba(255,232,192,0.8); margin:0;">The <b>visual mechanic</b> in this doc (6 stages, ERC-4906, stageURIs) still holds. The <b>economic mechanic</b> does not: sprouting no longer decays price — it <b>raises the minimum ask floor</b> (Fresh +0%, Leafing +10%, Sprouted +25%, Bloomed +50%, Harvest +100%, Eternal +200%). The "decayed price" language and any references to the asking price falling with sprouting are stale. See <a href="hot-potato-v4-mechanic-spec.html" style="color:#FAC775;">hot-potato-v4-mechanic-spec.html</a> for the locked parameters.</p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2>1. The Short Answer</h2>
+
+  <p><strong>Yes.</strong> The Hot Potato NFT (Token ID 0) visually transforms as it sprouts. Each of the five stages has its own pre-generated image and its own set of traits. The transformation is visible everywhere — on your site, on OpenSea, in wallets, in the Base block explorer, in social-media link previews.</p>
+
+  <p>This isn't a cosmetic site-only trick. It's a genuinely dynamic NFT, and the standard that makes it work is <strong>ERC-4906</strong> (the <code>MetadataUpdate</code> event). When the sprouting stage changes on-chain, the contract swaps the <code>tokenURI</code> and emits a <code>MetadataUpdate(0)</code> event. OpenSea watches for that event and re-fetches within minutes; most wallets honor it too.</p>
+
+  <div class="callout gold">
+    <p><strong>Why this matters for the game:</strong> a sprouted potato on OpenSea is a <em>public invitation</em>. Anyone browsing the Base NFT ecosystem sees that the Hot Potato has sprouts, checks the listing, sees the decayed price, and clicks buy. The NFT art doing the marketing for you.</p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2>2. The Five Visual States</h2>
+
+  <p>Five stages, five pre-rendered images, one final boss image. Each is pinned to IPFS at launch — the art itself is immutable; only the pointer changes.</p>
+
+  <div class="stage-row">
+    <div class="stage-art s-fresh">🥔</div>
+    <div class="stage-body">
+      <h3>STAGE 1 · FRESH</h3>
+      <span class="day">Day 0 – 3 · Post-sale baseline</span>
+      <p>The classic Hot Potato. Steaming, golden-brown, looking freshly-taken-from-the-oven. The image you see in every marketing asset.</p>
+      <p class="art-brief">Prompt direction: steaming russet potato, crispy skin, small blistered surface, visible heat shimmer, warm rim light. This is the hero shot.</p>
+    </div>
+  </div>
+
+  <div class="stage-row">
+    <div class="stage-art s-leafing">🌱</div>
+    <div class="stage-body">
+      <h3>STAGE 2 · LEAFING</h3>
+      <span class="day">Day 3 – 7 · First growth signal</span>
+      <p>A single tiny leaf has pushed through the skin. Steam is still rising but is thinner. The potato has been sitting a while.</p>
+      <p class="art-brief">Prompt direction: same potato, same angle, same lighting — with one small green pale-yellow shoot emerging from one eye. Minimal change; the player's eye notices it because it's the same composition, with one detail different.</p>
+    </div>
+  </div>
+
+  <div class="stage-row">
+    <div class="stage-art s-sprouted">🌿</div>
+    <div class="stage-body">
+      <h3>STAGE 3 · SPROUTED</h3>
+      <span class="day">Day 7 – 14 · Price decay begins · +1 Sprout Boost active</span>
+      <p>Multiple shoots, the potato looks noticeably less hot. The skin has started to wrinkle. Steam is gone. A few small green leaves have unfurled.</p>
+      <p class="art-brief">Prompt direction: dimmer lighting, cooler color balance, visible dried skin, 3–5 green shoots at varying lengths, one small leaf just starting to unfold. Still recognizably the same potato.</p>
+    </div>
+  </div>
+
+  <div class="stage-row">
+    <div class="stage-art s-bloomed">🌸</div>
+    <div class="stage-body">
+      <h3>STAGE 4 · BLOOMED</h3>
+      <span class="day">Day 14 – 21 · Accelerated decay · +2 Sprout Boost active</span>
+      <p>The potato is now more plant than food. Full leafy growth. Small purple-white potato flowers (real potatoes do flower) bloom at the tips. This is the dramatic image.</p>
+      <p class="art-brief">Prompt direction: overgrown potato half-obscured by foliage, several purple/white flowers, subtly lit as if on a windowsill. Emotional beat: "this thing has been forgotten for two weeks."</p>
+    </div>
+  </div>
+
+  <div class="stage-row">
+    <div class="stage-art s-harvest">🌾</div>
+    <div class="stage-body">
+      <h3>STAGE 5 · HARVEST READY</h3>
+      <span class="day">Day 21 – 30 · Holder can call harvest() · potato is practically a plant</span>
+      <p>The potato is a small tangled bush. New baby potatoes are beginning to form where roots have sprawled. The composition is almost inverted — the original potato is barely visible at the base of its own plant.</p>
+      <p class="art-brief">Prompt direction: potato plant in full bloom, parent potato visible but wrinkled and spent, soft halo of light, reverent mood. This image tells the holder "you grew this."</p>
+    </div>
+  </div>
+
+  <div class="stage-row">
+    <div class="stage-art s-eternal">👑</div>
+    <div class="stage-body">
+      <h3>STAGE 6 · ETERNAL (FINAL SEAL ONLY)</h3>
+      <span class="day">The Last Supper ending · 1/1 forever</span>
+      <p>Only ever generated once, if and when the game seals. A unique, never-reused image — the potato as final artifact. Could be a fully grown plant with the original potato as a gnarled root, lit like a reliquary.</p>
+      <p class="art-brief">Prompt direction: reliquary aesthetic, single perfect potato plant, flowering, dark velvet background, gold accents. Painted once. Pinned once. Never regenerated.</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2>3. How The Traits Update</h2>
+
+  <p>OpenSea (and any marketplace reading your metadata JSON) shows the NFT's traits as a list of key/value pairs. The potato's trait list changes at each stage — giving spectators a <em>data</em> reason to watch even if they're not looking at the image.</p>
+
+  <h3>3.1 Example: OpenSea Traits During Stage 4 (Bloomed)</h3>
+
+  <div class="traits-demo">
+    <div class="trait"><span class="trait-key">Growth Stage</span><span class="trait-val">BLOOMED</span></div>
+    <div class="trait"><span class="trait-key">Days Since Sale</span><span class="trait-val">17</span></div>
+    <div class="trait"><span class="trait-key">Current Holder</span><span class="trait-val">0x742d…3a8f</span></div>
+    <div class="trait"><span class="trait-key">Sit-Tier</span><span class="trait-val">Max (T4)</span></div>
+    <div class="trait"><span class="trait-key">Asking Price</span><span class="trait-val">0.082 ETH</span></div>
+    <div class="trait"><span class="trait-key">Price Decay</span><span class="trait-val">-18%</span></div>
+    <div class="trait"><span class="trait-key">Buyer Sprout Boost</span><span class="trait-val">+2</span></div>
+    <div class="trait"><span class="trait-key">Pot Size</span><span class="trait-val">3.8 ETH</span></div>
+    <div class="trait"><span class="trait-key">Total Sales Ever</span><span class="trait-val">284</span></div>
+  </div>
+
+  <p>A spectator browsing OpenSea without ever visiting your site gets the whole state of the game from this list. That's a free UI surface.</p>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2>4. The Technical Approach</h2>
+
+  <h3>4.1 Three Options — And Why I'm Recommending Option B</h3>
+
+  <table>
+    <thead><tr><th>Approach</th><th>Pros</th><th>Cons</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>A. Static NFT, site-only animation</strong></td>
+        <td>Zero complexity</td>
+        <td class="bad">OpenSea, wallets, Twitter previews all show the static image. Sprouting is invisible outside your site. Wastes the mechanic.</td>
+      </tr>
+      <tr>
+        <td><strong>B. ERC-4906 + pre-generated IPFS images</strong> <span class="hi">← recommended</span></td>
+        <td>Standard-compliant. OpenSea auto-refreshes. Images are immutable and pre-approved. Low gas. Clean, legible for collectors.</td>
+        <td>Requires someone to trigger <code>pokeStage()</code> to update. Solved with a keeper bounty.</td>
+      </tr>
+      <tr>
+        <td><strong>C. Fully dynamic <code>tokenURI()</code> returning computed metadata</strong></td>
+        <td>Always up-to-date without any trigger. Truly live.</td>
+        <td>Requires base64-encoded SVG or on-chain JSON. Complex. Image has to be SVG or pulled from a dedicated metadata server. Not fit for AI-generated hero art.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>4.2 Implementation Sketch</h3>
+
+<pre><code>// ERC-4906 event (standardized metadata refresh signal)
+event MetadataUpdate(uint256 _tokenId);
+
+// Pre-uploaded IPFS URIs, one per stage
+string[6] public stageURIs = [
+    "ipfs://.../fresh.json",
+    "ipfs://.../leafing.json",
+    "ipfs://.../sprouted.json",
+    "ipfs://.../bloomed.json",
+    "ipfs://.../harvest.json",
+    "ipfs://.../eternal.json"     // final seal only
+];
+
+uint8 public currentStage;    // 0-5
+
+function tokenURI(uint256 tokenId) public view override returns (string memory) {
+    if (tokenId == 0) return stageURIs[currentStage];
+    return _souvenirURIs[tokenId];  // souvenirs have their own URIs
+}
+
+function pokeStage() external {
+    uint8 newStage = _computeStage();    // derives from block.timestamp - lastSaleTime
+    require(newStage != currentStage, "no change");
+    currentStage = newStage;
+    emit MetadataUpdate(0);              // OpenSea will refresh
+
+    // Small bounty for the poker (covers their gas + tip)
+    if (treasury &gt;= 0.0005 ether) {
+        treasury -= 0.0005 ether;
+        payable(msg.sender).transfer(0.0005 ether);
+    }
+}
+
+function buyPotato(uint256 newAsk) external payable {
+    // ... normal buy logic ...
+    lastSaleTime = block.timestamp;
+    if (currentStage != 0) {
+        currentStage = 0;
+        emit MetadataUpdate(0);           // resets to Fresh on every sale
+    }
+}</code></pre>
+
+  <h3>4.3 Why Keepers Aren't A Weakness</h3>
+
+  <p>The concern: "what if no one calls <code>pokeStage()</code> and the NFT stays stuck on the wrong image?" In practice this is self-resolving:</p>
+
+  <ul>
+    <li>A small keeper bounty (0.0005 ETH) creates incentive for anyone to call it.</li>
+    <li>Your own backend or a simple Chainlink Automation job calls it every few hours as a free safety net.</li>
+    <li>Every <code>buyPotato()</code> call also runs the stage reset anyway, so the "worst case" is a short delay until the next buy or next pokeStage call.</li>
+    <li>And honestly — if an outdated NFT image goes viral on X because the stage hasn't updated in a few hours, that's free marketing, not a bug.</li>
+  </ul>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2>5. Souvenir Cross-Pollination (Bonus Idea)</h2>
+
+  <p>Since you're generating souvenirs via FLUX + LoRA at every sale, you have the option to <strong>bake the parent potato's stage into the souvenir art</strong>. A souvenir minted while the potato was Bloomed could carry leafy accents; a souvenir minted during Harvest could be shown clutching a tiny flower.</p>
+
+  <p>This creates a new, collectable axis that rewards buying at unusual moments:</p>
+
+  <table>
+    <thead><tr><th>Souvenir Minted During</th><th>Visual Signature</th><th>Collector Value</th></tr></thead>
+    <tbody>
+      <tr><td>Stage 1 Fresh (majority)</td><td>Clean potato portrait</td><td>Baseline</td></tr>
+      <tr><td>Stage 3 Sprouted</td><td>Subtle leaf detail in portrait</td><td>Rarer — only minted during 7-14d windows</td></tr>
+      <tr><td>Stage 4 Bloomed</td><td>Flower accent in portrait</td><td>Rarer still</td></tr>
+      <tr><td>Stage 5 Harvest / Grower souvenir</td><td>Full plant / fully flowering variant</td><td class="hi">Lineage-rare</td></tr>
+    </tbody>
+  </table>
+
+  <p>Add a trait <code>parentPotatoStage</code> to every souvenir's metadata. Collectors will hunt for "Bloomed-era" souvenirs the same way they hunt for early token IDs. Costs nothing extra to implement — you're already generating images at mint time, just vary the prompt based on <code>currentStage</code>.</p>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2>6. Marketplace Behavior Summary</h2>
+
+  <table>
+    <thead><tr><th>Platform</th><th>ERC-4906 Behavior</th><th>Refresh Speed</th></tr></thead>
+    <tbody>
+      <tr><td>OpenSea</td><td class="ok">Honors MetadataUpdate events</td><td>~5–10 minutes after event</td></tr>
+      <tr><td>Blur</td><td class="warn">Mixed — sometimes requires manual refresh</td><td>Varies</td></tr>
+      <tr><td>Rarible</td><td class="ok">Honors</td><td>~15 minutes</td></tr>
+      <tr><td>MetaMask wallet</td><td class="warn">Caches — slow to refresh</td><td>Hours to a day</td></tr>
+      <tr><td>Rainbow / Zerion wallets</td><td class="ok">Usually refreshes on balance change</td><td>~minutes</td></tr>
+      <tr><td>Twitter/X link previews</td><td class="warn">Heavily cached</td><td>Refresh is inconsistent</td></tr>
+    </tbody>
+  </table>
+
+  <p>OpenSea is the platform that matters most; it's well-behaved. Wallets and link previews lag but that's cosmetic.</p>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2>7. Art Production Checklist</h2>
+
+  <ul>
+    <li><strong>Generate 6 hero images</strong> (Stages 1–5 + the 1/1 Eternal) with your FLUX+LoRA pipeline. Aim for consistent composition, angle, and lighting so the progression feels unified rather than 6 unrelated images.</li>
+    <li><strong>Pin all 6 to IPFS via Pinata</strong> at launch. Immutable.</li>
+    <li><strong>Write 6 metadata JSON files</strong> (one per stage) with updated trait values. Pin those too.</li>
+    <li><strong>Hardcode the 6 URIs into the contract</strong> as <code>string[6] public stageURIs</code>.</li>
+    <li><strong>Implement <code>pokeStage()</code></strong> with the keeper bounty.</li>
+    <li><strong>Add a trait-update pass</strong> so the <code>Current Holder</code>, <code>Days Since Sale</code>, <code>Asking Price</code>, <code>Pot Size</code> traits update in the live metadata (this requires either a lightweight metadata server you host, or accept that these traits only update at stage boundaries).</li>
+    <li><strong>Add <code>parentPotatoStage</code> to souvenir metadata</strong> — record on mint, expose as a trait.</li>
+  </ul>
+
+  <div class="callout green">
+    <p><strong>Pre-launch gotcha to avoid:</strong> test the metadata refresh flow on Base Sepolia before mainnet. Trigger a fake stage change, watch OpenSea testnet refresh. If it doesn't pick up the new image within 10 minutes, your metadata JSON probably has a cache-busting issue (set correct <code>image</code> fields, avoid <code>?v=</code> suffixes, make sure IPFS URIs are immutable and not pointing to mutable gateways).</p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2>8. Summary</h2>
+
+  <table>
+    <thead><tr><th>Question</th><th>Answer</th></tr></thead>
+    <tbody>
+      <tr><td>Do the NFTs actually update?</td><td class="ok"><strong>Yes.</strong> Five real visual states, plus a 1/1 Eternal state if the game ever seals.</td></tr>
+      <tr><td>Where are the updates visible?</td><td class="ok">Your site, OpenSea, wallets (with some lag), block explorers, trait filters.</td></tr>
+      <tr><td>What's the standard used?</td><td class="ok"><strong>ERC-4906 MetadataUpdate event.</strong> Pre-generated images pinned to IPFS, URI swapped on stage change.</td></tr>
+      <tr><td>What triggers the update?</td><td class="ok">Any buy resets to Stage 1. Otherwise anyone can call <code>pokeStage()</code> for a 0.0005 ETH keeper bounty.</td></tr>
+      <tr><td>Do souvenirs carry the parent's state?</td><td class="ok">Optional but recommended. Adds a free collectable axis; costs nothing in contract.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout gold">
+    <p><strong>The effect:</strong> the Hot Potato isn't just an NFT — it's an on-chain <em>organism</em>. It grows when ignored. Its leaves appear in the secondary market. Its flowers become an alarm bell that someone is asleep at the wheel. You're not just shipping a game; you're shipping a living thing that anyone on Base can watch breathe.</p>
+  </div>
+
+  <hr>
+  <p style="font-size:11px;color:rgba(255,232,192,0.25);text-align:center;">Hot Potato — Living NFT Spec · April 2026</p>
+
+</div>
+</body>
+</html>

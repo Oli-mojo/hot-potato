@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hot Potato — v4 Mechanic Spec (locked)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Georgia', serif; background: #0f0800; color: #ffe8c0; line-height: 1.7; padding: 40px 24px; }
+  .page { max-width: 960px; margin: 0 auto; }
+  h1 { font-family: 'Arial Black', sans-serif; font-size: 30px; letter-spacing: 2px; color: #FAC775; margin-bottom: 6px; }
+  h2 { font-family: 'Arial Black', sans-serif; font-size: 16px; letter-spacing: 1px; color: #FF6B00; margin: 44px 0 12px; text-transform: uppercase; border-bottom: 1px solid rgba(255,107,0,0.3); padding-bottom: 8px; }
+  h3 { font-family: 'Arial Black', sans-serif; font-size: 14px; color: #FAC775; margin: 26px 0 10px; letter-spacing: 0.5px; }
+  h4 { font-family: 'Arial Black', sans-serif; font-size: 12px; color: #FF8C42; margin: 18px 0 6px; letter-spacing: 0.4px; text-transform: uppercase; }
+  p { font-size: 14px; color: rgba(255,232,192,0.85); margin-bottom: 12px; }
+  ul, ol { margin: 0 0 14px 22px; }
+  li { font-size: 14px; color: rgba(255,232,192,0.82); margin-bottom: 6px; line-height: 1.65; }
+  .meta { font-size: 12px; color: rgba(255,232,192,0.35); margin-bottom: 36px; border-top: 1px solid rgba(255,232,192,0.08); padding-top: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 14px 0 22px; }
+  th { background: rgba(255,107,0,0.15); color: #FF8C42; font-family: 'Arial', sans-serif; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; padding: 8px 12px; text-align: left; border-bottom: 1px solid rgba(255,107,0,0.3); }
+  td { padding: 10px 12px; border-bottom: 1px solid rgba(255,232,192,0.06); color: rgba(255,232,192,0.82); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .hi { color: #FAC775; font-weight: bold; }
+  .ok { color: #90EE90; }
+  .warn { color: #FF8C42; }
+  .bad { color: #FF5555; }
+  code { background: rgba(255,232,192,0.08); padding: 1px 5px; border-radius: 3px; font-size: 12px; font-family: 'Courier New', monospace; color: #FAC775; }
+  pre { background: rgba(0,0,0,0.35); border: 1px solid rgba(255,232,192,0.08); border-radius: 6px; padding: 14px 16px; margin: 14px 0; overflow-x: auto; font-family: 'Courier New', monospace; font-size: 12px; color: #ffe8c0; line-height: 1.5; }
+  .callout { background: rgba(255,107,0,0.07); border-left: 3px solid #FF6B00; padding: 13px 16px; margin: 16px 0 20px; border-radius: 0 8px 8px 0; }
+  .callout.gold { background: rgba(250,199,117,0.07); border-color: #FAC775; }
+  .callout.green { background: rgba(100,220,100,0.07); border-color: #90EE90; }
+  .callout.red { background: rgba(255,85,85,0.07); border-color: #FF5555; }
+  .callout p { margin: 0 0 6px; font-size: 13px; }
+  .callout p:last-child { margin-bottom: 0; }
+  blockquote { border-left: 3px solid rgba(250,199,117,0.4); padding: 2px 16px; margin: 14px 0; color: rgba(255,232,192,0.72); font-style: italic; font-size: 13px; }
+  hr { border: none; border-top: 1px solid rgba(255,232,192,0.08); margin: 40px 0; }
+  .badge { display: inline-block; font-family: 'Arial Black', sans-serif; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; margin-left: 6px; }
+  .badge.locked { background: rgba(100,220,100,0.15); color: #90EE90; border: 1px solid rgba(100,220,100,0.3); }
+  .badge.new { background: rgba(255,107,0,0.15); color: #FF8C42; border: 1px solid rgba(255,107,0,0.3); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>&#129364; HOT POTATO</h1>
+  <h1 style="font-size:20px;color:#FF6B00;margin-bottom:4px;">v4 Mechanic Spec — Locked <span class="badge locked">2026-04-20</span></h1>
+  <div class="meta">
+    Direction: <b>A + partial C</b> · Supersedes decay-based sprouting · Single source of truth for v4 Solidity, backend, and site copy.
+  </div>
+
+  <h2>0. Why this exists</h2>
+  <p>Earlier drafts had sprouting <i>decay</i> the asking price over time. On review, this created a backwards emotional arc: the longer you held, the bigger your Pot slice grew, but the more vulnerable you became — your reward and your punishment scaled together. The fix: sprouting should feel like <b>fortification and anticipation</b>, not erosion.</p>
+
+  <div class="callout gold">
+    <p><b>Design principle.</b> Sprouting is the holder's story of climbing toward a terminal payout. Each stage makes them harder to dislodge, not easier. The tension is "will I survive to the Last Supper?" — not "watch my defenses melt."</p>
+  </div>
+
+  <h2>1. The core loop (one paragraph)</h2>
+  <p>A holder sits on the throne. Every second they hold, the throne timer ticks up and they advance through sit-tiers (Cold &rarr; Warm &rarr; Hot &rarr; Blazing &rarr; Legendary). At fixed hold-time thresholds they also advance through <b>sprout stages</b> (Fresh &rarr; Leafing &rarr; Sprouted &rarr; Bloomed &rarr; Harvest &rarr; Eternal), and each stage <b>ratchets up the minimum next ask</b>, fortifying their position. When someone does snipe them, the seller takes 95% of the sale price plus a small tier-slice of the live Pot. Meanwhile an equivalent slice accrues into a separate <b>Last Supper Reserve</b> that only pays out when the game seals — at which point whoever is on the throne collects a tier-weighted share and the residual rolls into Season 2.</p>
+
+  <h2>2. Locked parameters</h2>
+
+  <h3>2.1 Sit-tier schedule (on-sale slice)</h3>
+  <p>Awarded to the outgoing seller from the live Pot at the moment of sale. Halved from earlier drafts to leave room for the Reserve.</p>
+  <table>
+    <thead><tr><th>Sit tier</th><th>Time on throne</th><th>On-sale Pot slice</th><th>Reserve accrues</th></tr></thead>
+    <tbody>
+      <tr><td>Cold</td><td>&lt; 6 h</td><td class="hi">0%</td><td>0%</td></tr>
+      <tr><td>Warm</td><td>6h &ndash; 48h</td><td class="hi">0.5%</td><td>0.5%</td></tr>
+      <tr><td>Hot</td><td>2 &ndash; 7 days</td><td class="hi">1.5%</td><td>1.5%</td></tr>
+      <tr><td>Blazing</td><td>7 &ndash; 30 days</td><td class="hi">3.5%</td><td>3.5%</td></tr>
+      <tr><td>Legendary</td><td>30+ days</td><td class="hi">7.5%</td><td>7.5%</td></tr>
+    </tbody>
+  </table>
+  <p class="meta" style="margin-top:-10px;">Reserve accrual is funded from the <b>1% Pot tax on each sale</b> and the <b>50% of overpay</b> that currently routes to Pot; half of those streams are diverted into the Reserve. The holder never feels a second fee — the split happens inside the Pot accounting.</p>
+
+  <h3>2.2 Sprout stage floor-lift <span class="badge new">changed</span></h3>
+  <p>Each sprout stage multiplies the minimum next ask (on top of the existing tiered min-increase). Cumulative, not per-day. The effect is that a deeply sprouted potato becomes genuinely expensive to take over, which is the point.</p>
+  <table>
+    <thead><tr><th>Stage</th><th>Unlocks at hold time</th><th>Floor lift (cumulative)</th><th>Emoji</th></tr></thead>
+    <tbody>
+      <tr><td>Fresh</td><td>0</td><td class="hi">+0%</td><td>&#129364;</td></tr>
+      <tr><td>Leafing</td><td>3 days</td><td class="hi">+10%</td><td>&#127793;</td></tr>
+      <tr><td>Sprouted</td><td>7 days</td><td class="hi">+25%</td><td>&#127807;</td></tr>
+      <tr><td>Bloomed</td><td>14 days</td><td class="hi">+50%</td><td>&#127806;</td></tr>
+      <tr><td>Harvest</td><td>30 days</td><td class="hi">+100%</td><td>&#127803;</td></tr>
+      <tr><td>Eternal</td><td>60 days</td><td class="hi">+200%</td><td>&#10024;</td></tr>
+    </tbody>
+  </table>
+  <p class="meta" style="margin-top:-10px;">Worked example. Base price 1 ETH with the 1-10 ETH tier's +10% minimum bump = 1.1 ETH floor. At <b>Bloomed</b> (+50% cumulative lift): floor becomes 1.1 &times; 1.50 = <b>1.65 ETH</b>. At <b>Eternal</b>: 1.1 &times; 3.00 = <b>3.30 ETH</b>. The holder is fortified; the sniper must commit.</p>
+
+  <h3>2.3 Last Supper trigger</h3>
+  <p>The game enters <code>LAST_SUPPER</code> state when either condition fires, whichever comes first:</p>
+  <ul>
+    <li><b>Timer path.</b> 30 days without a transfer. A permanent squatter gets a natural death — the throne is eventually called in.</li>
+    <li><b>Spectator path.</b> Staked glance-votes cross a threshold (pegged to a % of the current Reserve, e.g. 10%). Gives spectators real agency: collectively pay to force a turnover.</li>
+  </ul>
+  <p>Once in <code>LAST_SUPPER</code>, a short window (48h) opens for one last round of snipes. At the end of that window, <code>finalSeal()</code> can be called by anyone and the Reserve pays out.</p>
+
+  <h3>2.4 Last Supper payout (tier-weighted to the current sitter)</h3>
+  <p>At seal, the sitter's final tier determines what share of the Reserve they collect. The residual rolls forward.</p>
+  <table>
+    <thead><tr><th>Final tier at seal</th><th>Sitter's share of Reserve</th><th>Residual (rolls to Season 2)</th></tr></thead>
+    <tbody>
+      <tr><td>Cold</td><td class="hi">10%</td><td>90%</td></tr>
+      <tr><td>Warm</td><td class="hi">25%</td><td>75%</td></tr>
+      <tr><td>Hot</td><td class="hi">50%</td><td>50%</td></tr>
+      <tr><td>Blazing</td><td class="hi">75%</td><td>25%</td></tr>
+      <tr><td>Legendary</td><td class="hi">100%</td><td>0%</td></tr>
+    </tbody>
+  </table>
+  <p class="meta" style="margin-top:-10px;">A holder who got sniped at 29 days 23 hours and was replaced by a Cold sitter at seal leaves 90% of the Reserve on the table. That's the drama. "Don't let a newbie take the crown in the final hour."</p>
+
+  <h2>3. State machine</h2>
+  <pre>enum GameState { ACTIVE, LAST_SUPPER, SEALED }
+enum Stage      { FRESH, LEAFING, SPROUTED, BLOOMED, HARVEST, ETERNAL }
+
+ACTIVE --(30d no transfer  OR  glance-vote threshold hit)--&gt; LAST_SUPPER
+LAST_SUPPER --(48h window ends + finalSeal() called)--&gt; SEALED
+SEALED       (terminal — Season 2 spawns fresh potato)</pre>
+
+  <h2>4. Contract-level deltas vs. existing v3</h2>
+  <ul>
+    <li><b>New storage:</b> <code>gameState</code>, <code>currentStage</code>, <code>stageEnteredAt</code>, <code>pot</code>, <code>reserve</code>, <code>lastTransferAt</code>, <code>lastSupperStartedAt</code>, <code>stageFloorLiftBps[6]</code>, <code>stageThresholds[6]</code>, <code>stageURIs[6]</code>, <code>tierSaleSliceBps[5]</code>, <code>tierReserveSliceBps[5]</code>, <code>tierFinalShareBps[5]</code>.</li>
+    <li><b>New functions:</b> <code>pokeStage()</code> (permissionless stage advance), <code>minNextAsk()</code> (tiered + floor-lifted), <code>voteLastSupper()</code> (spectator early-trigger), <code>beginLastSupper()</code>, <code>finalSeal()</code>.</li>
+    <li><b>Modified <code>buyPotato()</code>:</b> rejects if <code>SEALED</code>; calls <code>pokeStage()</code> at entry so every sale self-heals the stage; uses <code>minNextAsk()</code> for price validation; splits the 1% Pot tax and 50% of overpay equally between <code>pot</code> and <code>reserve</code>; pays the seller their on-sale tier slice from <code>pot</code> only; resets stage + timers; updates <code>lastTransferAt</code>.</li>
+    <li><b>No decay logic anywhere.</b> <code>effectivePrice()</code> is removed; replaced with <code>minNextAsk()</code> which is monotonically non-decreasing within a hold.</li>
+  </ul>
+
+  <h2>5. Example game arc (narrative sanity check)</h2>
+
+  <div class="callout">
+    <p><b>Day 0.</b> Alice snipes the potato for 0.5 ETH, sets her ask at 1.0 ETH. Fresh stage. Pot and Reserve both sit empty.</p>
+  </div>
+  <div class="callout">
+    <p><b>Day 3.</b> Alice sprouts to Leafing. Min next ask lifts +10%. She's now "Hot" tier (past 48h). If she got sniped right now she'd collect a 1.5% slice of the live Pot — but the Reserve is also building in parallel.</p>
+  </div>
+  <div class="callout">
+    <p><b>Day 14.</b> Alice reaches <b>Bloomed</b> and <b>Legendary</b>. Floor is now +50% cumulative, so even minor snipe attempts bounce. She's collecting 7.5% of the Pot on sale, and 7.5% of every sale is banking into her theoretical final payout <i>if she's still sitting at seal</i>.</p>
+  </div>
+  <div class="callout red">
+    <p><b>Day 27.</b> Bob finally commits: pays 4.5 ETH (well above the sprouted floor), takes the throne. Alice walks away with 95% &times; 4.5 = 4.275 ETH + 7.5% of the live Pot. Bob is now Cold-tier, Fresh-stage, with only 3 days on the no-transfer clock reset.</p>
+  </div>
+  <div class="callout gold">
+    <p><b>Day 57.</b> Bob has squatted. Nobody's bought. The 30-day no-transfer timer fires. <code>LAST_SUPPER</code> begins. Bob's final tier is Legendary (he's been sitting 30 days). He holds on. 48h window passes. <code>finalSeal()</code> — Bob collects 100% of the Reserve. Season 1 is over.</p>
+  </div>
+  <div class="callout green">
+    <p><b>Alternate Day 57.</b> A late snipe knocks Bob off at hour 47. A newcomer "Cold" at seal only collects 10% of the Reserve. 90% rolls to Season 2's starting Reserve — Season 2 opens with a fat pot already on the table.</p>
+  </div>
+
+  <h2>6. Site / copy implications</h2>
+  <ul>
+    <li><b>Sprouting clock</b> reads "Next stage lifts your floor by +X%" instead of "price decays by -X%/day."</li>
+    <li><b>Pot widget</b> gains a sibling: <b>Last Supper Reserve</b>, shown alongside the live Pot with its own dollar estimate.</li>
+    <li><b>Tier ladder</b> shows two numbers per row: on-sale slice <i>and</i> reserve accrual. Adds a column for "final share at seal."</li>
+    <li><b>FAQ answer</b> on squatting changes from "sprouting decays their price" to "sprouting fortifies them, but the 30-day no-transfer timer forces an endgame anyway, and spectators can vote to force it earlier."</li>
+    <li><b>Spectator Hub</b> <code>vote</code> tile stops being a cosmetic v4+ tease and gets a real hookup: glance-stake to push the Last Supper trigger.</li>
+  </ul>
+
+  <h2>7. Open / deferred</h2>
+  <ul>
+    <li><b>Glance-vote pricing.</b> How much does a single vote-stake cost? What fraction of the Reserve does the threshold live at? Tuning problem. Start at 10% of Reserve and watch.</li>
+    <li><b>Last Supper visual state on the site.</b> Ember-red palette already exists in <code>index_v2.html</code>. Needs a countdown and a "vote to seal" CTA for spectators during <code>ACTIVE</code>.</li>
+    <li><b>Season 2 spawn.</b> Out of P1 scope but the Reserve residual mechanic requires some treasury account or a pre-deployed Season 2 contract address to forward funds to. Simplest: Reserve residual stays in the contract and a new potato mints with it as opening Reserve.</li>
+    <li><b>Re-entrancy.</b> <code>finalSeal()</code> and <code>buyPotato()</code> both do ETH transfers. CEI + <code>ReentrancyGuard</code> on both.</li>
+  </ul>
+
+  <hr>
+
+  <p class="meta">Next step: update <code>hot-potato-backend-rollout-plan.html</code> to match these locked parameters (stageFloorLiftBps array, split Pot / Reserve accounting, Last Supper trigger logic, tier-weighted seal payout), then draft v4 Solidity with tests, then cut over the site copy.</p>
+
+</div>
+</body>
+</html>

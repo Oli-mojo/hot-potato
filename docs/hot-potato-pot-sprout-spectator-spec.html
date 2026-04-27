@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hot Potato — Pot, Sprout & Spectator Mechanics (On-Chain Spec)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Georgia', serif; background: #0f0800; color: #ffe8c0; line-height: 1.7; padding: 40px 24px; }
+  .page { max-width: 920px; margin: 0 auto; }
+  h1 { font-family: 'Arial Black', sans-serif; font-size: 30px; letter-spacing: 2px; color: #FAC775; margin-bottom: 6px; }
+  h2 { font-family: 'Arial Black', sans-serif; font-size: 16px; letter-spacing: 1px; color: #FF6B00; margin: 44px 0 12px; text-transform: uppercase; border-bottom: 1px solid rgba(255,107,0,0.3); padding-bottom: 8px; }
+  h3 { font-family: 'Arial Black', sans-serif; font-size: 14px; color: #FAC775; margin: 26px 0 10px; letter-spacing: 0.5px; }
+  h4 { font-family: 'Arial Black', sans-serif; font-size: 12px; color: #FF8C42; margin: 16px 0 6px; letter-spacing: 0.4px; text-transform: uppercase; }
+  p { font-size: 14px; color: rgba(255,232,192,0.82); margin-bottom: 12px; }
+  ul, ol { margin: 0 0 14px 22px; }
+  li { font-size: 14px; color: rgba(255,232,192,0.78); margin-bottom: 6px; line-height: 1.65; }
+  .meta { font-size: 12px; color: rgba(255,232,192,0.35); margin-bottom: 36px; border-top: 1px solid rgba(255,232,192,0.08); padding-top: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 14px 0 22px; }
+  th { background: rgba(255,107,0,0.15); color: #FF8C42; font-family: 'Arial', sans-serif; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; padding: 8px 12px; text-align: left; border-bottom: 1px solid rgba(255,107,0,0.3); }
+  td { padding: 10px 12px; border-bottom: 1px solid rgba(255,232,192,0.06); color: rgba(255,232,192,0.78); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .hi { color: #FAC775; font-weight: bold; }
+  .ok { color: #90EE90; }
+  .warn { color: #FF8C42; }
+  .bad { color: #FF5555; }
+  code { background: rgba(255,232,192,0.08); padding: 1px 5px; border-radius: 3px; font-size: 12px; font-family: 'Courier New', monospace; color: #FAC775; }
+  pre { background: rgba(0,0,0,0.35); border: 1px solid rgba(255,232,192,0.08); border-radius: 6px; padding: 14px 16px; margin: 14px 0; overflow-x: auto; font-family: 'Courier New', monospace; font-size: 12px; color: #ffe8c0; line-height: 1.5; }
+  pre code { background: none; padding: 0; color: inherit; }
+  .callout { background: rgba(255,107,0,0.07); border-left: 3px solid #FF6B00; padding: 13px 16px; margin: 16px 0 20px; border-radius: 0 8px 8px 0; }
+  .callout.gold { background: rgba(250,199,117,0.07); border-color: #FAC775; }
+  .callout.blue { background: rgba(55,138,221,0.07); border-color: #85B7EB; }
+  .callout.red { background: rgba(255,85,85,0.07); border-color: #FF5555; }
+  .callout.green { background: rgba(100,220,100,0.07); border-color: #90EE90; }
+  .callout p { margin: 0 0 6px; font-size: 13px; }
+  .callout p:last-child { margin-bottom: 0; }
+  .stage-block { background: rgba(255,232,192,0.03); border: 1px solid rgba(255,232,192,0.08); border-left: 3px solid #90EE90; border-radius: 8px; padding: 14px 18px; margin: 10px 0; }
+  .stage-block.s1 { border-left-color: #D3D1C7; }
+  .stage-block.s2 { border-left-color: #85B7EB; }
+  .stage-block.s3 { border-left-color: #FAC775; }
+  .stage-block.s4 { border-left-color: #FF8C42; }
+  .stage-block.s5 { border-left-color: #FF5555; }
+  .stage-block h4 { margin: 0 0 6px; font-size: 12px; }
+  .stage-day { font-family: 'Arial Black', sans-serif; color: #FAC775; font-size: 11px; letter-spacing: 0.1em; }
+  .kv { display: grid; grid-template-columns: 160px 1fr; gap: 8px 16px; margin: 8px 0 4px; font-size: 13px; }
+  .kv dt { color: rgba(255,232,192,0.5); font-family: 'Arial', sans-serif; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding-top: 2px; }
+  .kv dd { color: rgba(255,232,192,0.85); }
+  .toc { background: rgba(255,232,192,0.03); border: 1px solid rgba(255,232,192,0.08); border-radius: 8px; padding: 18px 22px; margin: 24px 0 36px; }
+  .toc a { color: rgba(255,232,192,0.55); text-decoration: none; font-size: 13px; display: block; padding: 3px 0; }
+  .toc a:hover { color: #FAC775; }
+  .toc-section { font-family: 'Arial Black', sans-serif; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,107,0,0.6); margin: 10px 0 4px; }
+  hr { border: none; border-top: 1px solid rgba(255,232,192,0.08); margin: 40px 0; }
+  blockquote { border-left: 3px solid rgba(250,199,117,0.4); padding: 2px 16px; margin: 14px 0; color: rgba(255,232,192,0.7); font-style: italic; font-size: 13px; }
+  .tag { display: inline-block; font-size: 10px; font-family: 'Arial', sans-serif; font-weight: bold; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 8px; border-radius: 20px; margin-right: 3px; }
+  .tag-onchain { background: rgba(100,220,100,0.15); color: #90EE90; }
+  .tag-ui      { background: rgba(55,138,221,0.15); color: #85B7EB; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>🥔 HOT POTATO</h1>
+  <h1 style="font-size:20px;color:#FF6B00;margin-bottom:4px;">The Pot, The Sprout &amp; The Spectators</h1>
+  <div class="meta">Mechanics design spec · April 2026 · On-chain-first · Follow-up to pre-launch review</div>
+
+  <div style="background:rgba(255,85,85,0.1); border:1px solid rgba(255,85,85,0.35); border-left:4px solid #FF5555; border-radius:6px; padding:14px 18px; margin:12px 0 28px; font-family:'Arial',sans-serif;">
+    <div style="font-family:'Arial Black',sans-serif; font-size:11px; letter-spacing:0.15em; color:#FF5555; text-transform:uppercase; margin-bottom:6px;">Superseded · 2026-04-20</div>
+    <p style="font-size:13px; color:rgba(255,232,192,0.8); margin:0;">Sprouting in this doc is modeled as <i>price decay</i>. That direction was rejected (backwards emotional arc). The live design is <b>A + partial C</b>: sprouting raises the min-ask floor, a Last Supper Reserve accrues alongside the Pot, and pays out tier-weighted at <code>finalSeal()</code>. The Pot-funding and sit-tier concepts below are still load-bearing but the numbers (1%/3%/7%/15%) have been halved for the live Pot with the other half routing to the Reserve. Canonical numbers: <a href="hot-potato-v4-mechanic-spec.html" style="color:#FAC775;">hot-potato-v4-mechanic-spec.html</a>.</p>
+  </div>
+
+  <div class="toc">
+    <div class="toc-section">Design</div>
+    <a href="#frame">1. Reframing the Game</a>
+    <a href="#pot">2. The Pot — Patience Payouts</a>
+    <a href="#sprout">3. The Sprouting Event</a>
+    <a href="#spectators">4. Spectator Mechanics</a>
+    <div class="toc-section">Implementation</div>
+    <a href="#onchain">5. On-Chain Architecture</a>
+    <a href="#params">6. Parameter Cheat Sheet</a>
+    <a href="#sim">7. Economic Simulation</a>
+    <a href="#risks">8. Edge Cases &amp; Risks</a>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2 id="frame">1. Reframing the Game</h2>
+
+  <p>In the current design, the potato is a liability you try to offload. The souvenir is consolation for being stuck. Holding is anxiety; getting bought out is relief.</p>
+
+  <p>Add a Pot and the sign flips. The potato becomes an <strong>income-bearing asset</strong> that pays its holder proportionally to how long they've held. Now holding is yield, and getting bought out is both reward (souvenir + pot payout) <em>and</em> regret (you just lost the income stream).</p>
+
+  <p>Add Sprouting on top and the game gains a <strong>biological rhythm</strong>. The potato ripens. The visual changes. A stagnant hold becomes a public event, not a dead listing. Everyone watching knows the sprouted potato is coming to market at a known discount, and the race restarts.</p>
+
+  <p>Add Spectators and the 99% of the audience that was idle now has on-chain skin in the game — without needing to buy the potato itself.</p>
+
+  <div class="callout gold">
+    <p><strong>The design shift in one line:</strong> from "don't be the last one holding" to "be the one who grew it longest."</p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2 id="pot">2. The Pot — Patience Payouts</h2>
+
+  <h3>2.1 Where the Pot Comes From</h3>
+
+  <p>Three potential funding sources, not mutually exclusive:</p>
+
+  <table>
+    <thead><tr><th>Source</th><th>Rate</th><th>Pro</th><th>Con</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Creator fee split</strong></td><td>2% of sale (of the current 5%)</td><td>No increase in player-facing fees</td><td>Halves your creator revenue</td></tr>
+      <tr><td><strong>Overpay routing</strong></td><td>50% of any amount above asking</td><td>Overpayers fund the prize they're gunning for; narratively tight</td><td>Only active when overpay happens</td></tr>
+      <tr><td><strong>Burn kickback</strong></td><td>If a player burns a souvenir &lt; Epic for a trade-in, 0.01 ETH from their next buy routes to Pot</td><td>Ties the burn economy to the Pot</td><td>Adds complexity; small flow</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout blue">
+    <p><strong>Recommended mix:</strong> <span class="hi">1% of every sale (from creator fee) + 50% of overpay amount</span>. Predictable baseline income plus a variable spike from overpayers. Creator fee becomes 4% to holder-adjacent / 1% to pot — phrasing matters: "5% protocol fee, 4% to creator, 1% to the Potato Pot." Players perceive it as a rake that <em>comes back to them</em>, not a tax.</p>
+  </div>
+
+  <h3>2.2 How the Pot Pays Out</h3>
+
+  <p>Outgoing holders claim a share of the Pot when they're bought out, tied to their hold tier. Quick flips get nothing from the Pot; long holders extract serious size.</p>
+
+  <table>
+    <thead><tr><th>Hold Tier</th><th>Duration</th><th>Pot Share</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Tier 0 <span class="tag tag-onchain">Common</span></td><td>&lt; 6h</td><td class="bad">0%</td><td>Quick flips feed the Pot but don't drain it</td></tr>
+      <tr><td>Tier 1 <span class="tag tag-onchain">Rare</span></td><td>6 – 48h</td><td>1%</td><td>Small reward for overnight commitment</td></tr>
+      <tr><td>Tier 2 <span class="tag tag-onchain">Epic</span></td><td>2 – 7 days</td><td>3%</td><td>Meaningful payout</td></tr>
+      <tr><td>Tier 3 <span class="tag tag-onchain">Legendary</span></td><td>7 – 30 days</td><td>7%</td><td>Strong incentive</td></tr>
+      <tr><td>Tier 4 <span class="tag tag-onchain">Max</span></td><td>30+ days</td><td class="hi">15%</td><td>Pot drained hard — rewards ultra-patience</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout green">
+    <p><strong>Why these numbers work:</strong> with an assumed realistic sale mix (~80% Tier 0, ~15% Tier 1, ~4% Tier 2, ~1% Tier 3+), the Pot drains about 34% of its balance per week while receiving inflow from every sale. At steady-state with the recommended funding mix, the Pot parks at a size that makes a Tier 3 payout meaningfully profitable on its own — see the simulation in §7.</p>
+  </div>
+
+  <h3>2.3 Why This Creates Competition, Not Just Avoidance</h3>
+
+  <p>Right now the game asks: "who blinks first?" With the Pot it also asks: "who can outlast the buyout pressure the longest?" The Pot makes patience visibly profitable — players can literally see the Pot grow, see the 15% payout available, and know the exact moment another buyer snipes the position.</p>
+
+  <p>This is also the mechanic that makes <strong>being bought out feel like being sniped</strong>, not rescued. You were earning yield; someone stole your position. That's a clean, universally understood game emotion.</p>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2 id="sprout">3. The Sprouting Event</h2>
+
+  <p>Sprouting is what happens when nobody buys. It's the Pot's sibling mechanic — the Pot rewards <em>being held</em>, Sprouting resolves <em>being ignored</em>. Together they cover both directions of activity risk.</p>
+
+  <h3>3.1 Five Stages of the Potato Life-Cycle</h3>
+
+  <p>Stages are read from on-chain <code>block.timestamp - lastSaleTime</code>. No backend involvement.</p>
+
+  <div class="stage-block s1">
+    <span class="stage-day">STAGE 1 · DAY 0–3 · FRESH</span>
+    <h4>Normal potato</h4>
+    <p>Default state. Asking price is whatever the current holder set. Full anxiety, full yield accrual.</p>
+  </div>
+
+  <div class="stage-block s2">
+    <span class="stage-day">STAGE 2 · DAY 3–7 · LEAFING</span>
+    <h4>A small leaf emerges on the potato image</h4>
+    <p>Cosmetic signal only. No mechanical change. Tells watchers "this one's been sitting a while." Great for X/Discord — posts asking "anyone gonna buy this leafy boy?"</p>
+  </div>
+
+  <div class="stage-block s3">
+    <span class="stage-day">STAGE 3 · DAY 7–14 · SPROUTED</span>
+    <h4>Price begins decaying — 5%/day toward a floor of 1.1× purchase price</h4>
+    <p>Mechanical state change. The effective asking price is <code>min(explicitAsk, sprouted_price)</code> where <code>sprouted_price</code> is computed on-chain from the current ask and days since sprout began. Anyone who buys during Sprouted gets a <strong>+1 Sprout boost</strong> on their next souvenir. The potato image shows full sprouts.</p>
+  </div>
+
+  <div class="stage-block s4">
+    <span class="stage-day">STAGE 4 · DAY 14–21 · BLOOMED</span>
+    <h4>Decay accelerates to 10%/day; Sprout boost increases to +2</h4>
+    <p>The discount is now dramatic. The souvenir boost is dramatic. This is the "flash sale moment" — everyone watching knows a bargain is on the table. The Pot grows because the holder is still getting hit with Tier 4 payout potential. Image shows a flowering potato.</p>
+  </div>
+
+  <div class="stage-block s5">
+    <span class="stage-day">STAGE 5 · DAY 21+ · HARVEST WINDOW</span>
+    <h4>The holder can call <code>harvest()</code> for a guaranteed Legendary Grower souvenir</h4>
+    <p>At day 21 the holder gains the option to voluntarily harvest: mint a one-of-a-kind "Grower" souvenir (guaranteed Legendary, visually distinct flowering potato) and reset the listing to 25% of last price for the next buyer. The holder keeps their full Pot payout at Tier 4 rate. This is the <em>dignified exit</em> option — you didn't get bought out, you chose to grow and release.</p>
+  </div>
+
+  <div class="callout">
+    <p><strong>Day 30 fallback — Treasury Backstop.</strong> If no sale AND no harvest by day 30, anyone in the world can call <code>treasuryBuyback()</code>. The treasury (1% of all sales) purchases the potato at 40% of last price, the holder receives the Tier 4 Pot payout plus a Grower souvenir, and the potato is re-listed at a starting price. The caller of the keeper function receives 0.005 ETH as gas bounty. Game never freezes.</p>
+  </div>
+
+  <h3>3.2 Why Sprouting Works Thematically</h3>
+
+  <p>The potato is literally a living object that grows if left alone. This is not a mechanical metaphor — it's what potatoes <em>do</em>. That earned narrative buys you a tremendous amount of player tolerance for complexity. "It's sprouted" is a complete explanation; no one needs to ask why.</p>
+
+  <p>It also gives your AI image pipeline a reason to generate new art for the same token — a stage 3 sprouted potato, a stage 4 bloomed potato, a stage 5 ready-to-harvest potato. The potato's visual state is dynamic, which is rare and distinctive for an ERC-721.</p>
+
+  <h3>3.3 Interaction With The Pot</h3>
+
+  <p>The combination is deliberate: the Pot gives holders reason to hold; Sprouting ensures that holding doesn't break the game. A holder who survives to Stage 4 has:</p>
+
+  <ul>
+    <li>Spent 14+ days earning yield toward a Tier 4 payout (15% of the Pot).</li>
+    <li>Painted a giant target on themselves — everyone can see the discounted sprouted potato.</li>
+    <li>Built up the buyer's counter-incentive (the Sprout +2 boost).</li>
+    <li>Still has a safety valve (Harvest at day 21, Treasury at day 30).</li>
+  </ul>
+
+  <p>This is the exact shape of a great late-game moment: high stakes, visible clock, multiple actors with conflicting interests, no dead hands.</p>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2 id="spectators">4. Spectator Mechanics</h2>
+
+  <p>All proposed spectator actions are on-chain. No backend state. Low gas where possible.</p>
+
+  <h3>4.1 The Rooting Pool <span class="tag tag-onchain">On-chain</span> — the headline spectator mechanic</h3>
+
+  <p>Any wallet can stake a small amount of ETH behind the current holder. Stakes accumulate while the holder holds. When the holder is bought out, stake outcomes depend on the hold tier achieved — rooters win together or lose together.</p>
+
+  <table>
+    <thead><tr><th>Holder Reached</th><th>Rooter Outcome</th></tr></thead>
+    <tbody>
+      <tr><td>Tier 0 (quick flip)</td><td class="bad">Lose stake → flows to the Pot</td></tr>
+      <tr><td>Tier 1 (6–48h)</td><td>Stake refunded, no bonus</td></tr>
+      <tr><td>Tier 2 (2–7 days)</td><td>Stake + 1.5× from Pot</td></tr>
+      <tr><td>Tier 3 (7–30 days)</td><td>Stake + 2× from Pot <strong>and</strong> +1 boost pending next buy</td></tr>
+      <tr><td>Tier 4 (30+ days)</td><td class="hi">Stake + 3× from Pot <strong>and</strong> +2 boost pending next buy</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout blue">
+    <p><strong>Why this is the best spectator mechanic:</strong> it aligns spectators with the holder (so the holder feels publicly cheered for, not just hunted), creates visible social proof ("12 people rooting with 0.3 ETH behind them"), generates organic drama ("will the holder make it to Tier 3?"), and adds a soft-money flow to the Pot when rooters lose. Rooters have both carrot and stick — they can't just root and forget, they have to judge the holder's chances.</p>
+  </div>
+
+  <p>Minimum stake: 0.001 ETH. Maximum per wallet per holder: 0.05 ETH (prevents whale-dominance in the rooting pool). Multiple rooters per holder accumulate. Rooters use pull-not-push withdrawal (they call <code>claimRoot()</code> after the holder is bought out) to keep gas bounded.</p>
+
+  <h3>4.2 The Glance <span class="tag tag-onchain">On-chain</span> — free engagement floor</h3>
+
+  <p>Any wallet can call <code>glance()</code> once per day for the cost of gas only. The contract increments a per-wallet counter. At milestones (10, 50, 200, 1000 glances) the wallet is awarded a +1 boost claim on their next buy. This is pure habit formation — show up, tap the button, build toward a future advantage. Low stakes, high frequency, creates a Discord/X ritual of "did you glance today?"</p>
+
+  <h3>4.3 The Limit Buy <span class="tag tag-onchain">On-chain</span></h3>
+
+  <p>Spectators can place on-chain conditional orders: "auto-buy the potato if it drops below X ETH" or "auto-buy if the potato enters Stage 3 Sprouted." Funds are held in escrow. First matching order executes. This creates:</p>
+
+  <ul>
+    <li><strong>Market depth</strong> — the potato is never truly unbought because limit buys are waiting.</li>
+    <li><strong>Sprout-triggered flash trades</strong> — when a Stage 3 transition happens, all stage-conditional limits fire and someone wins the snipe.</li>
+    <li><strong>An additional reason for late-game visitors to set-and-forget</strong> — lower the barrier to participation.</li>
+  </ul>
+
+  <h3>4.4 Souvenir Vote <span class="tag tag-onchain">On-chain</span></h3>
+
+  <p>Weekly, any wallet can cast one vote for its favorite souvenir in the gallery. Winning souvenir's current owner earns +1 boost + a small cut of the Pot (0.5%). Creates collection curation content, drives OpenSea traffic, and makes rare souvenirs socially valuable beyond their rarity tier.</p>
+
+  <h3>4.5 Rooting-Only Referrals <span class="tag tag-onchain">On-chain</span></h3>
+
+  <p>Fix the referral farming problem from the prior review by <em>requiring</em> the referrer to have rooted at least once in the current chapter. Referrals then become a signal that the referrer has real skin in the game. Kills the influencer-spam vector at its root.</p>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2 id="onchain">5. On-Chain Architecture</h2>
+
+  <p>Here's what moves on-chain, what gets added to contract state, and what events fire. This is a minimum-viable implementation; your real Solidity will be more defensive.</p>
+
+  <h3>5.1 New Contract State</h3>
+
+<pre><code>uint256 public pot;                              // cumulative Pot balance
+uint256 public treasury;                         // Day-30 backstop fund
+uint256 public lastSaleTime;                     // already exists
+uint256 public lastSalePrice;                    // for sprout decay math
+
+mapping(address =&gt; uint256) public pendingBoosts;       // merged boost slot
+mapping(address =&gt; uint256) public glanceCount;         // per-wallet
+mapping(address =&gt; uint256) public lastGlanceTime;      // rate-limit to 1/day
+
+// Rooting pool
+mapping(address =&gt; mapping(address =&gt; uint256)) public rootedAmount;  // rooter =&gt; holder =&gt; stake
+mapping(address =&gt; address[]) public rootersOf;                      // holder =&gt; list of rooters
+mapping(address =&gt; uint256) public claimableRoot;                    // pull-withdraw
+
+// Limit buys
+struct LimitOrder {
+    address buyer;
+    uint256 maxPrice;
+    uint8 triggerStage;      // 0 = price-only, 3 = sprout, 4 = bloom
+    uint256 escrow;
+}
+LimitOrder[] public limitOrders;</code></pre>
+
+  <h3>5.2 Key Function Signatures</h3>
+
+<pre><code>// Buy flow (modified) — distributes to pot, rooters, creator, previous holder
+function buyPotato(uint256 newAskingPrice) external payable;
+
+// Sprouting read — pure view of current state
+function sproutStage() public view returns (uint8);
+function currentAskingPrice() public view returns (uint256);  // handles decay
+
+// Harvest — holder voluntarily ends Stage 4+
+function harvest() external;   // only callable by current holder after day 21
+
+// Treasury backstop — keeper function, bounty to caller
+function treasuryBuyback() external;  // only callable after day 30
+
+// Pot patience payout — called inside buyPotato()
+function _payPotPatience(address holder, uint8 tier) internal;
+
+// Rooting
+function root(address holder) external payable;
+function unroot(address holder) external;   // refund if current holder still holding
+function claimRoot() external;              // pull reward after buyout
+
+// Glance
+function glance() external;
+
+// Limit buy
+function placeLimit(uint256 maxPrice, uint8 triggerStage) external payable;
+function executeLimits() external;   // anyone can trigger; pays gas bounty</code></pre>
+
+  <h3>5.3 Events to Fire (critical for frontend + spectators)</h3>
+
+<pre><code>event PotatoSold(address from, address to, uint256 price, uint8 holdTier, uint256 potPayout);
+event SproutStageChanged(uint8 newStage);
+event Harvested(address grower, uint256 growerSouvenirId);
+event TreasuryBuyback(address caller, uint256 price, uint256 bounty);
+event Rooted(address rooter, address holder, uint256 amount);
+event RootClaimed(address rooter, uint256 reward);
+event Glanced(address watcher, uint256 newTotal);
+event LimitPlaced(uint256 orderId, address buyer, uint256 maxPrice, uint8 stage);
+event LimitExecuted(uint256 orderId);</code></pre>
+
+  <h3>5.4 Gas Considerations</h3>
+
+  <p>Two hot spots:</p>
+
+  <ul>
+    <li><strong>Rooter distribution on sale.</strong> Iterating <code>rootersOf[holder]</code> inside <code>buyPotato</code> would make the buy unpredictably expensive. Use pull-withdraw: on sale, write each rooter's outcome to <code>claimableRoot[rooter]</code> and emit one event. Rooters then call <code>claimRoot()</code> themselves and pay their own gas. Write loop is still O(rooters), but rooter count is capped by the per-wallet max stake and pool will be small enough (dozens, not thousands).</li>
+    <li><strong>Limit order matching.</strong> Don't match inside <code>buyPotato</code> — make it a separate keeper. Anyone calling <code>executeLimits()</code> gets a small bounty. This externalizes gas cost to actors who actually benefit.</li>
+  </ul>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2 id="params">6. Parameter Cheat Sheet</h2>
+
+  <p>All of the following should be public constants (or owner-settable with a timelock for the first 90 days, then renounced):</p>
+
+  <table>
+    <thead><tr><th>Parameter</th><th>Value</th><th>Justification</th></tr></thead>
+    <tbody>
+      <tr><td>Pot fee from creator fee</td><td>1% of sale</td><td>Predictable inflow without increasing total rake</td></tr>
+      <tr><td>Pot fee from overpay</td><td>50% of overpay above asking</td><td>Overpayers self-fund the prize they want</td></tr>
+      <tr><td>Treasury reserve</td><td>0.5% of sale (part of creator 5%)</td><td>Funds day-30 buybacks</td></tr>
+      <tr><td>Final effective fees</td><td>94% holder / 3.5% creator / 1% pot / 0.5% treasury / 1% pot from overpay</td><td>Small reduction in creator fee; players see the tax coming back</td></tr>
+      <tr><td>Pot payout tiers</td><td>0% / 1% / 3% / 7% / 15%</td><td>Rewards scale non-linearly to protect the Pot</td></tr>
+      <tr><td>Sprout begin</td><td>Day 7</td><td>Far enough that it's an event, not a nuisance</td></tr>
+      <tr><td>Stage 3 decay rate</td><td>5%/day, floor 1.1× purchase</td><td>Buyer still makes a positive-ROI buy</td></tr>
+      <tr><td>Stage 4 decay rate</td><td>10%/day, same floor</td><td>Accelerates the inevitable — a flash-sale feel</td></tr>
+      <tr><td>Sprout boost (Stage 3)</td><td>+1 tier</td><td>Matches loyalty/referral</td></tr>
+      <tr><td>Sprout boost (Stage 4)</td><td>+2 tiers</td><td>Real attractor; turns a risk into a deal</td></tr>
+      <tr><td>Harvest day</td><td>Day 21</td><td>Cost of patience earns a dignified exit</td></tr>
+      <tr><td>Treasury buyback day</td><td>Day 30</td><td>Hard floor on game-state freeze</td></tr>
+      <tr><td>Treasury buyback price</td><td>40% of last price</td><td>Harsh enough that players prefer other exits</td></tr>
+      <tr><td>Rooting min/max stake</td><td>0.001 / 0.05 ETH</td><td>Open to all; whales capped</td></tr>
+      <tr><td>Rooting payout multipliers</td><td>0 / 1× / 1.5× / 2× / 3×</td><td>Big gap at Tier 3+ creates real rooting drama</td></tr>
+      <tr><td>Glance cooldown</td><td>1 per 24h per wallet</td><td>Daily ritual; sybils still pay gas</td></tr>
+      <tr><td>Glance milestones</td><td>10 / 50 / 200 / 1000 for +1 boost</td><td>Long-tail habit reward</td></tr>
+      <tr><td>Limit buy escrow</td><td>Must equal maxPrice</td><td>No underfunded orders</td></tr>
+      <tr><td>Keeper bounty</td><td>0.005 ETH (buyback), 0.0005 ETH (limits)</td><td>Covers gas + small incentive</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2 id="sim">7. Economic Simulation</h2>
+
+  <p>To make sure the numbers aren't aspirational, here's a simple steady-state model. Assumptions:</p>
+
+  <ul>
+    <li>Average of 100 sales per week.</li>
+    <li>Average sale price: 0.1 ETH.</li>
+    <li>Average overpay rate: 25% above asking.</li>
+    <li>Tier distribution of sales: 80% Tier 0, 15% Tier 1, 4% Tier 2, 1% Tier 3+.</li>
+  </ul>
+
+  <h3>7.1 Pot Inflow</h3>
+
+  <ul>
+    <li>1% of every sale = 100 × 0.001 ETH = <strong>0.1 ETH/week</strong></li>
+    <li>50% of overpay = 100 × 0.0125 ETH = <strong>1.25 ETH/week</strong></li>
+    <li><strong>Total inflow: ~1.35 ETH/week</strong></li>
+  </ul>
+
+  <h3>7.2 Pot Outflow</h3>
+
+  <table>
+    <thead><tr><th>Tier</th><th>Sales/week</th><th>Drain rate</th><th>Weekly drain</th></tr></thead>
+    <tbody>
+      <tr><td>Tier 0</td><td>80</td><td>0%</td><td>0</td></tr>
+      <tr><td>Tier 1</td><td>15</td><td>1%</td><td>0.15 × pot</td></tr>
+      <tr><td>Tier 2</td><td>4</td><td>3%</td><td>0.12 × pot</td></tr>
+      <tr><td>Tier 3</td><td>1</td><td>7%</td><td>0.07 × pot</td></tr>
+      <tr><td><strong>Total</strong></td><td>100</td><td></td><td class="hi">~0.34 × pot</td></tr>
+    </tbody>
+  </table>
+
+  <h3>7.3 Steady-State Pot Size</h3>
+
+  <p>Inflow = Outflow → 1.35 = 0.34 × pot_size → <strong>pot_size ≈ 4.0 ETH</strong></p>
+
+  <h3>7.4 What That Pays Out</h3>
+
+  <table>
+    <thead><tr><th>A player who...</th><th>Wins from Pot</th><th>In USD (ETH=$3000)</th></tr></thead>
+    <tbody>
+      <tr><td>Holds overnight (Tier 1)</td><td>0.04 ETH</td><td>~$120</td></tr>
+      <tr><td>Holds 3 days (Tier 2)</td><td>0.12 ETH</td><td>~$360</td></tr>
+      <tr><td>Holds 10 days (Tier 3)</td><td>0.28 ETH</td><td class="hi">~$840</td></tr>
+      <tr><td>Holds 30+ days (Tier 4)</td><td>0.60 ETH</td><td class="hi">~$1,800</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout green">
+    <p><strong>Interpretation:</strong> these Pot payouts are <em>in addition to</em> the 95% sale proceeds and the souvenir. A 10-day holder is getting bought out at a ~40% premium (15% compounding for 10 days), getting an Epic/Legendary souvenir, <em>and</em> pulling ~$840 from the Pot. That's a very attractive hold. At the same time a quick flipper earns nothing from the Pot and provides its inflow. The Pot's purpose — redistributing value from impatient flippers to patient holders — is structurally aligned with the game's aesthetic goal.</p>
+  </div>
+
+  <h3>7.5 Scaling</h3>
+
+  <p>Pot size scales linearly with both sale volume and price. At 10× the assumed activity, the Pot steady-state is ~40 ETH and a Tier 4 payout is 6 ETH. The mechanic gets more compelling as the game grows — no retuning required.</p>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2 id="risks">8. Edge Cases &amp; Risks</h2>
+
+  <h3>R1 — Buyer-Holder Collusion</h3>
+  <p>A coordinated pair: Alice holds for 30+ days, Bob then buys her out. Alice pulls a Tier 4 Pot payout. Bob then quickly re-sells back to Alice in a short hold. Alice holds 30+ days again. Repeat. They drain the Pot to each other.</p>
+  <p><strong>Mitigation:</strong> the Pot payout is already capped by Pot size. The first drain to 15% doesn't empty the Pot; subsequent drains get smaller. More importantly, Alice and Bob each pay the creator fee + treasury fee + overpay fees on every round trip. The collusion has real cost. Also: <em>cap Pot payouts to the same wallet at 2× in any 90-day window</em> — after two Tier 4 hits, further Tier 4 payouts downgrade to Tier 2 rates. Clear on-chain rule, kills the farm.</p>
+
+  <h3>R2 — Rooting Pool Manipulation</h3>
+  <p>A holder self-roots (via alt wallet) to amplify their own payout. <strong>Mitigation:</strong> disallow the current holder (or any wallet that bought the potato in the last 30 days) from rooting for themselves or current holder. Enforced on-chain by address check in <code>root()</code>.</p>
+
+  <h3>R3 — Limit-Buy Front-Running</h3>
+  <p>A pending limit buy at 0.5 ETH sitting in the contract is visible on-chain. A frontrunner could buy the potato at 0.49 and immediately sell to the limit at 0.5. <strong>Mitigation:</strong> limit orders only auto-execute when triggered conditions (price or stage) are met. The frontrunner path is equivalent to a normal buy-and-flip; the limit holder still pays what they bid, the potato still trades. This isn't actually exploitable, just market mechanics. Worth flagging in player docs.</p>
+
+  <h3>R4 — Sprout-Snipe Arms Race</h3>
+  <p>Stage 3 transitions suddenly make the potato attractive. Bots will race to the block where the stage changes. That's fine — it's the point. But regular humans won't win those races. <strong>Mitigation:</strong> add a 1-block "dutch window" at stage entry where buys revert — gives human UIs a chance to warn their users. Or: make the first post-stage buy use a 1-block commit/reveal to level the playing field. Optional; depends on how protective you want to be of retail.</p>
+
+  <h3>R5 — Treasury Drain</h3>
+  <p>If many successive sales happen right after treasury buybacks, the treasury can deplete. <strong>Mitigation:</strong> treasury buyback is a rare event (requires 30 days of zero activity). In practice if the game has activity at all, treasury refills faster than it drains. If the game truly dies, the last treasury buyback is a graceful wind-down, not a bug.</p>
+
+  <h3>R6 — Harvest Exploit</h3>
+  <p>Players might collude to stall past day 21 to harvest a guaranteed Legendary, then re-buy cheaply. <strong>Mitigation:</strong> a wallet that has harvested cannot harvest again for the next 180 days (enforced by <code>lastHarvestTime[msg.sender]</code> check). Additionally, Grower souvenirs are a separate metadata track — rare and named as "Grower #N" — so repeated harvests by one wallet are publicly visible and socially unflattering.</p>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2>9. Summary — What To Lock In</h2>
+
+  <table>
+    <thead><tr><th>Mechanic</th><th>Commit</th></tr></thead>
+    <tbody>
+      <tr><td>Pot funding</td><td class="ok">1% of sale + 50% of overpay</td></tr>
+      <tr><td>Pot payout tiers</td><td class="ok">0 / 1 / 3 / 7 / 15%</td></tr>
+      <tr><td>Sprout timing</td><td class="ok">Day 7 sprout, Day 14 bloom, Day 21 harvest window, Day 30 treasury</td></tr>
+      <tr><td>Sprout buyer boost</td><td class="ok">+1 / +2 tiers</td></tr>
+      <tr><td>Harvest reward</td><td class="ok">Guaranteed Grower Legendary souvenir, one per wallet per 180 days</td></tr>
+      <tr><td>Treasury backstop</td><td class="ok">40% of last price, 0.005 ETH keeper bounty</td></tr>
+      <tr><td>Rooting pool</td><td class="ok">On-chain pull-claim, tier-gated payouts 0 / 1× / 1.5× / 2× / 3×</td></tr>
+      <tr><td>Glance</td><td class="ok">Daily-capped, milestone-rewarded</td></tr>
+      <tr><td>Limit buys</td><td class="ok">On-chain conditional orders with keeper execution</td></tr>
+      <tr><td>Souvenir vote</td><td class="ok">Weekly on-chain, winner gets +1 boost + 0.5% of Pot</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout gold">
+    <p><strong>Why this stack resolves the earlier critique:</strong> the Pot solves H1 (hold has real economic meaning again) and partially solves C4 (late-game holder gets a real reward, not just consolation). Sprouting solves C3 (no grief-lock), gives you the "sprouting event" you already wanted, and opens up the Stage 4 Bloom as a re-engagement event. The Rooting Pool solves H2 (spectators have something to do) and H3 partially (the buyout event becomes a payout event for a whole crowd). All of it is on-chain, all of it is enforceable, and none of it requires the backend to hold game-critical state.</p>
+  </div>
+
+  <hr>
+  <p style="font-size:11px;color:rgba(255,232,192,0.25);text-align:center;">Hot Potato — Pot, Sprout &amp; Spectator Spec · April 2026 · On-chain-first mechanics design</p>
+
+</div>
+</body>
+</html>

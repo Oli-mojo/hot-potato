@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hot Potato — Pre-Launch Game Design Review</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Georgia', serif; background: #0f0800; color: #ffe8c0; line-height: 1.7; padding: 40px 24px; }
+  .page { max-width: 920px; margin: 0 auto; }
+  h1 { font-family: 'Arial Black', sans-serif; font-size: 30px; letter-spacing: 2px; color: #FAC775; margin-bottom: 6px; }
+  h2 { font-family: 'Arial Black', sans-serif; font-size: 16px; letter-spacing: 1px; color: #FF6B00; margin: 44px 0 12px; text-transform: uppercase; border-bottom: 1px solid rgba(255,107,0,0.3); padding-bottom: 8px; }
+  h3 { font-family: 'Arial Black', sans-serif; font-size: 14px; color: #FAC775; margin: 26px 0 10px; letter-spacing: 0.5px; }
+  h4 { font-family: 'Arial Black', sans-serif; font-size: 12px; color: #FF8C42; margin: 16px 0 6px; letter-spacing: 0.4px; text-transform: uppercase; }
+  p { font-size: 14px; color: rgba(255,232,192,0.82); margin-bottom: 12px; }
+  ul, ol { margin: 0 0 14px 22px; }
+  li { font-size: 14px; color: rgba(255,232,192,0.78); margin-bottom: 6px; line-height: 1.65; }
+  .meta { font-size: 12px; color: rgba(255,232,192,0.35); margin-bottom: 36px; border-top: 1px solid rgba(255,232,192,0.08); padding-top: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 14px 0 22px; }
+  th { background: rgba(255,107,0,0.15); color: #FF8C42; font-family: 'Arial', sans-serif; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; padding: 8px 12px; text-align: left; border-bottom: 1px solid rgba(255,107,0,0.3); }
+  td { padding: 10px 12px; border-bottom: 1px solid rgba(255,232,192,0.06); color: rgba(255,232,192,0.78); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .hi { color: #FAC775; font-weight: bold; }
+  .ok { color: #90EE90; }
+  .warn { color: #FF8C42; }
+  .bad { color: #FF5555; }
+  code { background: rgba(255,232,192,0.08); padding: 1px 5px; border-radius: 3px; font-size: 12px; font-family: 'Courier New', monospace; color: #FAC775; }
+  .callout { background: rgba(255,107,0,0.07); border-left: 3px solid #FF6B00; padding: 13px 16px; margin: 16px 0 20px; border-radius: 0 8px 8px 0; }
+  .callout.gold { background: rgba(250,199,117,0.07); border-color: #FAC775; }
+  .callout.blue { background: rgba(55,138,221,0.07); border-color: #85B7EB; }
+  .callout.red { background: rgba(255,85,85,0.07); border-color: #FF5555; }
+  .callout.green { background: rgba(100,220,100,0.07); border-color: #90EE90; }
+  .callout p { margin: 0 0 6px; font-size: 13px; }
+  .callout p:last-child { margin-bottom: 0; }
+  .sev { display: inline-block; font-family: 'Arial Black', sans-serif; font-size: 10px; letter-spacing: 0.1em; padding: 3px 10px; border-radius: 20px; margin-right: 8px; vertical-align: middle; }
+  .sev-crit { background: rgba(255,85,85,0.18); color: #FF8888; }
+  .sev-high { background: rgba(255,140,66,0.18); color: #FF8C42; }
+  .sev-med  { background: rgba(250,199,117,0.18); color: #FAC775; }
+  .sev-low  { background: rgba(100,220,100,0.18); color: #90EE90; }
+  .finding { background: rgba(255,232,192,0.03); border: 1px solid rgba(255,232,192,0.08); border-radius: 10px; padding: 18px 22px; margin: 18px 0; }
+  .finding h3 { margin-top: 0; display: flex; align-items: center; }
+  .fix { background: rgba(100,220,100,0.05); border-left: 2px solid rgba(100,220,100,0.5); padding: 8px 14px; margin: 10px 0 0; border-radius: 0 6px 6px 0; font-size: 13px; color: rgba(255,232,192,0.85); }
+  .fix strong { color: #90EE90; }
+  .toc { background: rgba(255,232,192,0.03); border: 1px solid rgba(255,232,192,0.08); border-radius: 8px; padding: 18px 22px; margin: 24px 0 36px; }
+  .toc a { color: rgba(255,232,192,0.55); text-decoration: none; font-size: 13px; display: block; padding: 3px 0; }
+  .toc a:hover { color: #FAC775; }
+  .toc-section { font-family: 'Arial Black', sans-serif; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,107,0,0.6); margin: 10px 0 4px; }
+  hr { border: none; border-top: 1px solid rgba(255,232,192,0.08); margin: 40px 0; }
+  .score { display: inline-block; font-family: 'Arial Black', sans-serif; font-size: 15px; margin-right: 6px; }
+  .score.a { color: #90EE90; } .score.b { color: #FAC775; } .score.c { color: #FF8C42; } .score.d { color: #FF5555; }
+  blockquote { border-left: 3px solid rgba(250,199,117,0.4); padding: 2px 16px; margin: 14px 0; color: rgba(255,232,192,0.7); font-style: italic; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>🥔 HOT POTATO</h1>
+  <h1 style="font-size:20px;color:#FF6B00;margin-bottom:4px;">Pre-Launch Game Design Review</h1>
+  <div class="meta">Independent game-design critique · April 2026 · Reviewer brief: "weed out flaws before mainnet, small tweaks, logic adjustments, engagement focus"</div>
+
+  <div class="toc">
+    <div class="toc-section">Review</div>
+    <a href="#thesis">1. Reviewer's Thesis</a>
+    <a href="#critical">2. Critical Flaws (fix before mainnet)</a>
+    <a href="#high">3. High-Impact Design Gaps</a>
+    <a href="#balance">4. Balance &amp; Tuning Tweaks</a>
+    <a href="#engagement">5. Engagement &amp; Retention Gaps</a>
+    <a href="#lowhang">6. Low-Hanging Polish Wins</a>
+    <a href="#priority">7. Revised Priority Matrix</a>
+    <a href="#questions">8. Questions Worth Deciding Now</a>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2 id="thesis">1. Reviewer's Thesis</h2>
+
+  <p>The game's core loop is real. "You cannot refuse a sale, you are rewarded on exit, patience is rarity" is a <strong>compulsive three-beat hook</strong> — that's not an accident, it's a genuinely well-designed tension engine. Loss is reframed as reward, price is monotonic, scarcity is bounded. The 95/5 split is clean, the overpay mechanic is elegantly self-regulating, and the compressed tier update was the right call.</p>
+
+  <p>Where the game is <strong>not yet finished</strong> as a game-design artifact:</p>
+
+  <ul>
+    <li>There are <strong>six ways to boost rarity</strong> but only <strong>one way to express identity</strong> (hold time). The boosts are so generous that hold time has quietly been demoted from the primary mechanic to a flavor axis.</li>
+    <li>The game is built for <strong>the one person holding the potato</strong>. For the 99% of an audience who are watching, waiting, or lurking, there is almost no designed experience.</li>
+    <li>Two separate rarity rolls (on-chain and off-chain) producing two potentially different rarities for the same NFT is <strong>a trust bomb</strong>, not "acceptable complexity."</li>
+    <li>There's no pressure-release valve. Every mechanic pushes toward holding longer and paying more. A game of pure escalation without rest points burns players out fast.</li>
+    <li>The <strong>endgame is unspecified</strong>. Without seasons, caps, or milestones, the game has no shape — it's just price going up forever, which is also what a failed token looks like.</li>
+  </ul>
+
+  <div class="callout gold">
+    <p><strong>One-sentence verdict:</strong> This is an 80%-finished game with 95%-finished tech. The remaining 20% is about turning the mechanic into a <em>ritual</em> — something players show up for, not just transact with.</p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2 id="critical">2. Critical Flaws — Fix Before Mainnet</h2>
+
+  <div class="finding">
+    <h3><span class="sev sev-crit">CRIT</span> C1 — Two Rarity Truths For One NFT</h3>
+    <p>The contract rolls rarity using hold duration + overpay. The backend rolls rarity using hold duration + <em>all</em> boosts. The souvenir's on-chain <code>tier</code> and its metadata-displayed tier can therefore differ. Your own doc says the metadata tier is "always ≥" the on-chain tier.</p>
+    <p>From a player's point of view this is indefensible. A collector inspects the contract, sees Tier 2, but OpenSea shows Tier 4. Which is real? Whichever answer you give, some buyer feels cheated. On a secondary sale it's a dispute vector.</p>
+    <div class="fix"><strong>Tweak:</strong> Converge on a single roll. Cleanest path: move <em>all</em> boost accounting on-chain as a per-wallet <code>pendingBoost</code> uint that the contract reads during <code>buyPotato</code>. Promo/loyalty/referral/trade-in become transactions that write to that slot. One roll, one truth, no divergence. If full on-chain is too invasive, at minimum make the on-chain roll use the effective tier the backend computed, via a signed message from the backend wallet — never run two independent rolls.</div>
+  </div>
+
+  <div class="finding">
+    <h3><span class="sev sev-crit">CRIT</span> C2 — Boost State In RAM Is Silently Hostile</h3>
+    <p>Already flagged P0 in your own doc, calling it out again because the severity is understated. Losing a player's pending loyalty claim on a Railway redeploy doesn't just annoy them — it breaks the <em>promise</em> of the loyalty system. Players will post screenshots showing their boost "disappeared." That's a trust event, not a bug.</p>
+    <div class="fix"><strong>Tweak:</strong> Persist to Postgres/Supabase is fine as a bridge, but the actual right move is to burn the in-memory concept entirely. Any boost that's worth awarding is worth recording on-chain or deriving from on-chain state. The backend should be stateless: it reads the chain, signs metadata, and never stores game-relevant player state. "Stateless backend" is also an enormous security and ops win.</div>
+  </div>
+
+  <div class="finding">
+    <h3><span class="sev sev-crit">CRIT</span> C3 — The Griefer Lock</h3>
+    <p>Rule 1 says the holder cannot refuse a sale. Rule 2 says every buyer sets a new asking price above what they paid. What happens if someone buys the potato at 1 ETH and sets the new ask at 10,000 ETH? Nothing. The game freezes until they lower it (assuming the holder can update their own ask — the rule book doesn't say they can). If they can't, the game is bricked until someone pays 10,000 ETH.</p>
+    <p>This is a game-ending edge case and it's not addressed in the ruleset.</p>
+    <div class="fix"><strong>Tweak:</strong> Two options, pick one. <em>(a) Price decay:</em> if no sale within N days, the asking price decays linearly toward a floor (say 1.5× purchase price over 7 days). This is the true Harberger move and makes griefing self-resolving. <em>(b) Max ask multiplier:</em> the new ask is capped at e.g. 10× the price paid. Less elegant, more predictable. Either way, publish the rule.</div>
+  </div>
+
+  <div class="finding">
+    <h3><span class="sev sev-crit">CRIT</span> C4 — The Last-Holder Death Spiral</h3>
+    <p>Hot-potato-style games always have this failure mode: activity slows, the current holder sees fewer and fewer buy events, realises there may not <em>be</em> another buyer, and now they're holding a long-dated ask that nobody will hit. They've paid forward the most — and they get stuck. No souvenir is worth being the last one holding a 12 ETH potato.</p>
+    <p>This risk is structurally baked in. Once late-game holders start getting stuck, word spreads and buying demand collapses faster. Classic Ponzi-shape, but with the added indignity of souvenirs that nobody wants to trade in on a dead game.</p>
+    <div class="fix"><strong>Tweak:</strong> Add a <em>floor buyer of last resort</em>, funded by a small portion of the creator fee (e.g. 1% of the 5% routed to a treasury wallet). If the potato goes 14 days without a sale, the treasury buys it back at a formula-based price (say 70% of last paid price) and it's re-listed at a reset starting price. This keeps the loop alive, creates a soft floor, and turns an existential risk into a known cap on downside. Call it "The Kitchen" or whatever — it becomes lore.</div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2 id="high">3. High-Impact Design Gaps</h2>
+
+  <div class="finding">
+    <h3><span class="sev sev-high">HIGH</span> H1 — Hold Duration Has Been Silently Demoted</h3>
+    <p>Your own stacking table proves it: a quick flip with a burned legendary reaches the same 50% legendary odds as a 7-day patient hold with stacked loyalty. Why would anyone hold? Capital lockup and anxiety with no mechanical edge.</p>
+    <p>Once 2+ boosts are stacked, hold duration becomes ornamental. That is exactly the opposite of what the pitch promises.</p>
+    <div class="fix"><strong>Tweak:</strong> Reassert hold as primary. Two complementary moves: <em>(1)</em> cap the total <em>non-hold</em> boost sum at +3 (so boosts can bring you from Common-tier to Legendary-tier odds, but only hold can reach the 50% Max ceiling). <em>(2)</em> Award a "Patience" badge / special metadata trait only when the on-chain base tier is Legendary or Max, regardless of boosts. Visibly separate "earned" rarity from "bought" rarity in the gallery. Collectors will hunt the earned badge even at lower face rarity.</div>
+  </div>
+
+  <div class="finding">
+    <h3><span class="sev sev-high">HIGH</span> H2 — No Designed Experience For Non-Holders</h3>
+    <p>At any given moment, exactly one wallet owns the potato. Everyone else is a spectator. The game as designed has nothing for spectators beyond "wait to buy." That is a 99% idle audience, which kills Discord activity, kills social posts, and kills reasons to check the site.</p>
+    <div class="fix"><strong>Tweak:</strong> Design the spectator layer deliberately.
+      <ul>
+        <li><strong>Potato-watch widget:</strong> prominent countdown of current holder's hold duration, with tier thresholds visible. Players watch for the moment a tier flips.</li>
+        <li><strong>Ambient events:</strong> "2 watchers considering a buy" (show number of wallets that have approved spend but not executed), "this is the 7th longest hold ever," "3 referrals applied in the last hour."</li>
+        <li><strong>Spectator-only boosts:</strong> a free "Rooting For" action — any wallet can publicly root for the current holder once per session; if that holder reaches Legendary, rooters get a +1 boost on their next buy. Cheap engagement hook, strong social loop.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="finding">
+    <h3><span class="sev sev-high">HIGH</span> H3 — The Souvenir Reveal Is Under-Dramatized</h3>
+    <p>The peak dopamine moment in the game is the souvenir reveal. Your rules treat it as metadata generation. That's a missed opportunity of enormous size — this is the single moment a player actually feels something, and it determines whether they tell their friends.</p>
+    <div class="fix"><strong>Tweak:</strong> Build a proper reveal sequence. 5–8 seconds. The charred-potato loading state, tier probabilities visibly fluctuating on screen, a final commit with the rarity tag and image fade-in. Add a sharable "reveal card" (PNG export) with the player's hold duration, tier, and the souvenir front-and-centre — designed specifically for X/Twitter sharing. This is the viral moment of the game; it deserves production budget.</div>
+  </div>
+
+  <div class="finding">
+    <h3><span class="sev sev-high">HIGH</span> H4 — Commons Have No Reason To Exist</h3>
+    <p>Your projection shows ~52% of all souvenirs will be Common. Trade-in burn gives a Common only +1 tier. Most players will accumulate a pile of commons that aren't useful enough to burn, aren't rare enough to sell, and aren't interesting enough to keep. This is dead collectable inventory.</p>
+    <p>Dead inventory kills long-term engagement because players feel their effort didn't accumulate.</p>
+    <div class="fix"><strong>Tweak:</strong> Give commons compounding utility.
+      <ul>
+        <li><strong>Bundle burn:</strong> burn 3 commons together → +2 tier (better than one +1). Burn 5 commons → +3.</li>
+        <li><strong>Common set bonus:</strong> holding 10 commons in your wallet at buy time awards +1 boost. Suddenly commons are a strategic reserve.</li>
+        <li><strong>Thematic sets:</strong> if souvenir personalities include e.g. "sleeping," "angry," "surprised," a full set of 5 distinct-personality commons mints a unique commemorative badge NFT. Classic card-collecting meta.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="finding">
+    <h3><span class="sev sev-high">HIGH</span> H5 — Endgame Is Unspecified</h3>
+    <p>Price goes up forever; souvenirs mint forever; no cap, no season, no reset, no milestone. Games without shape accumulate fatigue. The first 200 souvenirs feel special; the 2,000th feels like inventory. This is how NFT projects fade.</p>
+    <div class="fix"><strong>Tweak:</strong> Introduce "Chapters" (softer than "Seasons"). Every 500 souvenirs minted, or every 90 days, whichever comes first:
+      <ul>
+        <li>The chapter closes with a commemorative souvenir minted to the current holder — unique 1/1.</li>
+        <li>A chapter leaderboard is frozen (most legendaries held, longest hold, most buyouts survived, biggest overpay).</li>
+        <li>A tiny contract tweak can shift per-chapter (e.g. Chapter 2 introduces a new souvenir personality). Low friction, huge narrative value.</li>
+      </ul>
+      Chapters give press hooks, natural re-engagement events, and visible progress for every player — without needing to reset the core loop.
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2 id="balance">4. Balance &amp; Tuning Tweaks</h2>
+
+  <h3>B1 — Tier 1 Rarity Weights Are Punitively Common-Heavy</h3>
+  <p>Current Tier 1 (6–48h): Common 60% / Rare 28% / Epic 9% / Legendary 3%. A player who holds overnight has a 60% chance of a Common. Overnight holding is a meaningful emotional commitment in crypto time; 60% Common feels like getting nothing for the wait.</p>
+  <div class="fix"><strong>Tweak:</strong> Shift to 50/30/15/5. Keeps Commons majority, raises Epic/Legendary floor enough that a focused overnight hold feels worth it. Your own doc flags this at P3 — I'd promote it to P1.</div>
+
+  <h3>B2 — Legendary Ceiling Is Too High</h3>
+  <p>50% Legendary odds means heavy boost-stackers will pull Legendaries on roughly one in two attempts. Legendaries will not feel legendary by month three.</p>
+  <div class="fix"><strong>Tweak:</strong> Cap Max-tier legendary odds at 35%. Keeps it "coin-flippish" without guaranteeing inflation. Alternatively, add a global per-week legendary mint cap (e.g. max 5 legendaries per week across all players); any roll above cap downgrades to Epic. Creates scarcity without arbitrary hard cap.</div>
+
+  <h3>B3 — Trade-In From Legendary Is Too Strong</h3>
+  <p>Already flagged in your doc. Cap legendary burn at +3, not +4. A legendary should be a trophy, not a factory input.</p>
+
+  <h3>B4 — Creator Fee Of 5% Is High For The Market</h3>
+  <p>Harberger-style and perpetual-auction games typically run at 1–3%. On a 10 ETH transfer that's a 0.5 ETH tax, which is conspicuous. Players can do this math. 5% is defensible but you should expect backlash.</p>
+  <div class="fix"><strong>Tweak:</strong> Consider 3% creator + 1% to a community treasury (funds the "buyer of last resort" from C4) + 1% to a rolling legendary prize pool that pays the current holder of the longest-held legendary monthly. Same total drag, much stronger story. The fee becomes a feature, not a tax.</div>
+
+  <h3>B5 — Referral Abuse Vector</h3>
+  <p>Referrals are reusable and each one gives +1 to both parties. An influencer with 10k followers can harvest thousands of +1 pending boosts (and seed them across friends too). Combined with loyalty, that's a farming vector.</p>
+  <div class="fix"><strong>Tweak:</strong> Referral +1 caps at the first N uses per referrer per chapter (say 10). After that the referrer earns credit points but no more +1s. Also require the referee's first buy to exceed a minimum ETH threshold (e.g. 0.05 ETH) to qualify — kills sybil-farming at the cheap end.</div>
+
+  <h3>B6 — Overpay Needs Visible In-Game Math</h3>
+  <p>Overpay is the cleverest mechanic in the system and it's almost invisible. The fact that a 100% overpay forces a 2.5× floor is buried. Most players will never discover it. A clever mechanic the players don't perceive is a wasted mechanic.</p>
+  <div class="fix"><strong>Tweak:</strong> On the buy screen, slider for overpay % with live preview of: your boost tier, your resulting minimum ask, breakeven price someone needs to buy at for you to profit. Make the trade-off visceral. Players will play with the slider for fun.</div>
+
+  <h3>B7 — Female / Happy Variants Should Carry Meaning</h3>
+  <p>Currently: 5% female, 25% happy, rolled independently across all rarity tiers. A female Legendary is ~0.25% — that's unicorn territory, but the variant itself carries no mechanical consequence. It's cosmetic randomness.</p>
+  <div class="fix"><strong>Tweak:</strong> Either commit to variants being a <em>trait layer</em> with its own collecting value (add more: happy/angry/sleeping/surprised/on-fire) and publish the full trait matrix like a normal PFP collection — or pull the female/happy split and invest in <em>personality by rarity tier</em> instead (e.g. Legendaries always have a unique emotional expression). The current halfway spot confuses both the collectors who want structured traits and the players who want lore-consistent art.</div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2 id="engagement">5. Engagement &amp; Retention Gaps</h2>
+
+  <h3>E1 — No Hooks For Return Visits</h3>
+  <p>Once a player has been bought out and received their souvenir, what brings them back to the site? The answer shouldn't only be "check if price is low enough to buy again." Successful games give players <em>identity-level</em> reasons to return: their profile, their collection, their streak, their rank.</p>
+  <ul>
+    <li><strong>Profile page per wallet:</strong> all souvenirs, hold history, biggest overpay, chapter rank, badges earned. Give them a URL to share.</li>
+    <li><strong>"Almost legendary" near-miss visualization:</strong> show the hold durations they've been bought out at, across a tier bar chart. Players will try to beat their own record.</li>
+    <li><strong>Weekly digest email/DM:</strong> to past holders: "this week the potato traded 14 times, 3 legendaries minted, top legendary went for 0.8 ETH on OpenSea. Your rank: 12th on longest hold."</li>
+  </ul>
+
+  <h3>E2 — No Social Proof Loop</h3>
+  <p>Hot Potato wants to be culturally sticky — the thing a community on X/Discord talks about. You need artifacts the community can rally around:</p>
+  <ul>
+    <li><strong>Daily/weekly auto-tweets</strong> from the game's X account summarizing transfers, legendaries, near-misses. Already have the account; point Twitter API at it.</li>
+    <li><strong>A running "longest hold" leaderboard</strong> and a "biggest overpay ever" leaderboard. These are identities — someone becomes known as <em>the whale who overpaid 10×</em>.</li>
+    <li><strong>A Discord bot</strong> that pings a channel on every transfer, with a mini hold-timer countdown embedded. This is free engagement.</li>
+  </ul>
+
+  <h3>E3 — Anxiety Has No Release Valve</h3>
+  <p>Every mechanic is about escalation: higher price, higher ask, longer hold, more overpay. A game that only goes <em>up</em> burns players out. Players need rest states where they can participate without economic exposure.</p>
+  <ul>
+    <li><strong>Free "Shout" action:</strong> any wallet can emoji-react to the potato once a day, free. The reactions are visible on the hold page.</li>
+    <li><strong>Gallery curation:</strong> holders can "feature" one of their souvenirs on the homepage for a day. Zero stakes, identity expression.</li>
+    <li><strong>Lore contributions:</strong> let the community name souvenirs (the holder gets naming rights when they mint). The potato gains a growing folklore. Naming rights are almost free and create infinite collectability.</li>
+  </ul>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2 id="lowhang">6. Low-Hanging Polish Wins</h2>
+
+  <table>
+    <thead><tr><th>Wins</th><th>Effort</th><th>Why It Pays</th></tr></thead>
+    <tbody>
+      <tr><td>Procedural souvenir titles (e.g. "Charred Duke of the 4th Day")</td><td>Tiny</td><td>Every souvenir feels bespoke; free lore generator</td></tr>
+      <tr><td>Live hold-duration clock ticking up on homepage</td><td>Tiny</td><td>Ambient tension for spectators</td></tr>
+      <tr><td>"You just missed it by X minutes" callout when someone buys before you</td><td>Low</td><td>Turns a loss into a re-engagement moment</td></tr>
+      <tr><td>Price-history sparkline on the homepage</td><td>Low</td><td>Signals activity to new visitors; already have the data</td></tr>
+      <tr><td>Published "Potato Almanac" page — cumulative stats</td><td>Low</td><td>Legitimacy, long-term flex, SEO</td></tr>
+      <tr><td>Commemorative Genesis Souvenir for first 25 holders</td><td>Low</td><td>Launch-week incentive; low supply, high story value</td></tr>
+      <tr><td>In-site "Rules" page that actually reads like a game manual, not a spec</td><td>Low</td><td>Players will actually read it</td></tr>
+      <tr><td>OpenSea collection banner + detailed trait filters</td><td>Low</td><td>Drives secondary market discoverability</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2 id="priority">7. Revised Priority Matrix</h2>
+
+  <p>Folding the above into your existing pre-mainnet list, reorganized by game-design risk rather than engineering effort:</p>
+
+  <table>
+    <thead><tr><th>P</th><th>Item</th><th>Category</th><th>Why Now</th></tr></thead>
+    <tbody>
+      <tr><td class="bad"><strong>P0</strong></td><td>Converge on a single rarity roll (C1)</td><td>Trust</td><td>Two-truths bug is existential for collectors</td></tr>
+      <tr><td class="bad"><strong>P0</strong></td><td>Persist or eliminate in-memory boost state (C2)</td><td>Trust</td><td>Lost boosts = broken promise</td></tr>
+      <tr><td class="bad"><strong>P0</strong></td><td>Add price-decay or max-ask rule (C3)</td><td>Mechanic</td><td>Prevents game-freezing grief</td></tr>
+      <tr><td class="bad"><strong>P0</strong></td><td>Treasury-funded buyer of last resort (C4)</td><td>Mechanic</td><td>Kills the death-spiral tail risk</td></tr>
+      <tr><td class="bad"><strong>P0</strong></td><td>Redeploy contract with compressed tiers + new wallets</td><td>Infra</td><td>Already in your doc, still true</td></tr>
+      <tr><td class="warn"><strong>P1</strong></td><td>Cap non-hold boosts at +3 (H1)</td><td>Balance</td><td>Reasserts hold as the primary mechanic</td></tr>
+      <tr><td class="warn"><strong>P1</strong></td><td>Spectator layer (H2) — widgets, countdowns, rooting</td><td>Engagement</td><td>99% of audience has nothing to do today</td></tr>
+      <tr><td class="warn"><strong>P1</strong></td><td>Proper souvenir reveal sequence + share card (H3)</td><td>Engagement</td><td>This is the viral moment of the game</td></tr>
+      <tr><td class="warn"><strong>P1</strong></td><td>Soften Tier 1 weights to 50/30/15/5 (B1)</td><td>Balance</td><td>Makes overnight holds feel rewarded</td></tr>
+      <tr><td class="warn"><strong>P1</strong></td><td>Cap legendary trade-in at +3 (B3)</td><td>Balance</td><td>Already in your doc</td></tr>
+      <tr><td class="warn"><strong>P1</strong></td><td>Overpay slider UI with live math (B6)</td><td>UX</td><td>Turns your cleverest mechanic into a visible feature</td></tr>
+      <tr><td class="hi"><strong>P2</strong></td><td>Chapters / season milestones (H5)</td><td>Retention</td><td>Gives the game shape without resets</td></tr>
+      <tr><td class="hi"><strong>P2</strong></td><td>Common utility (bundle burn, set bonuses) (H4)</td><td>Economy</td><td>Solves the dead-inventory problem</td></tr>
+      <tr><td class="hi"><strong>P2</strong></td><td>Referral caps &amp; min-buy (B5)</td><td>Balance</td><td>Pre-empt farming backlash</td></tr>
+      <tr><td class="hi"><strong>P2</strong></td><td>Legendary ceiling to 35% + weekly cap (B2)</td><td>Balance</td><td>Protect legendary scarcity</td></tr>
+      <tr><td class="hi"><strong>P2</strong></td><td>Discord bot + auto-tweets (E2)</td><td>Engagement</td><td>Cheap, high-leverage, already have credentials</td></tr>
+      <tr><td class="ok"><strong>P3</strong></td><td>Wallet profile pages (E1)</td><td>Retention</td><td>Identity-level return hook</td></tr>
+      <tr><td class="ok"><strong>P3</strong></td><td>Naming rights / folklore (E3)</td><td>Culture</td><td>Long-tail lore investment</td></tr>
+      <tr><td class="ok"><strong>P3</strong></td><td>Procedural titles, almanac, sparkline, polish table (6)</td><td>Polish</td><td>Each small; cumulatively large</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2 id="questions">8. Questions Worth Deciding Now</h2>
+
+  <p>Your own doc has 11 open questions. I'd recommend committing to positions on these five before you touch mainnet, because they shape everything else:</p>
+
+  <ol>
+    <li><strong>Is the game primarily a game, or primarily a financial instrument?</strong> The answer changes every balance decision. If game, hold and identity should dominate and legendaries stay scarce. If instrument, overpay and price action dominate and boost inflation is the retention mechanic. Pretending it's both is why the mechanics feel in tension.</li>
+    <li><strong>Single source of truth for rarity — on-chain or off-chain?</strong> Pick one and burn the other. (My vote: on-chain, full stop.)</li>
+    <li><strong>Chapters or perpetual?</strong> Both are valid. But without a position here you can't write a roadmap or a press release.</li>
+    <li><strong>Is hold time the dominant axis, or is it one of many?</strong> Answer determines whether boosts get capped or expanded. (My vote: dominant; cap boosts.)</li>
+    <li><strong>What's the backstop when activity dies?</strong> Answer is either "treasury backstop" or "let it die." Not having an answer is the worst option.</li>
+  </ol>
+
+  <div class="callout green">
+    <p><strong>Closing note.</strong> The bones of this game are strong. You have a real loop, a real aesthetic, a real on-chain enforcement layer, and a respectable souvenir system. The work left is mostly <em>commitment</em>: committing to hold as the hero mechanic, committing to one source of rarity truth, committing to an endgame shape, committing to a spectator experience. Every one of those is a design position, not a codebase change.</p>
+    <p>Ship the P0s, decide the five questions above, and you have a game that people will still be playing in December.</p>
+  </div>
+
+  <hr>
+  <p style="font-size:11px;color:rgba(255,232,192,0.25);text-align:center;">Hot Potato — Pre-Launch Game Design Review · April 2026 · Independent critique for mainnet readiness</p>
+
+</div>
+</body>
+</html>

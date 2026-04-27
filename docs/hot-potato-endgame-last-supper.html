@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hot Potato — The Endgame &amp; The Last Supper</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Georgia', serif; background: #0f0800; color: #ffe8c0; line-height: 1.7; padding: 40px 24px; }
+  .page { max-width: 900px; margin: 0 auto; }
+  h1 { font-family: 'Arial Black', sans-serif; font-size: 30px; letter-spacing: 2px; color: #FAC775; margin-bottom: 6px; }
+  h2 { font-family: 'Arial Black', sans-serif; font-size: 16px; letter-spacing: 1px; color: #FF6B00; margin: 44px 0 12px; text-transform: uppercase; border-bottom: 1px solid rgba(255,107,0,0.3); padding-bottom: 8px; }
+  h3 { font-family: 'Arial Black', sans-serif; font-size: 14px; color: #FAC775; margin: 26px 0 10px; letter-spacing: 0.5px; }
+  h4 { font-family: 'Arial Black', sans-serif; font-size: 12px; color: #FF8C42; margin: 16px 0 6px; letter-spacing: 0.4px; text-transform: uppercase; }
+  p { font-size: 14px; color: rgba(255,232,192,0.85); margin-bottom: 12px; }
+  ul, ol { margin: 0 0 14px 22px; }
+  li { font-size: 14px; color: rgba(255,232,192,0.8); margin-bottom: 6px; line-height: 1.65; }
+  .meta { font-size: 12px; color: rgba(255,232,192,0.35); margin-bottom: 36px; border-top: 1px solid rgba(255,232,192,0.08); padding-top: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 14px 0 22px; }
+  th { background: rgba(255,107,0,0.15); color: #FF8C42; font-family: 'Arial', sans-serif; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; padding: 8px 12px; text-align: left; border-bottom: 1px solid rgba(255,107,0,0.3); }
+  td { padding: 10px 12px; border-bottom: 1px solid rgba(255,232,192,0.06); color: rgba(255,232,192,0.82); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .hi { color: #FAC775; font-weight: bold; }
+  .ok { color: #90EE90; }
+  .warn { color: #FF8C42; }
+  .bad { color: #FF5555; }
+  code { background: rgba(255,232,192,0.08); padding: 1px 5px; border-radius: 3px; font-size: 12px; font-family: 'Courier New', monospace; color: #FAC775; }
+  pre { background: rgba(0,0,0,0.35); border: 1px solid rgba(255,232,192,0.08); border-radius: 6px; padding: 14px 16px; margin: 14px 0; overflow-x: auto; font-family: 'Courier New', monospace; font-size: 12px; color: #ffe8c0; line-height: 1.5; }
+  .callout { background: rgba(255,107,0,0.07); border-left: 3px solid #FF6B00; padding: 13px 16px; margin: 16px 0 20px; border-radius: 0 8px 8px 0; }
+  .callout.gold { background: rgba(250,199,117,0.07); border-color: #FAC775; }
+  .callout.blue { background: rgba(55,138,221,0.07); border-color: #85B7EB; }
+  .callout.red { background: rgba(255,85,85,0.07); border-color: #FF5555; }
+  .callout.green { background: rgba(100,220,100,0.07); border-color: #90EE90; }
+  .callout p { margin: 0 0 6px; font-size: 13px; }
+  .callout p:last-child { margin-bottom: 0; }
+  .timeline { position: relative; padding: 10px 0 10px 30px; margin: 20px 0; border-left: 2px solid rgba(255,232,192,0.2); }
+  .phase { position: relative; padding: 14px 18px; margin: 8px 0 18px; background: rgba(255,232,192,0.03); border: 1px solid rgba(255,232,192,0.08); border-radius: 8px; }
+  .phase::before { content: ""; position: absolute; left: -37px; top: 18px; width: 14px; height: 14px; border-radius: 50%; background: #FAC775; border: 3px solid #0f0800; }
+  .phase.dead::before { background: #FF5555; }
+  .phase.revive::before { background: #90EE90; }
+  .phase.eternal::before { background: #C4B5F4; }
+  .phase-head { font-family: 'Arial Black', sans-serif; font-size: 13px; color: #FAC775; letter-spacing: 0.5px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+  .phase-day { font-family: 'Arial', sans-serif; font-size: 10px; letter-spacing: 0.1em; color: rgba(255,232,192,0.45); }
+  .phase p { font-size: 13px; margin-bottom: 0; }
+  .big-num { font-family: 'Arial Black', sans-serif; font-size: 28px; color: #FAC775; display: inline-block; }
+  .payout-card { background: rgba(255,232,192,0.04); border: 1px solid rgba(255,232,192,0.1); border-radius: 12px; padding: 22px 26px; margin: 16px 0; }
+  .payout-row { display: grid; grid-template-columns: 200px 1fr auto; gap: 12px; padding: 8px 0; border-bottom: 1px dashed rgba(255,232,192,0.08); align-items: baseline; }
+  .payout-row:last-child { border-bottom: none; padding-top: 14px; font-weight: bold; border-top: 2px solid rgba(250,199,117,0.4); margin-top: 6px; }
+  .payout-row .label { color: rgba(255,232,192,0.55); font-size: 13px; font-family: 'Arial', sans-serif; letter-spacing: 0.04em; }
+  .payout-row .desc { color: rgba(255,232,192,0.8); font-size: 13px; }
+  .payout-row .amt { color: #FAC775; font-family: 'Courier New', monospace; font-size: 14px; text-align: right; white-space: nowrap; }
+  .payout-row.total .label, .payout-row.total .desc { color: #90EE90; font-family: 'Arial Black', sans-serif; font-size: 13px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .payout-row.total .amt { color: #90EE90; font-size: 15px; font-weight: bold; }
+  blockquote { border-left: 3px solid rgba(250,199,117,0.4); padding: 2px 16px; margin: 14px 0; color: rgba(255,232,192,0.72); font-style: italic; font-size: 13px; }
+  hr { border: none; border-top: 1px solid rgba(255,232,192,0.08); margin: 40px 0; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>🥔 HOT POTATO</h1>
+  <h1 style="font-size:20px;color:#FF6B00;margin-bottom:4px;">The Seller's Take &amp; The Endgame</h1>
+  <div class="meta">Payout resolution · Terminal-state design · "The Last Supper" mechanic · April 2026</div>
+
+  <div style="background:rgba(255,85,85,0.1); border:1px solid rgba(255,85,85,0.35); border-left:4px solid #FF5555; border-radius:6px; padding:14px 18px; margin:12px 0 28px; font-family:'Arial',sans-serif;">
+    <div style="font-family:'Arial Black',sans-serif; font-size:11px; letter-spacing:0.15em; color:#FF5555; text-transform:uppercase; margin-bottom:6px;">Superseded · 2026-04-20</div>
+    <p style="font-size:13px; color:rgba(255,232,192,0.8); margin:0;">Endgame in this doc is "100% of the Pot to the Eternal Holder." That's no longer the design. Live model (A + partial C): a <b>Last Supper Reserve</b> accrues alongside the live Pot; at <code>finalSeal()</code> the current sitter collects a tier-weighted share (Cold 10% &rarr; Legendary 100%) and the residual rolls to Season 2. Last Supper is triggered by a 30-day no-transfer timer OR spectator vote-stake crossing ~10% of Reserve. Canonical numbers: <a href="hot-potato-v4-mechanic-spec.html" style="color:#FAC775;">hot-potato-v4-mechanic-spec.html</a>.</p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2>1. What The Seller Walks Away With</h2>
+
+  <p>"The seller" = the outgoing holder, the one who just got sniped. Their payout is a stack of three pieces. Everything below is settled on-chain inside <code>buyPotato()</code>.</p>
+
+  <h3>1.1 The Fee Split (locked in)</h3>
+
+  <table>
+    <thead><tr><th>Cut</th><th>% of sale price</th><th>Goes To</th></tr></thead>
+    <tbody>
+      <tr><td>Outgoing holder</td><td class="hi">95%</td><td>Their wallet, direct, instant</td></tr>
+      <tr><td>Creator fee</td><td>3%</td><td>Creator wallet</td></tr>
+      <tr><td>Pot funding</td><td>1.5%</td><td>On-chain Pot balance</td></tr>
+      <tr><td>Treasury reserve</td><td>0.5%</td><td>On-chain Treasury (backstop &amp; endgame)</td></tr>
+    </tbody>
+  </table>
+
+  <p>The 5% protocol fee is just internally split three ways. Buyer pays one number. Seller sees 95% of that number hit their wallet the same block.</p>
+
+  <h3>1.2 The Pot Slice (on top of sale proceeds)</h3>
+
+  <table>
+    <thead><tr><th>Sit-Tier</th><th>Duration</th><th>Pot Slice</th></tr></thead>
+    <tbody>
+      <tr><td>Tier 0 · Common</td><td>&lt; 6h</td><td class="bad">0%</td></tr>
+      <tr><td>Tier 1 · Rare</td><td>6 – 48h</td><td>1%</td></tr>
+      <tr><td>Tier 2 · Epic</td><td>2 – 7d</td><td>3%</td></tr>
+      <tr><td>Tier 3 · Legendary</td><td>7 – 30d</td><td>7%</td></tr>
+      <tr><td>Tier 4 · Max</td><td>30+d</td><td class="hi">15%</td></tr>
+    </tbody>
+  </table>
+
+  <h3>1.3 The Souvenir NFT</h3>
+
+  <p>One freshly minted Souvenir NFT — rarity rolled on-chain from sit-tier plus any pending boosts (overpay, loyalty, referral, trade-in, Sprout). Minted to the outgoing holder's wallet in the same transaction.</p>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2>2. Worked Example — Bob Gets Sniped</h2>
+
+  <p>Bob bought the potato 8 days ago at 0.10 ETH. Today he set his ask at 0.18 ETH and someone hit it. The Pot currently holds 4.0 ETH. Bob had no pending boosts.</p>
+
+  <div class="payout-card">
+    <div class="payout-row"><span class="label">Sale price paid</span><span class="desc">What the next buyer paid</span><span class="amt">0.180 ETH</span></div>
+    <div class="payout-row"><span class="label">Sale proceeds (95%)</span><span class="desc">Direct to Bob's wallet</span><span class="amt">+ 0.171 ETH</span></div>
+    <div class="payout-row"><span class="label">Pot slice (Tier 3 · 7%)</span><span class="desc">4.0 ETH × 7%</span><span class="amt">+ 0.280 ETH</span></div>
+    <div class="payout-row"><span class="label">Souvenir NFT</span><span class="desc">Legendary-weighted roll (30% chance)</span><span class="amt">+ 1× NFT</span></div>
+    <div class="payout-row total"><span class="label">Bob's take</span><span class="desc">From a 0.10 ETH entry</span><span class="amt">0.451 ETH + NFT</span></div>
+  </div>
+
+  <p>That's a <span class="big-num">4.5×</span> return in eight days, plus a tradeable NFT worth another 0.05–0.5 ETH on secondary. <em>This</em> is why patient holding earns real money, not just consolation rarity.</p>
+
+  <div class="callout gold">
+    <p><strong>The reframe:</strong> in the old design, being sniped was losing the potato. In this design, being sniped is <em>cashing out your position</em>. You bought a seat, you sat on it, and the game paid you.</p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2>3. When No One Buys — Three Time Horizons</h2>
+
+  <p>"What happens when no one buys" has three different answers depending on how long "no one" lasts. The Sprouting system handles the short-to-medium horizon. The Treasury Backstop handles the medium. The Last Supper handles the terminal case.</p>
+
+  <div class="timeline">
+
+    <div class="phase">
+      <div class="phase-head">
+        <span>Short silence</span>
+        <span class="phase-day">DAY 0 – 7</span>
+      </div>
+      <p>Normal quiet. Holder's sit-timer grows, Pot slice grows, nothing unusual. Healthy resting state.</p>
+    </div>
+
+    <div class="phase">
+      <div class="phase-head">
+        <span>Stage 3 · Sprouted</span>
+        <span class="phase-day">DAY 7 – 14</span>
+      </div>
+      <p>Asking price decays 5%/day automatically. Any buyer gets +1 Sprout Boost on their next souvenir. The potato is now publicly on sale at a discount — the crowd comes hunting.</p>
+    </div>
+
+    <div class="phase">
+      <div class="phase-head">
+        <span>Stage 4 · Bloomed</span>
+        <span class="phase-day">DAY 14 – 21</span>
+      </div>
+      <p>Decay accelerates to 10%/day. Sprout Boost jumps to +2. Spectator limit-buy orders start firing as the price crosses their thresholds. At this point a sale is very likely.</p>
+    </div>
+
+    <div class="phase">
+      <div class="phase-head">
+        <span>Stage 5 · Harvest Window</span>
+        <span class="phase-day">DAY 21 – 30</span>
+      </div>
+      <p>Holder can call <code>harvest()</code> — voluntarily end the hold, mint a guaranteed-Legendary "Grower" souvenir, reset the potato at 25% of last price. Dignified exit.</p>
+    </div>
+
+    <div class="phase dead">
+      <div class="phase-head">
+        <span>Treasury Buyback</span>
+        <span class="phase-day">DAY 30</span>
+      </div>
+      <p>Anyone in the world can call <code>treasuryBuyback()</code>. Treasury purchases the potato at 40% of last price. Holder receives Tier 4 Pot slice + a "Released" souvenir. Potato re-lists at a reset price. Caller gets a 0.005 ETH keeper bounty.</p>
+    </div>
+
+    <div class="phase revive">
+      <div class="phase-head">
+        <span>Normal cycle resumes</span>
+        <span class="phase-day">IF TREASURY FIRES</span>
+      </div>
+      <p>After a treasury buyback, the potato is fresh again. New starting price, new owner (the treasury itself — which holds it until first buyer arrives, usually within minutes).</p>
+    </div>
+
+  </div>
+
+  <p>So far so good — the game self-heals through one lull. But what if the lull never breaks? What if the treasury fires, no one buys again, it fires again, and the game keeps refusing to spark?</p>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2>4. The Last Supper — Terminal Endgame</h2>
+
+  <p>This is the mechanic you've been planning for: the <em>actual</em> end of Hot Potato. Triggered when the game has run out of momentum and none of the smaller self-heal mechanisms work anymore.</p>
+
+  <h3>4.1 Trigger Condition</h3>
+
+  <p>The Last Supper enters when either:</p>
+
+  <ul>
+    <li>The Treasury has fired <strong>3 consecutive buybacks</strong> with no intervening player-initiated sale, <em>or</em></li>
+    <li>The Treasury balance drops below the buyback floor and <strong>no sale occurs for 60 days</strong>.</li>
+  </ul>
+
+  <p>Either condition confirms the game has stopped. The contract emits <code>LastSupperBegan</code> and the site flips into a distinctive "Last Supper" visual mode — the potato starts glowing faintly, a 30-day countdown appears.</p>
+
+  <h3>4.2 The 30-Day Last Supper Window</h3>
+
+  <p>During this window:</p>
+
+  <ul>
+    <li>The asking price decays <strong>linearly to zero</strong> over the full 30 days.</li>
+    <li>Anyone on Earth can still buy the potato at the current decayed price. If they do, the contract exits Last Supper mode and the game resumes normally — but the buyer receives a unique <strong>"Savior"</strong> 1/1 NFT in addition to their standard buy outcome. Being the person who brought the potato back has permanent on-chain bragging rights.</li>
+    <li>The current holder cannot harvest, cannot transfer, cannot sell outside the contract. They just sit and wait.</li>
+    <li>All Rooting, Glance, and Limit-Buy functions continue to work.</li>
+  </ul>
+
+  <h3>4.3 If The 30 Days Pass With No Buyer</h3>
+
+  <p>The contract calls <code>finalSeal()</code>. The holder becomes <strong>The Eternal Holder</strong>. The game is over.</p>
+
+  <div class="callout gold">
+    <p><strong>Narrative:</strong> nobody wanted the potato. Not even for free. The person holding it when the music finally stopped... kept it forever.</p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2>5. The Eternal Holder — What They Receive</h2>
+
+  <div class="payout-card">
+    <div class="payout-row"><span class="label">The Eternal Potato</span><span class="desc">Token ID 0 upgraded with unique metadata — 1/1 forever</span><span class="amt">1× NFT (unique)</span></div>
+    <div class="payout-row"><span class="label">Remaining Pot balance</span><span class="desc">Every ETH left in the Pot, 100%</span><span class="amt">+ full Pot</span></div>
+    <div class="payout-row"><span class="label">Remaining Treasury balance</span><span class="desc">Every ETH left in the Treasury, 100%</span><span class="amt">+ full Treasury</span></div>
+    <div class="payout-row"><span class="label">Grower's souvenir</span><span class="desc">One final Legendary-guaranteed souvenir with "ETERNAL" trait</span><span class="amt">+ 1× NFT</span></div>
+    <div class="payout-row total"><span class="label">The prize</span><span class="desc">Capstone of the entire project</span><span class="amt">The whole thing</span></div>
+  </div>
+
+  <h3>5.1 The Seal</h3>
+
+  <p>When <code>finalSeal()</code> fires:</p>
+
+  <ul>
+    <li><code>buyPotato()</code> permanently reverts. The potato can never be sold again by anyone.</li>
+    <li>Souvenir minting stops. No new souvenirs can ever be generated.</li>
+    <li>All existing souvenirs remain fully tradeable on OpenSea forever (they're their own ERC-721 tokens).</li>
+    <li>The Eternal Potato token is transferable only by the Eternal Holder — they can sell it on OpenSea if they want. They probably won't. If they do, it becomes the most expensive potato ever sold.</li>
+    <li>Rooting, Glance, and Limit-Buy functions are disabled; any ETH in those escrows is refunded pull-style.</li>
+  </ul>
+
+  <h3>5.2 Why It Matters</h3>
+
+  <p>A game with a real ending is different from a game without one. Consider the consequences:</p>
+
+  <ul>
+    <li><strong>Late-game holders have extraordinary asymmetric upside.</strong> Late in the game's life, holding through one quiet stretch might be the moment you become the Eternal Holder. Every long hold carries a micro-chance of winning the whole project. That's a tail-risk reward that no other NFT game offers.</li>
+    <li><strong>The project has closure.</strong> It's not an abandoned Discord in 2029. It's a finite artwork with a final chapter. The whole thing becomes a completable story.</li>
+    <li><strong>The "Savior" NFT creates revival drama.</strong> During Last Supper, anyone can become the person who brought the potato back from the dead. That's a once-ever role. Enormously memetic.</li>
+    <li><strong>The Eternal Potato becomes a legendary artifact.</strong> A 1/1 NFT that ended a multi-year on-chain game. That's the kind of provenance collectors pay serious money for.</li>
+    <li><strong>Secondary value of all souvenirs compounds.</strong> Once minting stops, the collection is finite. Legendaries become genuinely limited. Every holder benefits.</li>
+  </ul>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2>6. Why Not Simpler Alternatives</h2>
+
+  <table>
+    <thead><tr><th>Alternative</th><th>Why I'm Not Recommending It</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Phoenix Reset</strong><br>(burn the potato, mint a new one, game restarts)</td><td>Dilutes the prize. Creates no narrative closure. Long-tail holders get nothing special. Permanent on-chain record becomes less meaningful.</td></tr>
+      <tr><td><strong>DAO vote on what happens</strong></td><td>Gives voting authority to souvenir holders, which is democratic but slow and decision-paralyzed. The simplicity of a fixed mechanic is worth more than optionality.</td></tr>
+      <tr><td><strong>"Game just dies quietly"</strong><br>(no special mechanic, last holder keeps potato)</td><td>Underselling. You'd miss the strongest narrative moment the game has to offer. If the game is going to end, make the ending a <em>thing</em>.</td></tr>
+      <tr><td><strong>Timed season ending</strong><br>(e.g. game auto-ends after 2 years)</td><td>Forces closure artificially. An organic endgame is better — the game ends when the players let it.</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2>7. On-Chain Implementation Sketch</h2>
+
+<pre><code>enum GameState { ACTIVE, LAST_SUPPER, SEALED }
+GameState public state = GameState.ACTIVE;
+
+uint256 public lastSupperStart;
+uint256 public consecutiveTreasuryFires;
+
+// Called at end of every buyPotato() and harvest()
+function _resetFireCounter() internal { consecutiveTreasuryFires = 0; }
+
+function treasuryBuyback() external {
+    require(state == GameState.ACTIVE, "not active");
+    require(block.timestamp &gt;= lastSaleTime + 30 days, "too soon");
+    // ... do the buyback ...
+    consecutiveTreasuryFires++;
+    if (consecutiveTreasuryFires &gt;= 3) {
+        _enterLastSupper();
+    }
+}
+
+function _enterLastSupper() internal {
+    state = GameState.LAST_SUPPER;
+    lastSupperStart = block.timestamp;
+    emit LastSupperBegan(block.timestamp, currentHolder);
+}
+
+function currentAskingPrice() public view returns (uint256) {
+    if (state == GameState.LAST_SUPPER) {
+        uint256 elapsed = block.timestamp - lastSupperStart;
+        if (elapsed &gt;= 30 days) return 0;
+        return lastSalePrice * (30 days - elapsed) / 30 days;
+    }
+    // ... normal sprout/active price logic ...
+}
+
+function buyPotato(uint256 newAsk) external payable {
+    require(state != GameState.SEALED, "sealed");
+    if (state == GameState.LAST_SUPPER) {
+        _mintSaviorNFT(msg.sender);
+        state = GameState.ACTIVE;
+        consecutiveTreasuryFires = 0;
+    }
+    // ... normal buy logic ...
+}
+
+function finalSeal() external {
+    require(state == GameState.LAST_SUPPER, "not in last supper");
+    require(block.timestamp &gt;= lastSupperStart + 30 days, "too soon");
+    _upgradePotatoToEternal(currentHolder);
+    _mintEternalSouvenir(currentHolder);
+    payable(currentHolder).transfer(pot + treasury);
+    pot = 0;
+    treasury = 0;
+    state = GameState.SEALED;
+    emit GameSealed(currentHolder);
+}</code></pre>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <h2>8. Summary</h2>
+
+  <table>
+    <thead><tr><th>Question</th><th>Answer</th></tr></thead>
+    <tbody>
+      <tr><td>Does the seller get sale price + the Pot %?</td><td class="ok"><strong>Yes.</strong> 95% of sale price + Pot slice (0–15% based on tier) + souvenir NFT. Three separate payouts, one transaction.</td></tr>
+      <tr><td>What's the final fee split?</td><td class="ok"><strong>95 / 3 / 1.5 / 0.5</strong> — holder / creator / pot / treasury. Out of the sale price, not added to it.</td></tr>
+      <tr><td>What happens during a quiet week?</td><td class="ok">Nothing unusual. Pot slice grows, sit-tier climbs.</td></tr>
+      <tr><td>What happens after 2+ weeks of silence?</td><td class="ok">Sprouting kicks in. Price decays, buyer boost grows, crowd piles in.</td></tr>
+      <tr><td>What happens after 30 days of silence?</td><td class="ok">Treasury buyback triggers. Game resumes with fresh listing.</td></tr>
+      <tr><td>What happens if the game truly dies?</td><td class="hi"><strong>The Last Supper.</strong> 30-day glowing countdown. Anyone can be the Savior and revive it. If no one does: the current holder becomes the Eternal Holder, receives Pot + Treasury + the Eternal Potato NFT, and the contract is permanently sealed.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout gold">
+    <p><strong>One line to remember:</strong> the Pot says "you earn while you sit." The Last Supper says "if the music ever fully stops, whoever's sitting keeps it all." Every moment in between is a tension between those two promises.</p>
+  </div>
+
+  <hr>
+  <p style="font-size:11px;color:rgba(255,232,192,0.25);text-align:center;">Hot Potato — Payout &amp; Endgame Spec · April 2026</p>
+
+</div>
+</body>
+</html>
