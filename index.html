@@ -238,7 +238,7 @@
     font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: rgba(255,245,224,0.4);
+    color: rgba(255,245,224,0.55);
     margin-top: 4px;
   }
   .buy-section { display: flex; flex-direction: column; gap: 10px; }
@@ -288,7 +288,7 @@
   .buy-btn:hover::after { transform: translateX(100%); }
   .buy-btn:hover { background: var(--pink-light); transform: translateY(-2px); }
   .buy-btn:active { transform: scale(0.98); }
-  .buy-note { font-size: 12px; color: rgba(255,245,224,0.3); }
+  .buy-note { font-size: 12px; color: rgba(255,245,224,0.5); }
 
   .hero-right {
     display: flex;
@@ -753,7 +753,7 @@
     <div class="hero-tagline">
       <div class="tagline-main">Price only goes up. ↑</div>
       <div class="tagline-sub">
-        Once you buy it, it's yours — until someone takes it. <span>And it will get hot.</span><br>
+        Once you buy it, it's yours — until someone takes it.<br>
         Every transfer mints a souvenir. <span>Only strong hands get Legendary.</span>
       </div>
     </div>
@@ -850,8 +850,8 @@
       </div>
       <div class="rule-card">
         <span class="rule-icon">👑</span>
-        <div class="rule-title">Legends Pay to Play.</div>
-        <div class="rule-desc">Want a Legendary souvenir? <span class="rule-highlight">You have to earn it.</span> Hold longer and overpay on entry. Legends aren't handed out.</div>
+        <div class="rule-title">Legends Are Earned.</div>
+        <div class="rule-desc">Hold for 7+ days and you're in <span class="rule-highlight">Legendary territory</span>. Overpay on entry to boost even further. No shortcuts — the contract enforces it all.</div>
       </div>
     </div>
   </div>
@@ -866,7 +866,7 @@
       And <b>loyal holders</b> — wallets that have held the potato before — automatically get a bonus when they get bought out again. All boosts stack, capped at Legendary.
     </p>
     <table class="boost-table">
-      <thead><tr><th>Overpay above asking price</th><th>Boost</th><th>Effect on souvenir</th></tr></thead>
+      <thead><tr><th>Overpay above minimum bid</th><th>Boost</th><th>Effect on souvenir</th></tr></thead>
       <tbody>
         <tr><td>0 – 9%</td><td>None</td><td>Standard rarity based on hold time</td></tr>
         <tr><td>10 – 24%</td><td>+1 tier</td><td>e.g. Common → Rare odds</td></tr>
@@ -875,8 +875,8 @@
         <tr><td>100%+</td><td>+4 tiers (max)</td><td>Maximum Legendary odds regardless of hold time</td></tr>
       </tbody>
     </table>
-    <p style="font-size:12px;color:rgba(255,245,224,0.35);margin-top:14px;">
-      <b style="color:rgba(255,245,224,0.5);">Note:</b> The minimum price increase scales with the potato's value — lower % at high prices so the game stays accessible. At current prices the minimum is shown next to the buy button.
+    <p style="font-size:12px;color:rgba(255,245,224,0.55);margin-top:14px;">
+      <b style="color:rgba(255,245,224,0.75);">Note:</b> The minimum price increase scales with the potato's value — lower % at high prices so the game stays accessible. At current prices the minimum is shown next to the buy button.
     </p>
     <div class="boost-tiers">
       <div class="boost-tier-card">
@@ -897,7 +897,7 @@
       <div class="boost-tier-card">
         <div class="boost-tier-label" style="color:#FFD600;">👑 Legendary</div>
         <div class="boost-tier-over">7 – 30 days held</div>
-        <div class="boost-tier-effect">50% Legendary · 40% Epic</div>
+        <div class="boost-tier-effect">30% Legendary · 45% Epic · 20% Rare</div>
       </div>
     </div>
   </div>
@@ -980,7 +980,7 @@
 
   <div style="margin-top:28px;">
     <div style="font-family:'Black Ops One',sans-serif;font-size:13px;color:var(--yellow);letter-spacing:1px;margin-bottom:4px;">👑 HALL OF FAME — LEGENDARY HOLDERS</div>
-    <div style="font-size:12px;color:rgba(255,245,224,0.3);margin-bottom:12px;">Wallets that earned a Legendary souvenir by holding the potato long enough to reach myth status.</div>
+    <div style="font-size:12px;color:rgba(255,245,224,0.5);margin-bottom:12px;">Wallets that earned a Legendary souvenir by holding the potato long enough to reach myth status.</div>
     <div class="hof-grid" id="hof-grid">
       <div style="color:rgba(255,245,224,0.3);font-size:13px;grid-column:1/-1;padding:16px 0;">👑 Coming soon — will you be the first?</div>
     </div>
@@ -996,8 +996,8 @@
       View on OpenSea
     </a>
   </div>
-  <div style="font-size:11px;color:rgba(255,245,224,0.25);font-family:'Barlow Condensed',sans-serif;margin-bottom:16px;letter-spacing:0.03em;">
-    Sell your souvenirs on <a id="opensea-link-inline" href="#" target="_blank" rel="noopener" style="color:rgba(100,180,255,0.6);text-decoration:none;" onmouseover="this.style.color='rgba(100,180,255,0.9)'" onmouseout="this.style.color='rgba(100,180,255,0.6)'">OpenSea</a>.
+  <div style="font-size:11px;color:rgba(255,245,224,0.5);font-family:'Barlow Condensed',sans-serif;margin-bottom:16px;letter-spacing:0.03em;">
+    Sell your souvenirs on <a id="opensea-link-inline" href="#" target="_blank" rel="noopener" style="color:rgba(100,180,255,0.75);text-decoration:none;" onmouseover="this.style.color='rgba(100,180,255,1)'" onmouseout="this.style.color='rgba(100,180,255,0.75)'">OpenSea</a>.
   </div>
   <div class="gallery" id="souvenir-gallery"><div style="color:rgba(255,245,224,0.3);font-size:13px;grid-column:1/-1;padding:24px 0;">Loading souvenirs…</div></div>
 </div>
