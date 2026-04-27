@@ -439,6 +439,25 @@
   .brewing-tier-badge.tier-rare     { background: rgba(55,138,221,0.2);   color: #85B7EB; }
   .brewing-tier-badge.tier-epic     { background: rgba(150,100,220,0.2);  color: #C4B5F4; }
   .brewing-tier-badge.tier-legendary { background: rgba(250,199,117,0.2); color: #FAC775; }
+  .brewing-hold-timer {
+    display: flex; align-items: center; gap: 6px;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 600;
+    letter-spacing: 0.05em; color: rgba(255,245,224,0.5);
+    padding: 7px 0 9px; border-bottom: 0.5px solid rgba(255,245,224,0.07);
+    margin-bottom: 8px;
+  }
+  .brewing-pulse {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--orange); flex-shrink: 0;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  .brewing-timer-val {
+    font-family: 'Black Ops One', sans-serif; font-size: 12px;
+    color: var(--orange); transition: color .8s ease;
+  }
+  .brewing-timer-status {
+    color: rgba(255,245,224,0.4); transition: color .8s ease;
+  }
   .brewing-odds {
     display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; margin-bottom: 10px;
   }
@@ -777,6 +796,11 @@
         </span>
         <span class="brewing-tier-badge tier-common" id="brewing-tier-badge">COMMON</span>
       </div>
+      <div class="brewing-hold-timer">
+        <span class="brewing-pulse"></span>
+        Current holder for <span class="brewing-timer-val" id="hold-display">…</span>
+        <span class="brewing-timer-status" id="timer-status">— loading</span>
+      </div>
       <div class="brewing-odds" id="brewing-odds">
         <div class="brewing-odd"><span class="brewing-odd-label">🥔 Common</span><span class="brewing-odd-val" id="bo-common">85%</span></div>
         <div class="brewing-odd"><span class="brewing-odd-label">💎 Rare</span>  <span class="brewing-odd-val" id="bo-rare">12%</span></div>
@@ -808,10 +832,6 @@
         <div class="price-eth">… ETH</div>
         <div class="price-usd">≈ $—</div>
         <div class="price-change">↑ MIN +15%</div>
-      </div>
-      <div class="hold-timer">
-        Current holder for <span class="timer-val" id="hold-display">…</span>
-        <span class="timer-status" id="timer-status">— loading</span>
       </div>
       <button class="buy-btn" id="buy-btn" onclick="openModal()">🥔 BUY THE POTATO</button>
       <div class="buy-note">Minimum bid: … ETH</div>
@@ -1261,7 +1281,7 @@ function updateTimer() {
   }
 
   el.style.color = color;
-  el.className   = legendaryClass ? 'timer-val timer-legendary' : 'timer-val';
+  el.className   = legendaryClass ? 'brewing-timer-val timer-legendary' : 'brewing-timer-val';
   if (status) status.textContent = statusText;
 
   // Update brewing panel every tick (cheap DOM ops, skips if no change)
