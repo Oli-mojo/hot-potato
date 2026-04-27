@@ -729,6 +729,144 @@
   .referral-copy-btn { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; background: rgba(255,214,0,0.12); border: 0.5px solid rgba(255,214,0,0.3); border-radius: 4px; color: var(--yellow); padding: 4px 10px; cursor: pointer; transition: background .2s; }
   .referral-copy-btn:hover { background: rgba(255,214,0,0.22); }
   .referral-note { font-size: 11px; color: rgba(255,245,224,0.75); margin-top: 5px; }
+
+  /* ─── MOBILE ──────────────────────────────────────────────── */
+  @media (max-width: 768px) {
+
+    /* Nav — hide text links, keep logo + icons + connect */
+    nav { padding: 12px 16px; }
+    .nav-link { display: none; }
+    .connect-btn { padding: 7px 14px; font-size: 12px; }
+
+    /* Hero — single column, right column first (potato + buy on top) */
+    .hero {
+      grid-template-columns: 1fr;
+      min-height: unset;
+    }
+    .hero-left {
+      padding: 28px 20px 24px;
+      border-right: none;
+      border-bottom: 0.5px solid var(--border);
+      order: 2;
+    }
+    .hero-right {
+      padding: 28px 20px 24px;
+      order: 1;
+      background: radial-gradient(ellipse at center, rgba(232,24,106,0.14) 0%, transparent 70%);
+    }
+
+    /* Title — scale down */
+    .hero-title { font-size: 44px; }
+    .hero-title .fire { font-size: 36px; }
+    .tagline-main { font-size: 16px; }
+    .tagline-sub { font-size: 13px; max-width: 100%; }
+
+    /* Potato card — smaller */
+    .potato-card { width: 200px; height: 200px; }
+
+    /* Heat meter — reposition to bottom, horizontal */
+    .heat-meter {
+      position: static;
+      transform: none;
+      flex-direction: row;
+      justify-content: center;
+      margin-top: 12px;
+      width: 100%;
+      order: 10;
+    }
+    .heat-label {
+      writing-mode: horizontal-tb;
+      transform: none;
+      font-size: 9px;
+    }
+    .heat-bar {
+      width: 120px;
+      height: 6px;
+      flex-direction: row;
+    }
+    .heat-fill { width: 0; height: 100%; }
+    .potato-wrap { flex-direction: column; }
+
+    /* Owner label — static position on mobile */
+    .potato-owner {
+      position: static;
+      transform: none;
+      text-align: center;
+      margin-top: 8px;
+      white-space: normal;
+    }
+
+    /* Price — slightly smaller */
+    .price-eth { font-size: 28px; }
+
+    /* Buy button — full width already, fine */
+
+    /* Stats */
+    .hero-stats { margin-top: 0; }
+    .stat-val { font-size: 18px; }
+
+    /* Brewing panel — no changes needed, already full-width */
+
+    /* Sections */
+    .section { padding: 32px 16px; }
+
+    /* Rules tabs — scrollable */
+    .rules-tabs {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 4px;
+      gap: 6px;
+      flex-wrap: nowrap;
+    }
+    .rules-tab { white-space: nowrap; flex-shrink: 0; }
+
+    /* Rules grid — 1 column on small mobile */
+    .rules-grid { grid-template-columns: 1fr; }
+
+    /* Boost tiers — 2 columns */
+    .boost-tiers { grid-template-columns: 1fr 1fr; }
+
+    /* Boost table — horizontal scroll */
+    .boost-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .boost-table { min-width: 400px; }
+
+    /* Gallery — 2 columns */
+    .gallery { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+
+    /* History table — horizontal scroll */
+    .history-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .history-table { min-width: 480px; }
+
+    /* Leaderboard — already handles 1 col via existing media query */
+
+    /* Modal — bottom sheet */
+    .modal-overlay { align-items: flex-end; }
+    .modal {
+      width: 100%;
+      max-height: 92vh;
+      overflow-y: auto;
+      border-radius: 16px 16px 0 0;
+      padding: 24px 20px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Trade-in modal */
+    .tradein-modal {
+      width: calc(100% - 32px);
+      padding: 24px 20px;
+    }
+
+    /* Footer — stack */
+    footer { flex-direction: column; gap: 12px; padding: 20px 16px; text-align: center; }
+    .footer-links { justify-content: center; flex-wrap: wrap; gap: 14px; }
+  }
+
+  @media (max-width: 400px) {
+    .hero-title { font-size: 36px; }
+    .price-eth { font-size: 24px; }
+    .buy-btn { font-size: 15px; padding: 14px 20px; }
+    .gallery { grid-template-columns: repeat(2, 1fr); }
+  }
 </style>
 </head>
 <body>
@@ -894,7 +1032,7 @@
       <b>Trade in</b> a souvenir you already own to convert it into a single-use boost code.
       And <b>loyal holders</b> — wallets that have held the potato before — automatically get a bonus when they get bought out again. All boosts stack, capped at Legendary.
     </p>
-    <table class="boost-table">
+    <div class="boost-table-wrap"><table class="boost-table">
       <thead><tr><th>Overpay above minimum bid</th><th>Boost</th><th>Effect on souvenir</th></tr></thead>
       <tbody>
         <tr><td>0 – 9%</td><td>None</td><td>Standard rarity based on hold time</td></tr>
@@ -903,7 +1041,7 @@
         <tr><td>50 – 99%</td><td>+3 tiers</td><td>e.g. Common → Legendary odds</td></tr>
         <tr><td>100%+</td><td>+4 tiers (max)</td><td>Maximum Legendary odds regardless of hold time</td></tr>
       </tbody>
-    </table>
+    </table></div>
     <p style="font-size:12px;color:rgba(255,245,224,0.55);margin-top:14px;">
       <b style="color:rgba(255,245,224,0.75);">Note:</b> The minimum price increase scales with the potato's value — lower % at high prices so the game stays accessible. At current prices the minimum is shown next to the buy button.
     </p>
@@ -1036,10 +1174,10 @@
     <div class="section-title">OWNERSHIP HISTORY</div>
     <div class="section-count" id="history-count">loading…</div>
   </div>
-  <table class="history-table">
+  <div class="history-table-wrap"><table class="history-table">
     <thead><tr><th>Hand</th><th>Address</th><th>Price Paid</th><th>Held For</th><th>Souvenir</th></tr></thead>
     <tbody id="history-body"><tr><td colspan="5" style="color:rgba(255,245,224,0.3);padding:24px 12px;">Loading ownership history…</td></tr></tbody>
-  </table>
+  </table></div>
 </div>
 
 <footer>
@@ -1226,7 +1364,11 @@ async function loadGameState() {
     // Wire heat bar to actual hold time (max heat = 3 months = 2160h)
     const heatPct = Math.min(95, Math.max(4, (gameState.holdDurationHours / 2160) * 100));
     const heatEl = document.getElementById('heat-fill');
-    if (heatEl) heatEl.style.height = heatPct + '%';
+    if (heatEl) {
+      const isMobile = window.innerWidth <= 768;
+      if (isMobile) { heatEl.style.width = heatPct + '%'; heatEl.style.height = '100%'; }
+      else { heatEl.style.height = heatPct + '%'; heatEl.style.width = '100%'; }
+    }
 
     // Update section counts (use IDs — order changed after section reorder)
     const hCount = document.getElementById('history-count');
