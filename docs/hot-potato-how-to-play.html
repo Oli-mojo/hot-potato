@@ -28,10 +28,12 @@
   p { font-size: 15px; color: rgba(255,245,224,0.82); margin-bottom: 14px; }
   strong { color: var(--cream); font-weight: 700; }
   em { color: var(--yellow); font-style: normal; font-weight: 600; }
+  ul { margin: 0 0 14px 22px; font-size: 15px; color: rgba(255,245,224,0.82); }
+  li { margin-bottom: 6px; line-height: 1.6; }
 
   .big-statement { font-family: 'Black Ops One', sans-serif; font-size: 26px; color: var(--orange); letter-spacing: 1.5px; line-height: 1.3; text-align: center; margin: 24px 0; padding: 20px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
 
-  .three-up { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin: 22px 0; }
+  .two-up { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 22px 0; }
   .role-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 22px 20px; }
   .role-icon { font-size: 32px; margin-bottom: 8px; }
   .role-title { font-family: 'Black Ops One', sans-serif; font-size: 14px; color: var(--yellow); letter-spacing: 1px; margin-bottom: 4px; }
@@ -40,39 +42,41 @@
   .role-card ul { font-size: 13px; margin: 0 0 0 18px; color: rgba(255,245,224,0.72); }
   .role-card li { margin-bottom: 5px; line-height: 1.5; }
 
-  .bar { display: flex; height: 50px; border-radius: 8px; overflow: hidden; margin: 18px 0 6px; border: 1px solid var(--border); }
-  .bar .seg { flex: 1; display: flex; align-items: center; justify-content: center; font-family: 'Black Ops One', sans-serif; font-size: 14px; letter-spacing: 1px; color: #0f0800; }
-  .bar .seg-0 { background: #6B5E4F; flex: 0.5; color: rgba(255,245,224,0.5); font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 11px; }
-  .bar .seg-1 { background: #85B7EB; }
-  .bar .seg-2 { background: #C4B5F4; }
-  .bar .seg-3 { background: #FAC775; }
-  .bar .seg-4 { background: #FF6B00; color: var(--cream); }
-  .bar-labels { display: flex; font-family: 'Barlow Condensed', sans-serif; font-size: 11px; color: rgba(255,245,224,0.5); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 22px; }
-  .bar-labels span { flex: 1; text-align: center; }
-  .bar-labels span:first-child { flex: 0.5; }
+  .rarity-table { width: 100%; border-collapse: collapse; margin: 10px 0 24px; font-size: 14px; }
+  .rarity-table th { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,245,224,0.4); text-align: left; padding: 8px 14px; border-bottom: 1px solid var(--border); }
+  .rarity-table td { padding: 11px 14px; border-bottom: 0.5px solid rgba(232,24,106,0.08); color: rgba(255,245,224,0.82); }
+  .rarity-table td.hold { color: var(--yellow); font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .rarity-table td.big { font-family: 'Black Ops One', sans-serif; color: var(--orange); }
 
-  .payout-table { width: 100%; border-collapse: collapse; margin: 10px 0 24px; font-size: 14px; }
-  .payout-table th { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,245,224,0.4); text-align: left; padding: 8px 14px; border-bottom: 1px solid var(--border); }
-  .payout-table td { padding: 11px 14px; border-bottom: 0.5px solid rgba(232,24,106,0.08); color: rgba(255,245,224,0.82); }
-  .payout-table td.tier { color: var(--yellow); font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
-  .payout-table td.big { font-family: 'Black Ops One', sans-serif; color: var(--orange); }
+  .boost-table { width: 100%; border-collapse: collapse; margin: 10px 0 24px; font-size: 14px; }
+  .boost-table th { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,245,224,0.4); text-align: left; padding: 8px 14px; border-bottom: 1px solid var(--border); }
+  .boost-table td { padding: 10px 14px; border-bottom: 0.5px solid rgba(232,24,106,0.08); color: rgba(255,245,224,0.82); font-size: 13px; }
+  .boost-table td.level { font-family: 'Black Ops One', sans-serif; color: var(--orange); font-size: 15px; }
+
+  .price-table { width: 100%; border-collapse: collapse; margin: 10px 0 24px; font-size: 14px; }
+  .price-table th { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,245,224,0.4); text-align: left; padding: 8px 14px; border-bottom: 1px solid var(--border); }
+  .price-table td { padding: 10px 14px; border-bottom: 0.5px solid rgba(232,24,106,0.08); color: rgba(255,245,224,0.82); font-size: 13px; }
+  .price-table td.range { color: var(--yellow); font-family: 'Barlow Condensed', sans-serif; font-weight: 700; text-transform: uppercase; }
 
   .scenario { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px 22px; margin: 14px 0; }
   .scenario-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
   .scenario-name { font-family: 'Black Ops One', sans-serif; font-size: 14px; color: var(--pink); letter-spacing: 1px; }
   .scenario-verdict { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; font-weight: 700; }
-  .v-flop { background: rgba(255,85,85,0.15); color: #FF8888; }
-  .v-mid  { background: rgba(96,165,250,0.15); color: #85B7EB; }
+  .v-flip { background: rgba(96,165,250,0.15); color: #85B7EB; }
   .v-win  { background: rgba(34,197,94,0.18); color: #22C55E; }
-  .v-spec { background: rgba(206,147,216,0.15); color: #CE93D8; }
+  .v-bold { background: rgba(255,107,0,0.18); color: var(--orange); }
   .scenario p { font-size: 14px; margin-bottom: 8px; color: rgba(255,245,224,0.8); }
   .scenario .got { background: rgba(255,214,0,0.06); border-left: 2px solid var(--yellow); padding: 8px 12px; border-radius: 0 6px 6px 0; margin-top: 8px; font-size: 13px; color: rgba(255,245,224,0.9); }
   .scenario .got strong { color: var(--yellow); }
 
+  .boost-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; margin: 10px 0; display: flex; gap: 16px; align-items: flex-start; }
+  .boost-icon { font-size: 26px; flex-shrink: 0; }
+  .boost-name { font-family: 'Black Ops One', sans-serif; font-size: 13px; color: var(--yellow); letter-spacing: 0.8px; margin-bottom: 4px; }
+  .boost-card p { font-size: 13px; color: rgba(255,245,224,0.75); margin: 0; line-height: 1.55; }
+
   .faq { background: rgba(255,214,0,0.04); border: 1px solid rgba(255,214,0,0.15); border-radius: 10px; padding: 18px 22px; margin: 12px 0; }
   .faq .q { font-family: 'Black Ops One', sans-serif; font-size: 13px; color: var(--yellow); letter-spacing: 0.6px; margin-bottom: 8px; }
   .faq .a { font-size: 14px; color: rgba(255,245,224,0.82); margin: 0; }
-  .faq .a strong { color: var(--cream); }
 
   .dont { background: rgba(255,85,85,0.06); border-left: 3px solid var(--red); padding: 12px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; }
   .dont .title { font-family: 'Black Ops One', sans-serif; font-size: 12px; color: #FF8888; letter-spacing: 1px; margin-bottom: 6px; }
@@ -82,10 +86,12 @@
   .do .title { font-family: 'Black Ops One', sans-serif; font-size: 12px; color: #22C55E; letter-spacing: 1px; margin-bottom: 6px; }
   .do p { font-size: 14px; color: rgba(255,245,224,0.82); margin: 0; }
 
+  .onchain-note { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,245,224,0.3); margin-top: 6px; }
+
   footer { text-align: center; margin-top: 56px; padding-top: 24px; border-top: 1px solid var(--border); font-family: 'Barlow Condensed', sans-serif; font-size: 12px; color: rgba(255,245,224,0.25); letter-spacing: 0.08em; text-transform: uppercase; }
 
   @media (max-width: 720px) {
-    .three-up { grid-template-columns: 1fr; }
+    .two-up { grid-template-columns: 1fr; }
     .hero h1 { font-size: 34px; }
     .big-statement { font-size: 20px; }
   }
@@ -94,170 +100,174 @@
 <body>
 <div class="page">
 
-  <!-- ⚠️  AUDIT NOTE C-4 — READ BEFORE SHARING THIS DOCUMENT  ⚠️
-       ─────────────────────────────────────────────────────────────
-       This file describes a PLANNED V5 design iteration that was
-       never deployed to the contract. The following mechanics exist
-       here in the docs but DO NOT exist in the live HotPotato v4
-       contract on Base Sepolia / Mainnet:
-
-         • The Pot / Pot accumulator (no on-chain Pot mapping)
-         • Pot slice payout on being sniped
-         • Spectator Rooting (bet ETH on a holder)
-         • Sprout Boost from sprouted-potato buys
-         • Limit Buy (auto-buy on price drop / sprout)
-         • The Sprouting Event (price decay tiers, Leafing/Sprouted/Bloomed)
-         • Harvest Window (Day 21+ voluntary Legendary souvenir + exit)
-         • Treasury Buyback (Day 30 forced reset)
-
-       The ACCURATE description of the live contract is:
-         • One ERC-721 NFT always for sale at currentPrice
-         • Price only goes up (tiered minimum: +5%–+25%)
-         • 5% creator fee on every sale
-         • Souvenir NFT minted to the outgoing holder on each transfer
-         • Rarity determined by hold duration + optional overpay boost
-         • No Pot, no sprout mechanics, no spectator betting
-
-       DO NOT show this document to players or link it publicly.
-       Use it as reference for future V5 planning only.
-       ────────────────────────────────────────────────────────── -->
-  <div style="background:#7c1c1c;border:2px solid #ff5555;border-radius:10px;padding:16px 22px;margin-bottom:32px;font-family:'Barlow Condensed',sans-serif;">
-    <div style="font-size:13px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#ff5555;margin-bottom:8px;">⚠️ V5 PLANNING DOCUMENT — NOT LIVE</div>
-    <p style="font-size:14px;color:rgba(255,245,224,0.85);margin:0;">This document describes features planned for a future version of Hot Potato. The <strong style="color:#fff;">Pot accumulator, Sprouting Event, Harvest Window, Treasury Buyback, Spectator Rooting, Sprout Boost, and Limit Buy</strong> mechanics described below <strong style="color:#ff5555;">do not exist in the deployed v4 contract.</strong> Do not share with players or link publicly.</p>
-  </div>
-
   <div class="hero">
     <div class="eyebrow">Hot Potato · Player Guide</div>
     <h1>🥔 HOW TO PLAY</h1>
     <h2>The game in one page</h2>
-    <p class="tagline">"It's not about holding out. It's about how long you can stay on the throne."</p>
+    <p class="tagline">"The longer you sit, the rarer the souvenir you leave with."</p>
   </div>
 
   <!-- ═══════════════════════════════════════════════════ -->
   <section>
     <h2 class="sec">The Whole Game In 30 Seconds</h2>
 
-    <p>The Hot Potato is <strong>a throne</strong>. One player sits on it at a time. While you sit, a <em>Pot of ETH</em> beneath the throne accumulates your claim. Anyone can pay to snatch the throne from you at any moment. When they do, you leave with:</p>
+    <p>The Hot Potato is <strong>one NFT, always for sale.</strong> One player holds it at a time. Anyone can buy it from the current holder at any moment by paying the asking price.</p>
 
-    <ul style="margin: 10px 0 14px 22px; font-size: 15px;">
-      <li>The <strong>ETH they paid you</strong> for your seat (minus a 5% protocol fee)</li>
-      <li>A <strong>Souvenir NFT</strong> whose rarity scales with how long you sat</li>
-      <li>A <strong>slice of the Pot</strong> based on your sit-tier — more time = bigger slice</li>
+    <p>When you get bought out, you receive two things:</p>
+
+    <ul>
+      <li><strong>95% of the ETH the buyer paid</strong> — sent to your wallet to withdraw (5% goes to the creator)</li>
+      <li><strong>A Souvenir NFT</strong> — a unique piece of art whose rarity is determined by how long you held and how much the buyer overpaid</li>
     </ul>
 
-    <div class="big-statement">You never defend the potato.<br>You just try to stay on it as long as possible.</div>
+    <div class="big-statement">You can't refuse a sale.<br>You just try to stay on as long as possible.</div>
+
+    <p>That's the whole game. Set your asking price, wait, get bought out, collect your proceeds and your souvenir. The longer you hold, the rarer the souvenir — but hold too long and the asking price may start to feel like a barrier.</p>
   </section>
 
   <!-- ═══════════════════════════════════════════════════ -->
   <section>
-    <h2 class="sec">Who Gets What, When</h2>
+    <h2 class="sec">Buying the Potato</h2>
 
-    <div class="three-up">
-      <div class="role-card">
-        <div class="role-icon">💸</div>
-        <div class="role-title">THE BUYER</div>
-        <div class="role-sub">Just took the throne</div>
-        <p>Paid ETH → now holds the potato. <strong>Doesn't touch the current Pot.</strong></p>
-        <p>What they <em>do</em> get right now:</p>
-        <ul>
-          <li>The throne itself</li>
-          <li>A fresh sit-timer at 0:00</li>
-          <li>A Sprout Boost (+1 or +2) if they bought during a sprouted potato</li>
-        </ul>
-        <p style="margin-top:10px;">Their Pot slice and souvenir come <em>later</em>, when they get sniped.</p>
-      </div>
+    <p>To buy, you pay the current asking price and set a <strong>new asking price</strong> for the next buyer. Two rules govern your new price:</p>
 
-      <div class="role-card">
-        <div class="role-icon">👑</div>
-        <div class="role-title">THE HOLDER</div>
-        <div class="role-sub">Currently on the throne</div>
-        <p>Sit-timer ticking up. Pot slice growing. Getting sniped is inevitable — the only question is <em>when</em>.</p>
-        <p>What they pay out on snipe:</p>
-        <ul>
-          <li>95% of the next buyer's ETH</li>
-          <li>A Souvenir NFT (rarity from sit-tier + boosts)</li>
-          <li>A slice of the Pot (0% → 15% based on tier)</li>
-        </ul>
-      </div>
+    <ul>
+      <li><strong>Minimum increase.</strong> Your asking price must be at least a set percentage above what you paid. The percentage scales down as prices rise to keep the game accessible at higher valuations.</li>
+      <li><strong>Maximum cap.</strong> Your asking price cannot exceed <em>10× what you paid.</em> This prevents anyone from freezing the game with an astronomical price.</li>
+    </ul>
 
-      <div class="role-card">
-        <div class="role-icon">🍿</div>
-        <div class="role-title">THE SPECTATOR</div>
-        <div class="role-sub">Watching the throne</div>
-        <p>Can't afford to buy? Don't want to? Still in the game.</p>
-        <ul>
-          <li><strong>Root</strong> ETH on the current holder — win big if they last</li>
-          <li><strong>Glance</strong> daily — build boosts just by showing up</li>
-          <li><strong>Place a Limit Buy</strong> — auto-buy when the price drops or the potato sprouts</li>
-        </ul>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════════════ -->
-  <section>
-    <h2 class="sec">The Sit-Tier Ladder</h2>
-
-    <p>The longer you sit, the bigger your Pot slice and the rarer your souvenir. The clock runs from the moment you took the throne until the moment someone snipes you.</p>
-
-    <div class="bar">
-      <div class="seg seg-0">0</div>
-      <div class="seg seg-1">T1</div>
-      <div class="seg seg-2">T2</div>
-      <div class="seg seg-3">T3</div>
-      <div class="seg seg-4">MAX</div>
-    </div>
-    <div class="bar-labels">
-      <span>&lt;6h</span>
-      <span>6–48h</span>
-      <span>2–7d</span>
-      <span>7–30d</span>
-      <span>30+d</span>
-    </div>
-
-    <table class="payout-table">
-      <thead><tr><th>Sit-Tier</th><th>Hold Duration</th><th>Souvenir Odds</th><th>Pot Slice</th></tr></thead>
+    <table class="price-table">
+      <thead><tr><th>Price You Paid</th><th>Minimum Your Ask Must Be</th><th>Example</th></tr></thead>
       <tbody>
-        <tr><td class="tier">Tier 0</td><td>&lt; 6 hours</td><td>Mostly Common</td><td>0% · <em>quick flip, no Pot</em></td></tr>
-        <tr><td class="tier">Tier 1</td><td>6 – 48 hours</td><td>Rare leaning</td><td>1% of Pot</td></tr>
-        <tr><td class="tier">Tier 2</td><td>2 – 7 days</td><td>Epic leaning</td><td>3% of Pot</td></tr>
-        <tr><td class="tier">Tier 3</td><td>7 – 30 days</td><td>Legendary leaning</td><td>7% of Pot</td></tr>
-        <tr><td class="tier">MAX</td><td>30+ days</td><td class="big">50% Legendary</td><td class="big">15% of Pot</td></tr>
+        <tr><td class="range">Under 0.1 ETH</td><td>+25% above what you paid</td><td>Paid 0.01 → ask at least 0.0125</td></tr>
+        <tr><td class="range">0.1 – 1 ETH</td><td>+15%</td><td>Paid 0.5 → ask at least 0.575</td></tr>
+        <tr><td class="range">1 – 10 ETH</td><td>+10%</td><td>Paid 2 → ask at least 2.2</td></tr>
+        <tr><td class="range">10 – 100 ETH</td><td>+7%</td><td>Paid 20 → ask at least 21.4</td></tr>
+        <tr><td class="range">100+ ETH</td><td>+5%</td><td>Paid 100 → ask at least 105</td></tr>
       </tbody>
     </table>
 
     <div class="do">
-      <div class="title">MENTAL MODEL</div>
-      <p>Every second you're on the throne, a tiny fraction of the Pot is quietly becoming yours. You can see it fill on the screen. You'll never know <em>when</em> you get sniped — but you'll know exactly <em>what you leave with</em> the instant it happens.</p>
+      <div class="title">STRATEGY</div>
+      <p>Set your ask high to buy yourself more time on the throne — the next buyer needs to pay more, so you wait longer and accumulate rarer souvenir odds. Set it low and you flip quickly for a smaller but faster profit. The 10× cap ensures nobody can orphan the game permanently.</p>
     </div>
   </section>
 
   <!-- ═══════════════════════════════════════════════════ -->
   <section>
-    <h2 class="sec">Where Does The Pot Come From?</h2>
+    <h2 class="sec">Your Souvenir — What You Leave With</h2>
 
-    <p>Two inflows, both taken automatically on every sale:</p>
+    <p>Every time the potato changes hands, the outgoing holder receives a <strong>Souvenir NFT</strong> — a unique piece of AI-generated art that commemorates their hold. The art style and rarity tier are determined on-chain at the moment of sale and cannot be changed afterwards.</p>
 
-    <ul style="margin: 0 0 14px 22px; font-size: 15px;">
-      <li><strong>1% of every sale price</strong> — paid out of the standard 5% protocol fee. You're not paying extra; a fifth of the fee gets redirected back to players.</li>
-      <li><strong>50% of any overpay</strong> — if you pay more than the asking price (to grab a boost), half of that extra goes straight into the Pot.</li>
-    </ul>
+    <p>Two things determine your souvenir's rarity: <em>how long you held</em> and <em>how much the next buyer overpaid.</em></p>
 
-    <p>So: the Pot is funded by impatient flippers and big overpayers. It's paid out to patient holders. That's the whole economy in one sentence.</p>
+    <div class="two-up">
+      <div class="role-card">
+        <div class="role-icon">⏱️</div>
+        <div class="role-title">HOLD DURATION</div>
+        <div class="role-sub">Your base rarity tier</div>
+        <p>The clock starts the moment you buy and stops the moment someone buys from you. Longer holds unlock better base odds.</p>
+        <p>Your hold duration sets your <strong>base tier</strong> — the starting point for the rarity roll.</p>
+      </div>
+      <div class="role-card">
+        <div class="role-icon">💸</div>
+        <div class="role-title">BUYER OVERPAY</div>
+        <div class="role-sub">A bonus boost for you</div>
+        <p>When the next buyer pays <em>more than your asking price</em>, that overpayment gives <em>you</em> a rarity boost — up to +4 tiers.</p>
+        <p>So an eager buyer who throws in extra ETH is actually doing you a favour.</p>
+      </div>
+    </div>
   </section>
 
   <!-- ═══════════════════════════════════════════════════ -->
   <section>
-    <h2 class="sec">Three Players, Three Outcomes</h2>
+    <h2 class="sec">Rarity Odds</h2>
+
+    <p>There are four rarity tiers: <strong>Common, Rare, Epic,</strong> and <strong>Legendary.</strong> Your hold duration sets a base tier (0–4). Buyer overpay adds on top. The final combined tier determines your rarity odds at the moment of sale.</p>
+
+    <table class="rarity-table">
+      <thead><tr><th>Hold Duration</th><th>Base Tier</th><th>Common</th><th>Rare</th><th>Epic</th><th>Legendary</th></tr></thead>
+      <tbody>
+        <tr><td class="hold">Under 6 hours</td><td>0</td><td>85%</td><td>12%</td><td>2%</td><td>1%</td></tr>
+        <tr><td class="hold">6h – 2 days</td><td>1</td><td>60%</td><td>28%</td><td>9%</td><td>3%</td></tr>
+        <tr><td class="hold">2 – 7 days</td><td>2</td><td>20%</td><td>40%</td><td>25%</td><td>15%</td></tr>
+        <tr><td class="hold">7 – 30 days</td><td>3</td><td>5%</td><td>20%</td><td>45%</td><td>30%</td></tr>
+        <tr><td class="hold big">30+ days</td><td>4 (max)</td><td class="big">1%</td><td class="big">9%</td><td class="big">40%</td><td class="big">50%</td></tr>
+      </tbody>
+    </table>
+
+    <p>Buyer overpay adds directly to your base tier (capped at tier 4):</p>
+
+    <table class="boost-table">
+      <thead><tr><th>Buyer Overpays By</th><th>Tier Boost You Receive</th></tr></thead>
+      <tbody>
+        <tr><td>Less than 10%</td><td class="level">+0</td></tr>
+        <tr><td>10 – 24%</td><td class="level">+1 tier</td></tr>
+        <tr><td>25 – 49%</td><td class="level">+2 tiers</td></tr>
+        <tr><td>50 – 99%</td><td class="level">+3 tiers</td></tr>
+        <tr><td>100% or more</td><td class="level">+4 tiers (max)</td></tr>
+      </tbody>
+    </table>
+
+    <div class="do">
+      <div class="title">EXAMPLE</div>
+      <p>You held for 3 days (base tier 2 — Epic-leaning). The buyer overpays by 30% (+2 tiers). Your effective tier is 4 — you roll at 1% Common / 9% Rare / 40% Epic / <strong>50% Legendary.</strong></p>
+    </div>
+
+    <p class="onchain-note">▲ Rarity is rolled on-chain at the moment of sale using block randomness. It cannot be predicted or gamed in advance.</p>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <section>
+    <h2 class="sec">Extra Rarity Boosts</h2>
+
+    <p>On top of hold duration and buyer overpay, the site offers four ways to stack additional rarity boosts onto your <em>next</em> souvenir. These are applied at generation time — they don't change the on-chain rarity tier, but they shift the art quality and metadata rarity upward.</p>
+
+    <div class="boost-card">
+      <div class="boost-icon">🎟️</div>
+      <div>
+        <div class="boost-name">PROMO CODES</div>
+        <p>Social codes shared via Discord or Twitter give +1 rarity boost. Apply a code before you buy — it locks in and activates when you eventually get bought out.</p>
+      </div>
+    </div>
+
+    <div class="boost-card">
+      <div class="boost-icon">🏆</div>
+      <div>
+        <div class="boost-name">LOYALTY BOOST</div>
+        <p>Hold the potato multiple times and build a loyalty counter. Once you have unclaimed holds, claim your loyalty boost before your next buy — up to +3 for three or more previous holds.</p>
+      </div>
+    </div>
+
+    <div class="boost-card">
+      <div class="boost-icon">🤝</div>
+      <div>
+        <div class="boost-name">REFERRAL</div>
+        <p>Share your referral code with a new buyer. When they use it, you both get +1. Each wallet can redeem one referral code.</p>
+      </div>
+    </div>
+
+    <div class="boost-card">
+      <div class="boost-icon">🔥</div>
+      <div>
+        <div class="boost-name">TRADE-IN</div>
+        <p>Burn an existing souvenir NFT to receive a trade-in code. The code gives a rarity boost scaled to the burned souvenir's tier — Common gives +1, Rare +2, Epic +3, Legendary +4.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <section>
+    <h2 class="sec">Two Players, Two Outcomes</h2>
 
     <div class="scenario">
       <div class="scenario-head">
         <div class="scenario-name">⚡ ALEX THE FLIPPER</div>
-        <div class="scenario-verdict v-flop">QUICK FLIP</div>
+        <div class="scenario-verdict v-flip">QUICK FLIP</div>
       </div>
-      <p>Buys the potato at 0.10 ETH, sets asking price at 0.12. Gets sniped 90 minutes later.</p>
+      <p>Buys the potato at 0.10 ETH. Sets asking price at 0.125 (the 25% minimum). Gets bought out 3 hours later.</p>
       <div class="got">
-        <strong>Alex walks away with:</strong> 0.114 ETH (next buyer paid 0.12, minus 5% fee) · a Common souvenir · <em>nothing from the Pot</em> (Tier 0). Made a small profit, zero bragging rights. Their overpay slice <em>contributes to the Pot</em> Bob and Charlie will compete for.
+        <strong>Alex walks away with:</strong> 0.119 ETH (95% of 0.125) and a <strong>Common souvenir</strong> (3 hours = base tier 0). Fast, small profit, nothing to write home about. The souvenir might be worth something to a collector one day — or it might not.
       </div>
     </div>
 
@@ -266,54 +276,21 @@
         <div class="scenario-name">👑 BOB THE THRONE-SITTER</div>
         <div class="scenario-verdict v-win">PATIENCE WINS</div>
       </div>
-      <p>Buys at 0.10 ETH, holds for 10 days. The potato goes through several price increases waiting for a buyer. Eventually sniped at 0.18 ETH.</p>
+      <p>Buys at 0.10 ETH. Sets asking price at 0.50 (5× overshoot — within the 10× cap). Holds for 12 days before someone pays the 0.50.</p>
       <div class="got">
-        <strong>Bob walks away with:</strong> 0.171 ETH from the sale · a Legendary-weighted Souvenir roll · <em>7% of the Pot</em> (≈ 0.28 ETH at steady state — a ~$840 bonus on top). Plus bragging rights and a chance the souvenir sells on OpenSea later.
+        <strong>Bob walks away with:</strong> 0.475 ETH (95% of 0.50) — a <strong>375% return on his 0.10</strong>. Plus a souvenir rolled at 7–30 day odds (5% Common / 20% Rare / <strong>45% Epic / 30% Legendary</strong>). And if the buyer threw in a little extra, Bob's rarity bumps up further.
       </div>
     </div>
 
     <div class="scenario">
       <div class="scenario-head">
-        <div class="scenario-name">🍿 SARAH THE SPECTATOR</div>
-        <div class="scenario-verdict v-spec">ROOTED</div>
+        <div class="scenario-name">🎯 CHARLIE THE BOOSTER</div>
+        <div class="scenario-verdict v-bold">STACKED</div>
       </div>
-      <p>Never bought the potato. But when Bob took the throne, she <strong>Rooted 0.01 ETH behind him</strong>. Bob made it to Tier 3.</p>
+      <p>Holds for 4 days (base tier 2). Has a promo code (+1) and loyalty boost from two previous holds (+2). The buyer overpays by 30% (+2 tiers). Combined boost: 2 + 1 + 2 + 2 = tier 7, capped at tier 4.</p>
       <div class="got">
-        <strong>Sarah walks away with:</strong> her 0.01 back · a 2× bonus from the Pot · a +1 boost pending her next buy. Zero downside to being right; she pre-positioned for when she eventually buys the potato herself.
+        <strong>Charlie rolls at max odds:</strong> 1% Common / 9% Rare / 40% Epic / <strong>50% Legendary.</strong> Stacking boosts from multiple sources is the highest-leverage play in the game.
       </div>
-    </div>
-
-    <div class="scenario">
-      <div class="scenario-head">
-        <div class="scenario-name">💀 DAVE THE WRONG ROOTER</div>
-        <div class="scenario-verdict v-flop">READ IT WRONG</div>
-      </div>
-      <p>Rooted 0.01 ETH behind Alex (the flipper). Alex got sniped in 90 minutes — Tier 0.</p>
-      <div class="got">
-        <strong>Dave loses his 0.01 ETH to the Pot.</strong> Rooting isn't free — you're betting on the holder's patience. Pick your throne-sitter carefully.
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════════════ -->
-  <section style="opacity:0.55;border:1px dashed rgba(255,85,85,0.4);border-radius:8px;padding:20px;">
-    <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#ff5555;margin-bottom:12px;">⚠️ NOT IN V4 CONTRACT — V5 PLANNED FEATURE</div>
-    <h2 class="sec">The Sprouting Event</h2>
-
-    <p>If nobody snipes the throne for a while, the potato starts to <em>grow</em>. Five stages, all visible on the site:</p>
-
-    <ul style="margin: 0 0 14px 22px; font-size: 15px; line-height: 1.8;">
-      <li><strong>Day 0–3 · Fresh.</strong> Normal potato.</li>
-      <li><strong>Day 3–7 · Leafing.</strong> A small leaf appears. Cosmetic only — signals "this one's been sitting."</li>
-      <li><strong>Day 7–14 · Sprouted.</strong> Asking price decays 5%/day. Any buyer gets a +1 Sprout Boost on their next souvenir. The race is on.</li>
-      <li><strong>Day 14–21 · Bloomed.</strong> Decay accelerates to 10%/day. Sprout Boost jumps to +2. It's practically a flash sale.</li>
-      <li><strong>Day 21+ · Harvest Window.</strong> The holder can voluntarily <em>harvest</em>: mint a 1/1 "Grower" souvenir (guaranteed Legendary) and release the potato at 25% of last price. A dignified exit.</li>
-      <li><strong>Day 30 · Treasury Buyback.</strong> Still no sale, no harvest? Anyone can trigger the treasury to buy it back at 40% of last price. Game never freezes.</li>
-    </ul>
-
-    <div class="do">
-      <div class="title">WHY THIS MATTERS</div>
-      <p>Spectators hunt for sprouts. A sprouted potato is a public bargain. When the potato enters Stage 3 or 4, it becomes the single hottest thing on the site — the crowd piles in and someone wins the snipe.</p>
     </div>
   </section>
 
@@ -322,58 +299,63 @@
     <h2 class="sec">Quick FAQ</h2>
 
     <div class="faq">
-      <div class="q">Do I need to do anything to "defend" the potato?</div>
-      <p class="a">No. You can't. The game has no defense mechanic — anyone can snipe you at any time by paying your asking price. Your only control is <strong>the price you set</strong>. Set it high, you earn more when sniped but wait longer. Set it low, you get sniped faster.</p>
+      <div class="q">Can I refuse to sell?</div>
+      <p class="a">No. Anyone can buy the potato from you at any time by paying your asking price. You can't block, pause, or delay a sale. Your only control is the price you set.</p>
     </div>
 
     <div class="faq">
-      <div class="q">If the potato is always for sale, what does "holding" even mean?</div>
-      <p class="a">It means <strong>occupying the throne</strong>. You haven't been sniped yet. Every minute you're still there, your future Pot slice and souvenir rarity grow. You're not hiding the potato — you're visible, wearing a target, getting paid for the risk.</p>
+      <div class="q">How do I collect my ETH after being bought out?</div>
+      <p class="a">Your proceeds (95% of what the buyer paid) are credited to your wallet in the contract and collected via a <strong>withdraw</strong> transaction — they're not pushed automatically. This protects the game from broken payment receivers. The UI shows your pending balance and lets you withdraw with one click.</p>
     </div>
 
     <div class="faq">
-      <div class="q">So what is the buyer actually buying?</div>
-      <p class="a">They're buying <strong>a fresh seat and a fresh timer.</strong> They're not buying any portion of the existing Pot — that belongs to whoever gets sniped next. They <em>are</em> buying a position to earn their own future Pot slice and souvenir, and if the potato is sprouted, they're also buying a Sprout Boost.</p>
+      <div class="q">What determines my souvenir's rarity?</div>
+      <p class="a">Two on-chain factors: <strong>how long you held</strong> (sets your base tier) and <strong>how much the buyer overpaid</strong> (adds up to +4 tiers). Off-chain boosts from promo codes, loyalty, referrals, and trade-ins apply on top at generation time.</p>
     </div>
 
     <div class="faq">
-      <div class="q">Can I set the asking price super high to stay longer?</div>
-      <p class="a">Yes — up to the cap (10× your purchase price). But the longer you sit, the more likely the potato <em>sprouts</em>, and then your asking price starts decaying automatically. So high asking prices give you time but aren't bulletproof.</p>
+      <div class="q">What's the point of setting a high asking price?</div>
+      <p class="a">Time. A higher price makes the next buyer pay more and hesitate longer, giving your hold timer more time to tick up — which shifts your rarity odds toward Epic and Legendary. The tradeoff is you earn more ETH but wait longer to collect it.</p>
     </div>
 
     <div class="faq">
-      <div class="q">Can the holder claim the Pot while still holding?</div>
-      <p class="a">No. The Pot is paid out at the <strong>moment of being sniped</strong>, not before. It's your <em>exit bonus</em>, not a yield you can siphon. This is intentional — it means your Pot slice is always on the line.</p>
+      <div class="q">Can I set my asking price to anything?</div>
+      <p class="a">Within two bounds. It must be <strong>at least</strong> the tiered minimum above what you paid (5–25% depending on price). And it can be <strong>at most</strong> 10× what you paid. The cap prevents someone from permanently freezing the game with an impossible price.</p>
     </div>
 
     <div class="faq">
-      <div class="q">What stops one person from farming the Pot forever?</div>
-      <p class="a">A wallet cap: no wallet can claim more than 2× Tier 4 Pot payouts in any 90-day rolling window. After that, further Tier 4 hits downgrade to Tier 2 rates. Plus every round trip costs them protocol fees and rooters know their patterns.</p>
+      <div class="q">If the buyer overpays, who benefits?</div>
+      <p class="a">You, the current holder. The overpay boosts <em>your</em> souvenir rarity — not the buyer's. The buyer's rarity boost is banked for <em>their</em> souvenir, which they'll receive when they eventually get bought out. Everyone wins from an eager overpayer.</p>
     </div>
 
     <div class="faq">
-      <div class="q">Why would a spectator root rather than just buy the potato?</div>
-      <p class="a">Rooting costs as little as 0.001 ETH. Buying the potato might cost several ETH. Rooting lets casual players bet on patience without buying the throne — and the winning rooters earn a <em>boost they can use later</em> when they eventually buy. It's the on-ramp.</p>
+      <div class="q">Are souvenir rarity odds visible before I get bought out?</div>
+      <p class="a">Yes. The site shows your live rarity preview — your current hold tier, any boost from when you bought, and the resulting odds — updated in real time as your hold timer ticks up. You always know what you're rolling for.</p>
+    </div>
+
+    <div class="faq">
+      <div class="q">Can I trade or sell my souvenir NFTs?</div>
+      <p class="a">Yes. Souvenirs are standard ERC-721 tokens and appear on OpenSea and other marketplaces. You can also burn them via the site's trade-in feature to get a boost code for your next souvenir instead.</p>
     </div>
   </section>
 
   <!-- ═══════════════════════════════════════════════════ -->
   <section>
-    <h2 class="sec">Two Rules You'll Hear Again</h2>
+    <h2 class="sec">The Two Rules</h2>
 
     <div class="dont">
       <div class="title">NOT A RULE</div>
-      <p>"Hold out." There's no holding out. The potato is always for sale and you cannot refuse. You're on the clock from the moment you buy.</p>
+      <p>"Hold out." You can't. The potato is always for sale and you cannot refuse. The moment you buy it, someone else can buy it from you. There's no defence mechanic.</p>
     </div>
 
     <div class="do">
       <div class="title">THE ACTUAL RULE</div>
-      <p>"Stay seated longer than the next player expects." That's the entire skill of the game — pricing your seat so buyers hesitate just long enough for your Pot slice to grow.</p>
+      <p>"Set your price so that waiting longer is worth it." A higher ask buys you time on the throne — more time means rarer odds and more ETH when you're eventually bought out. Every second you're still holding, your souvenir is getting more valuable.</p>
     </div>
   </section>
 
   <footer>
-    Hot Potato · Player Guide · April 2026
+    Hot Potato · Player Guide · v4 · April 2026
   </footer>
 
 </div>
