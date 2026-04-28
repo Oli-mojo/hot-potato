@@ -26,6 +26,11 @@ const pendingBoosts = new Map();
 // { code => walletAddress.toLowerCase() }
 const referralCodes = new Map();
 
+// M-4 fix: track which wallets have already redeemed a referral code so one
+// wallet can't apply multiple different referral codes to stack boosts.
+// { walletAddress.toLowerCase() => true }
+const referralRedeemed = new Set();
+
 const RARITY_BOOST   = { common: 1, rare: 2, epic: 3, legendary: 4 };
 const RARITY_ORDER   = ['common', 'rare', 'epic', 'legendary'];
 
@@ -80,19 +85,31 @@ function registerReferral(walletAddress) {
 }
 
 // Apply referral: referee gets +1 pending boost, referrer also gets +1 pending boost
+//
+// M-4 fix: each wallet may only redeem ONE referral code. Without this a player
+// could apply multiple different referral codes to accumulate boosts.
 function applyReferral(referralCode, refereeAddress) {
   const upper = referralCode.toUpperCase().trim();
   const referrerAddress = referralCodes.get(upper);
   if (!referrerAddress) return { success: false, reason: 'Referral code not registered' };
-  if (referrerAddress === refereeAddress.toLowerCase()) return { success: false, reason: 'Cannot use your own referral code' };
+
+  const refeeAddr = refereeAddress.toLowerCase();
+  if (referrerAddress === refeeAddr) {
+    return { success: false, reason: 'Cannot use your own referral code' };
+  }
+
+  // M-4: one referral redemption per wallet
+  if (referralRedeemed.has(refeeAddr)) {
+    return { success: false, reason: 'You have already used a referral code' };
+  }
 
   // Store +1 boost for referee
-  const refeeAddr = refereeAddress.toLowerCase();
   const existingReferee = pendingBoosts.get(refeeAddr);
   if (!existingReferee || 1 > existingReferee.boost) {
     pendingBoosts.set(refeeAddr, { boost: 1, fromCode: upper, appliedAt: Date.now() });
     console.log(`🤝 Referral: referee boost +1 stored for ${refeeAddr}`);
   }
+  referralRedeemed.add(refeeAddr); // mark this wallet as having redeemed a referral
 
   // Store +1 boost for referrer too (mutual)
   const existingReferrer = pendingBoosts.get(referrerAddress);
@@ -105,15 +122,25 @@ function applyReferral(referralCode, refereeAddress) {
 }
 
 // Validate any code — returns { valid, boost, type } or { valid: false, reason }
+//
+// M-4 fix:
+//   - Max code length (50 chars) prevents CPU waste on giant inputs.
+//   - Social boost values are clamped to 1–4 so a misconfigured PROMO_CODES
+//     env var can't grant an out-of-range boost.
 function validateCode(code) {
   if (!code) return { valid: false, reason: 'No code provided' };
+  if (typeof code !== 'string' || code.length > 50) {
+    return { valid: false, reason: 'Invalid code' };
+  }
   const upper = code.toUpperCase().trim();
 
   // Social codes from env var
   try {
     const social = JSON.parse(process.env.PROMO_CODES || '{}');
     if (social[upper] !== undefined) {
-      return { valid: true, boost: Number(social[upper]), type: 'social', code: upper };
+      // Clamp boost to 1–4 regardless of what's in the env var
+      const boost = Math.min(4, Math.max(1, Math.floor(Number(social[upper]))));
+      return { valid: true, boost, type: 'social', code: upper };
     }
   } catch (e) {}
 

@@ -40,8 +40,19 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', project: 'Hot Potato 🥔' });
 });
 
+// M-5 / L-6: log which env vars are set (boolean only — never log values).
+// Helps diagnose misconfiguration without exposing secrets in Railway logs.
+function logEnvAudit() {
+  const required = ['CONTRACT_ADDRESS', 'SOUVENIR_ADDRESS', 'RPC_URL', 'WALLET_PRIVATE_KEY', 'GENERATE_SECRET', 'ALLOWED_ORIGIN'];
+  const optional = ['PINATA_JWT', 'FAL_API_KEY', 'FAL_LORA_URL', 'DISCORD_WEBHOOK_URL', 'PROMO_CODES', 'SITE_URL'];
+  const fmt = (vars) => vars.map(k => `${k}=${process.env[k] ? '✅' : '❌'}`).join('  ');
+  console.log('🔐 Env audit (required):', fmt(required));
+  console.log('🔧 Env audit (optional):', fmt(optional));
+}
+
 app.listen(PORT, () => {
   console.log(`🥔 Hot Potato backend running on http://localhost:${PORT}`);
+  logEnvAudit();
   // H-1 fix: start the on-chain event listener after the HTTP server is ready.
   // The listener calls /api/souvenir/generate internally — the server must be
   // listening before that call is made.
