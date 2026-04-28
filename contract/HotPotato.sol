@@ -92,6 +92,13 @@ contract HotPotato is ERC721, ERC2981, Ownable, ReentrancyGuard {
 
     ISouvenirContract public souvenirContract;
 
+    // ─── Pull-payment accounting ──────────────────────────────
+    // C-1 fix: never push ETH during buyPotato. Credit recipients here;
+    // they withdraw separately. A reverting recipient only blocks their own
+    // withdrawal — it cannot brick the game for anyone else.
+    mapping(address => uint256) public pendingWithdrawals;
+    uint256 public totalPendingWithdrawals;
+
     // Hot Potato's own metadata URI (set by owner/backend)
     string private _potatoURI;
 
@@ -105,6 +112,12 @@ contract HotPotato is ERC721, ERC2981, Ownable, ReentrancyGuard {
         uint8   rarityTier,
         uint8   buyerBoostLevel
     );
+
+    /// Emitted when the souvenir contract mint call fails (game still proceeds).
+    event SouvenirMintFailed(address indexed seller, uint256 handNumber);
+
+    /// Emitted whenever the souvenir contract address is updated by the owner.
+    event SouvenirContractUpdated(address indexed newContract);
 
     // ─── Constructor ──────────────────────────────────────────
     constructor(address _souvenirContract)
@@ -171,22 +184,31 @@ contract HotPotato is ERC721, ERC2981, Ownable, ReentrancyGuard {
         });
 
         // ── Mint souvenir to seller via souvenir contract ────
-        uint256 souvenirId = souvenirContract.mint(
+        // C-2 fix: wrap in try/catch so a failing souvenir contract cannot
+        // brick buyPotato. The game always proceeds; the seller just misses
+        // their souvenir. The SouvenirMintFailed event lets off-chain services
+        // detect and recover (e.g. re-trigger generation manually).
+        uint256 souvenirId = 0;
+        try souvenirContract.mint(
             seller, handNumber, msg.value, holdDuration, rarityTierUint
-        );
+        ) returns (uint256 id) {
+            souvenirId = id;
+        } catch {
+            emit SouvenirMintFailed(seller, handNumber);
+        }
 
         // ── Transfer The Hot Potato to buyer ─────────────────
         _transfer(seller, msg.sender, POTATO_TOKEN_ID);
 
-        // ── Pay creator (5%) then seller (95%) ───────────────
+        // ── Credit creator (5%) and seller (95%) via pull-payment ──
+        // C-1 fix: never push ETH to external addresses inside buyPotato.
+        // Seller and creator call withdrawPayments() to collect their funds.
         uint256 creatorFee     = (msg.value * CREATOR_FEE_BPS) / BPS_DENOMINATOR;
         uint256 sellerProceeds = msg.value - creatorFee;
 
-        (bool creatorOk,) = CREATOR_WALLET.call{value: creatorFee}("");
-        require(creatorOk, "Creator fee transfer failed");
-
-        (bool sellerOk,) = seller.call{value: sellerProceeds}("");
-        require(sellerOk, "Seller payment failed");
+        pendingWithdrawals[CREATOR_WALLET] += creatorFee;
+        pendingWithdrawals[seller]         += sellerProceeds;
+        totalPendingWithdrawals            += msg.value;
 
         emit PotatoPassed(
             seller, msg.sender, msg.value,
@@ -249,6 +271,19 @@ contract HotPotato is ERC721, ERC2981, Ownable, ReentrancyGuard {
         if (tier == 2) return [uint256(20), 40, 25, 15];
         if (tier == 3) return [uint256( 5), 20, 45, 30];
                        return [uint256( 1),  9, 40, 50];
+    }
+
+    // ─── Pull-payment Withdrawal ──────────────────────────────
+
+    /// Collect your accumulated proceeds (available to sellers and the creator).
+    /// Uses CEI pattern: zero the balance before sending to prevent reentrancy.
+    function withdrawPayments() external nonReentrant {
+        uint256 amount = pendingWithdrawals[msg.sender];
+        require(amount > 0, "Nothing to withdraw");
+        pendingWithdrawals[msg.sender] = 0;
+        totalPendingWithdrawals       -= amount;
+        (bool ok,) = msg.sender.call{value: amount}("");
+        require(ok, "Withdrawal failed");
     }
 
     // ─── Read Functions ───────────────────────────────────────
@@ -323,10 +358,13 @@ contract HotPotato is ERC721, ERC2981, Ownable, ReentrancyGuard {
 
     // ─── Admin ────────────────────────────────────────────────
 
-    /// Update the souvenir contract address (owner only, for emergency use)
+    /// Update the souvenir contract address (owner only, for emergency use).
+    /// Emits SouvenirContractUpdated for auditability — all on-chain changes to
+    /// critical addresses should be visible in the event log.
     function setSouvenirContract(address _souvenirContract) external onlyOwner {
         require(_souvenirContract != address(0), "Zero address");
         souvenirContract = ISouvenirContract(_souvenirContract);
+        emit SouvenirContractUpdated(_souvenirContract);
     }
 
     // ─── ERC-165 ──────────────────────────────────────────────
@@ -338,9 +376,12 @@ contract HotPotato is ERC721, ERC2981, Ownable, ReentrancyGuard {
     }
 
     // ─── Safety withdraw ──────────────────────────────────────
-    /// Rescue any accidentally stuck ETH
+    /// Rescue ETH that became stuck (e.g. sent directly to the contract).
+    /// Intentionally excludes pendingWithdrawals — those belong to sellers/creator.
     function withdraw() external onlyOwner {
-        (bool ok,) = owner().call{value: address(this).balance}("");
+        uint256 stuck = address(this).balance - totalPendingWithdrawals;
+        require(stuck > 0, "No stuck ETH to rescue");
+        (bool ok,) = owner().call{value: stuck}("");
         require(ok, "Withdraw failed");
     }
 }

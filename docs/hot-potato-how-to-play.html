@@ -94,6 +94,38 @@
 <body>
 <div class="page">
 
+  <!-- ⚠️  AUDIT NOTE C-4 — READ BEFORE SHARING THIS DOCUMENT  ⚠️
+       ─────────────────────────────────────────────────────────────
+       This file describes a PLANNED V5 design iteration that was
+       never deployed to the contract. The following mechanics exist
+       here in the docs but DO NOT exist in the live HotPotato v4
+       contract on Base Sepolia / Mainnet:
+
+         • The Pot / Pot accumulator (no on-chain Pot mapping)
+         • Pot slice payout on being sniped
+         • Spectator Rooting (bet ETH on a holder)
+         • Sprout Boost from sprouted-potato buys
+         • Limit Buy (auto-buy on price drop / sprout)
+         • The Sprouting Event (price decay tiers, Leafing/Sprouted/Bloomed)
+         • Harvest Window (Day 21+ voluntary Legendary souvenir + exit)
+         • Treasury Buyback (Day 30 forced reset)
+
+       The ACCURATE description of the live contract is:
+         • One ERC-721 NFT always for sale at currentPrice
+         • Price only goes up (tiered minimum: +5%–+25%)
+         • 5% creator fee on every sale
+         • Souvenir NFT minted to the outgoing holder on each transfer
+         • Rarity determined by hold duration + optional overpay boost
+         • No Pot, no sprout mechanics, no spectator betting
+
+       DO NOT show this document to players or link it publicly.
+       Use it as reference for future V5 planning only.
+       ────────────────────────────────────────────────────────── -->
+  <div style="background:#7c1c1c;border:2px solid #ff5555;border-radius:10px;padding:16px 22px;margin-bottom:32px;font-family:'Barlow Condensed',sans-serif;">
+    <div style="font-size:13px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#ff5555;margin-bottom:8px;">⚠️ V5 PLANNING DOCUMENT — NOT LIVE</div>
+    <p style="font-size:14px;color:rgba(255,245,224,0.85);margin:0;">This document describes features planned for a future version of Hot Potato. The <strong style="color:#fff;">Pot accumulator, Sprouting Event, Harvest Window, Treasury Buyback, Spectator Rooting, Sprout Boost, and Limit Buy</strong> mechanics described below <strong style="color:#ff5555;">do not exist in the deployed v4 contract.</strong> Do not share with players or link publicly.</p>
+  </div>
+
   <div class="hero">
     <div class="eyebrow">Hot Potato · Player Guide</div>
     <h1>🥔 HOW TO PLAY</h1>
@@ -264,7 +296,8 @@
   </section>
 
   <!-- ═══════════════════════════════════════════════════ -->
-  <section>
+  <section style="opacity:0.55;border:1px dashed rgba(255,85,85,0.4);border-radius:8px;padding:20px;">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#ff5555;margin-bottom:12px;">⚠️ NOT IN V4 CONTRACT — V5 PLANNED FEATURE</div>
     <h2 class="sec">The Sprouting Event</h2>
 
     <p>If nobody snipes the throne for a while, the potato starts to <em>grow</em>. Five stages, all visible on the site:</p>

@@ -2212,8 +2212,8 @@ async function loadGallery() {
           ${overpayStr ? `<span style="font-family:'Barlow Condensed',sans-serif;font-size:10px;color:rgba(232,24,106,0.7);">${overpayStr}${boostStr ? ' ' + boostStr : ''}</span>` : ''}
         </div>
         <div style="margin-bottom:8px;">
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:rgba(255,245,224,0.35);">${playerName}</div>
-          ${playerTaunt ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-style:italic;color:rgba(255,245,224,0.2);">"${playerTaunt}"</div>` : ''}
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:rgba(255,245,224,0.35);">${esc(playerName)}</div>
+          ${playerTaunt ? `<div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-style:italic;color:rgba(255,245,224,0.2);">"${esc(playerTaunt)}"</div>` : ''}
         </div>`;
 
       const cardStyle = isOwned ? ' style="border-color:var(--yellow);"' : '';
@@ -2308,6 +2308,15 @@ async function loadProfiles(addresses) {
   } catch {}
 }
 
+// C-3 fix: HTML escape helper — always call esc() before inserting any
+// user-controlled string into an innerHTML template literal. This prevents
+// stored XSS even if a malicious string reaches the frontend via the API.
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[c]));
+}
+
 function getDisplayName(addr) {
   if (!addr) return '—';
   const p = playerProfiles[addr.toLowerCase()];
@@ -2326,14 +2335,25 @@ async function saveProfile() {
   const taunt = (document.getElementById('profile-taunt-input')?.value || '').trim();
   if (!name && !taunt) return;
   try {
+    // C-3 fix: sign a timestamped message to prove ownership of walletAddress.
+    // The backend verifies ethers.verifyMessage(message, signature) === walletAddress.
+    const timestamp = Date.now();
+    const message = `Hot Potato profile update\nAddress: ${walletAddress}\nTimestamp: ${timestamp}`;
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer   = await provider.getSigner();
+    const signature = await signer.signMessage(message);
+
     await fetch(`${API_BASE}/player/profile`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ walletAddress, name, taunt }),
+      body: JSON.stringify({ walletAddress, name, taunt, signature, message }),
     });
     // Update local cache immediately
     playerProfiles[walletAddress.toLowerCase()] = { name: name || null, taunt: taunt || null };
-  } catch {}
+  } catch (err) {
+    // User rejected signature or wallet error — silently ignore
+    console.warn('Profile save failed:', err?.message);
+  }
 }
 
 function prefillProfileFields() {
@@ -2369,8 +2389,8 @@ async function loadLeaderboard() {
       const taunt = getPlayerTaunt(addr);
       return `
         <div class="lb-player">
-          <span class="lb-name">${name}</span>
-          ${taunt ? `<span class="lb-taunt">"${taunt}"</span>` : ''}
+          <span class="lb-name">${esc(name)}</span>
+          ${taunt ? `<span class="lb-taunt">"${esc(taunt)}"</span>` : ''}
         </div>
         ${valHtml}
         ${extraHtml}`;
@@ -2419,8 +2439,8 @@ async function loadLeaderboard() {
           return `
           <div class="hof-card">
             <div class="hof-crown">👑</div>
-            <div class="hof-addr">${name}</div>
-            ${taunt ? `<div class="hof-detail" style="font-style:italic;color:rgba(255,214,0,0.5);">"${taunt}"</div>` : ''}
+            <div class="hof-addr">${esc(name)}</div>
+            ${taunt ? `<div class="hof-detail" style="font-style:italic;color:rgba(255,214,0,0.5);">"${esc(taunt)}"</div>` : ''}
             <div class="hof-detail">Hand #${h.hand} · ${h.holdDurationHours >= 24 ? (h.holdDurationHours / 24).toFixed(1) + ' days' : h.holdDurationHours.toFixed(1) + 'h'}</div>
           </div>`;
         }).join('');

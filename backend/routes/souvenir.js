@@ -28,7 +28,15 @@ const IPFS_GATEWAY  = 'https://gateway.pinata.cloud/ipfs/';
 
 // ── V3 legacy helpers — used by gallery/owned/trade-in until V4 is deployed ──
 // TODO: after V4 deploy, replace these routes with SouvenirNFT V4 ABI calls.
-const CONTRACT_ADDRESS = process.env.SOUVENIR_ADDRESS || process.env.CONTRACT_ADDRESS || '0x90Bfcf98282445B35e3ce48b9Eb21E532E603473';
+//
+// H-8/M-2 fix: fail fast if SOUVENIR_ADDRESS is missing rather than silently
+// falling back to a hardcoded testnet address or the game contract address.
+if (!process.env.SOUVENIR_ADDRESS) {
+  throw new Error(
+    'SOUVENIR_ADDRESS env var is required — set it to the HotPotatoSouvenir contract address.'
+  );
+}
+const CONTRACT_ADDRESS = process.env.SOUVENIR_ADDRESS;
 const RPC_URL          = process.env.RPC_URL;
 const RARITY_MAP       = ['common', 'uncommon', 'rare', 'epic', 'legendary']; // 5-tier V4 mapping
 const SOUVENIR_ABI     = [
@@ -85,7 +93,7 @@ router.post('/generate', async (req, res) => {
 
       // ── Step 4: generate art + upload metadata ───────────────────────────
       const imageUrl          = await generateSouvenirImage(finalRarity, holdDurationHours, fromAddress);
-      const { cid: imageCid } = await uploadImageToIPFS(imageUrl, `jackpotato-souvenir-${edition}.png`);
+      const { cid: imageCid } = await uploadImageToIPFS(imageUrl, `hotpotato-souvenir-${edition}.png`);
       const metadata          = buildMetadata({ rarity: finalRarity, holdDurationHours, holderAddress: fromAddress, imageCid, edition });
       const { url: tokenUri } = await uploadMetadataToIPFS(metadata);
 
@@ -339,15 +347,9 @@ router.get('/demo', async (req, res) => {
   }
 });
 
-router.get('/debug-env', (req, res) => {
-  res.json({
-    DISCORD_WEBHOOK_URL: process.env.DISCORD_WEBHOOK_URL ? `set (${process.env.DISCORD_WEBHOOK_URL.slice(0, 40)}...)` : 'NOT SET',
-    RPC_URL: process.env.RPC_URL ? 'set' : 'NOT SET',
-    PINATA_JWT: process.env.PINATA_JWT ? 'set' : 'NOT SET',
-    PROMO_CODES: process.env.PROMO_CODES ? `set (${process.env.PROMO_CODES})` : 'NOT SET',
-    CONTRACT_ADDRESS: process.env.CONTRACT_ADDRESS || 'using default',
-  });
-});
+// H-5 fix: /debug-env removed — it leaked DISCORD_WEBHOOK_URL and PROMO_CODES
+// in plaintext. Use server logs or a health-check endpoint that returns only
+// boolean "set / not set" values without exposing actual content.
 
 router.post('/test-discord', async (req, res) => {
   try {

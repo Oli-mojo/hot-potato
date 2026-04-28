@@ -6,7 +6,16 @@ const { getPotatoState, getRarityTier } = require('../services/contract');
 const axios = require('axios');
 
 const CONTRACT_ADDRESS  = process.env.CONTRACT_ADDRESS;
-const SOUVENIR_ADDRESS  = process.env.SOUVENIR_ADDRESS || process.env.CONTRACT_ADDRESS;
+
+// H-8 fix: SOUVENIR_ADDRESS must be set explicitly. Falling back to
+// CONTRACT_ADDRESS silently pointed at the game contract (wrong ABI)
+// and would cause souvenirCount() calls to return garbage or revert.
+if (!process.env.SOUVENIR_ADDRESS) {
+  throw new Error(
+    'SOUVENIR_ADDRESS env var is required — set it to the HotPotatoSouvenir contract address.'
+  );
+}
+const SOUVENIR_ADDRESS  = process.env.SOUVENIR_ADDRESS;
 const RPC_URL  = process.env.RPC_URL;
 const IPFS_GW  = 'https://gateway.pinata.cloud/ipfs/';
 const RARITY_MAP = ['common', 'rare', 'epic', 'legendary'];
