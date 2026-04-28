@@ -5,6 +5,7 @@
 const express = require('express');
 const router  = express.Router();
 const { ethers } = require('ethers');
+const { mutationLimiter } = require('../middleware/rateLimiter');
 
 // Map: lowercaseAddress → { name, taunt, updatedAt }
 const profiles = new Map();
@@ -18,7 +19,7 @@ const profiles = new Map();
 //
 // Client-side: const sig = await signer.signMessage(message);
 // where message = `Hot Potato profile update\nAddress: ${walletAddress}\nTimestamp: ${timestamp}`
-router.post('/profile', (req, res) => {
+router.post('/profile', mutationLimiter, (req, res) => {
   const { walletAddress, name, taunt, signature, message } = req.body;
   if (!walletAddress) return res.status(400).json({ error: 'walletAddress required' });
 

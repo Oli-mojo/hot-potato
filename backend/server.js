@@ -9,6 +9,8 @@ const potatoRoutes   = require('./routes/potato');
 const souvenirRoutes = require('./routes/souvenir');
 const playerRoutes   = require('./routes/player');
 const { startEventListener } = require('./services/eventListener');
+// H-4 fix: blanket rate limit on all API traffic
+const { globalLimiter } = require('./middleware/rateLimiter');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -24,6 +26,9 @@ app.use(cors({
   credentials: false, // no cookies/sessions — wallet auth uses signed messages
 }));
 app.use(express.json());
+// H-4 fix: apply global rate limit to all routes (300 req / 15 min per IP).
+// Tighter per-route limits are applied in the individual route files.
+app.use(globalLimiter);
 
 // Routes
 app.use('/api/potato',   potatoRoutes);

@@ -24,6 +24,7 @@ const {
 const { ethers } = require('ethers');
 const requireSignature   = require('../middleware/requireSignature');
 const requireInternalKey = require('../middleware/requireInternalKey');
+const { mutationLimiter, validateLimiter, galleryLimiter } = require('../middleware/rateLimiter');
 
 const BURN_ADDRESS  = '0x000000000000000000000000000000000000dEaD';
 const IPFS_GATEWAY  = 'https://gateway.pinata.cloud/ipfs/';
@@ -126,7 +127,7 @@ router.post('/generate', requireInternalKey, async (req, res) => {
 // POST /api/souvenir/apply-promo
 // Body: { walletAddress, promoCode, signature, message }
 // Stores a pending boost for this buyer — applied when they eventually get bought out
-router.post('/apply-promo', requireSignature, (req, res) => {
+router.post('/apply-promo', mutationLimiter, requireSignature, (req, res) => {
   const { walletAddress, promoCode } = req.body;
   if (!walletAddress || !promoCode) {
     return res.status(400).json({ error: 'walletAddress and promoCode required' });
@@ -140,7 +141,7 @@ router.post('/apply-promo', requireSignature, (req, res) => {
 });
 
 // GET /api/souvenir/validate-promo/:code?wallet=0x...
-router.get('/validate-promo/:code', (req, res) => {
+router.get('/validate-promo/:code', validateLimiter, (req, res) => {
   const result = validateCode(req.params.code);
   // Block self-referral — check if this REF- code belongs to the requester
   if (result.valid && result.type === 'referral' && req.query.wallet) {
@@ -172,7 +173,7 @@ router.get('/loyalty/:address', async (req, res) => {
 
 // POST /api/souvenir/claim-loyalty — player claims their loyalty boost before buying
 // Body: { walletAddress, signature, message }
-router.post('/claim-loyalty', requireSignature, async (req, res) => {
+router.post('/claim-loyalty', mutationLimiter, requireSignature, async (req, res) => {
   const { walletAddress } = req.body;
   if (!walletAddress) return res.status(400).json({ error: 'walletAddress required' });
   try {
@@ -210,7 +211,7 @@ router.get('/referral/:address', (req, res) => {
 // POST /api/souvenir/apply-referral
 // Body: { referralCode, walletAddress, signature, message }
 // Applies mutual +1 boost to referee and referrer
-router.post('/apply-referral', requireSignature, (req, res) => {
+router.post('/apply-referral', mutationLimiter, requireSignature, (req, res) => {
   const { referralCode, walletAddress } = req.body;
   if (!referralCode || !walletAddress) {
     return res.status(400).json({ error: 'referralCode and walletAddress required' });
@@ -225,7 +226,7 @@ router.post('/apply-referral', requireSignature, (req, res) => {
 // POST /api/souvenir/trade-in
 // Body: { walletAddress, tokenId, txHash, signature, message }
 // Verifies souvenir was burned, generates a trade-in promo code
-router.post('/trade-in', requireSignature, async (req, res) => {
+router.post('/trade-in', mutationLimiter, requireSignature, async (req, res) => {
   const { walletAddress, tokenId, txHash } = req.body;
   if (!walletAddress || tokenId === undefined || !txHash) {
     return res.status(400).json({ error: 'walletAddress, tokenId, and txHash required' });
@@ -297,7 +298,7 @@ async function fetchMetadata(tokenURI) {
   } catch { return { imageUrl: null, metadataRarity: null }; }
 }
 
-router.get('/gallery', async (req, res) => {
+router.get('/gallery', galleryLimiter, async (req, res) => {
   try {
     const provider = new ethers.JsonRpcProvider(RPC_URL);
     const contract = new ethers.Contract(CONTRACT_ADDRESS, SOUVENIR_ABI, provider);
@@ -332,7 +333,7 @@ router.get('/gallery', async (req, res) => {
   }
 });
 
-router.get('/owned/:address', async (req, res) => {
+router.get('/owned/:address', galleryLimiter, async (req, res) => {
   try {
     const { address } = req.params;
     const provider = new ethers.JsonRpcProvider(RPC_URL);
