@@ -1265,23 +1265,27 @@
 <script>
 // ─── CONFIG ───────────────────────────────────────────────
 const API_BASE = 'https://hot-potato-production.up.railway.app/api';
-const CONTRACT_ADDRESS = '0xf9b3912578893a0c4771db56D7F64B956311524E'; // v5 — post-audit
+const CONTRACT_ADDRESS  = '0xf9b3912578893a0c4771db56D7F64B956311524E'; // v5 — post-audit
+const SOUVENIR_ADDRESS  = '0xf4C5c825bCC7C36977062cB1376C5548FE698c5E'; // v2 — souvenir collection
 
 // Marketplace config — switch to mainnet URLs before launch
 const CHAIN_SLUG    = 'base-sepolia';  // change to 'base' on mainnet
 const OPENSEA_BASE  = `https://testnets.opensea.io/assets/${CHAIN_SLUG}`;  // change to https://opensea.io/assets/base on mainnet
-function openSeaTokenUrl(tokenId) { return `${OPENSEA_BASE}/${CONTRACT_ADDRESS}/${tokenId}`; }
+function openSeaTokenUrl(tokenId) { return `${OPENSEA_BASE}/${SOUVENIR_ADDRESS}/${tokenId}`; }
 const OPENSEA_COLLECTION = `https://testnets.opensea.io/0xf4C5c825bCC7C36977062cB1376C5548FE698c5E`; // souvenir collection
 const CHAIN_ID = 84532; // Base Sepolia
 const CONTRACT_ABI = [
   'function buyPotato(uint256 newAskingPrice, uint256 maxCurrentPrice) external payable',
   'function getGameState() external view returns (address currentOwner, uint256 price, uint256 timeHeld, uint256 totalTransfers)',
-  'function safeTransferFrom(address from, address to, uint256 tokenId)',
   // N-6: pull-payment withdraw UI
   'function withdrawPayments() external',
   'function pendingWithdrawals(address) view returns (uint256)',
   'function totalPendingWithdrawals() view returns (uint256)',
   'event PotatoPassed(address indexed from, address indexed to, uint256 price, uint256 holdDuration, uint256 souvenirTokenId, uint8 rarityTier, uint8 buyerBoostLevel)',
+];
+// Minimal ABI for souvenir contract — used for trade-in burn and MetaMask add
+const SOUVENIR_ABI = [
+  'function safeTransferFrom(address from, address to, uint256 tokenId)',
 ];
 const BURN_ADDRESS = '0x000000000000000000000000000000000000dEaD';
 
@@ -2012,10 +2016,10 @@ async function tradeInSouvenir(tokenId, rarity) {
 
   try {
     showToast('⏳ Burning souvenir — confirm in MetaMask…', '#FF6B00');
-    const provider = new ethers.BrowserProvider(window._ethProvider || window.ethereum);
-    const signer   = await provider.getSigner();
-    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-    const tx       = await contract.safeTransferFrom(walletAddress, BURN_ADDRESS, tokenId);
+    const provider       = new ethers.BrowserProvider(window._ethProvider || window.ethereum);
+    const signer         = await provider.getSigner();
+    const souvenirContract = new ethers.Contract(SOUVENIR_ADDRESS, SOUVENIR_ABI, signer);
+    const tx             = await souvenirContract.safeTransferFrom(walletAddress, BURN_ADDRESS, tokenId);
     showToast('⏳ Waiting for confirmation…', '#FF6B00');
     const receipt  = await tx.wait();
 
@@ -2116,7 +2120,7 @@ async function addSouvenirToMetaMask(tokenId) {
       params: {
         type: 'ERC721',
         options: {
-          address: CONTRACT_ADDRESS,
+          address: SOUVENIR_ADDRESS,
           tokenId: tokenId.toString(),
         },
       },
