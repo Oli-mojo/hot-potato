@@ -121,6 +121,20 @@ function rarityLabel(rarityTierUint) {
 // ── Token URI setter ───────────────────────────────────────────────────────────
 
 /**
+ * Read a souvenir's current token URI from the contract.
+ * Returns an empty string if not yet set or if the call reverts.
+ * Used by the generate route as an idempotency check (H-7).
+ */
+async function getTokenURI(tokenId) {
+  try {
+    const souvenir = getSouvenirContract(getProvider());
+    return await souvenir.tokenURI(tokenId);
+  } catch {
+    return '';
+  }
+}
+
+/**
  * Set a souvenir's IPFS metadata URI on-chain.
  * Called by the backend after image generation + Pinata upload.
  * Backend wallet must be the owner of the souvenir contract.
@@ -188,6 +202,7 @@ module.exports = {
   getRarityTier,
   rarityLabel,
   // URI management
+  getTokenURI,
   setTokenURI,
   batchSetTokenURIs,
   // Compatibility shims (souvenir.js imports these)

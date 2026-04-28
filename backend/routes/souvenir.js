@@ -9,6 +9,7 @@ const {
   scoreToRarity,
   applyScoreBoost,
   setRarityScore,
+  getTokenURI,
   setTokenURI,
 } = require('../services/contract');
 const { generateSouvenirImage } = require('../services/imageGen');
@@ -78,6 +79,16 @@ router.post('/generate', requireInternalKey, async (req, res) => {
     try {
       const tokenId = Number(souvenirTokenId);
       const holdDurationHours = (Number(req.body.holdDurationSeconds) || 0) / 3600;
+
+      // H-7 fix: idempotency guard — if this souvenir already has a URI on-chain
+      // (e.g. the event listener replayed an old event after a restart), skip
+      // generation entirely rather than overwriting the existing artwork.
+      const existingUri = await getTokenURI(tokenId);
+      if (existingUri) {
+        console.log(`⏭️  Souvenir #${tokenId} already has a URI — skipping duplicate generation`);
+        return;
+      }
+
       const state   = await getPotatoState();
       const edition = state.totalSouvenirs;
 

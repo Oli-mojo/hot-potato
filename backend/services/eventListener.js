@@ -7,23 +7,59 @@
 //
 // Architecture:
 //   1. On startup, scan for missed PotatoPassed events since the last known block
-//      (stored in-memory; production should persist this to avoid re-generation).
+//      (persisted to disk — H-7 fix — to survive process restarts).
 //   2. Subscribe to new PotatoPassed events in real time.
 //   3. For each event, POST to /api/souvenir/generate with the internal key.
 //
 // The HTTP call to /generate is intentional — it keeps generation logic in
 // one place and makes manual recovery easy (just hit the endpoint with curl).
+//
+// H-7 note: Railway redeploys reset the container filesystem, so the persisted
+// block file is lost on each deploy. The catch-up scan will replay recent events,
+// but the /generate endpoint is idempotent — it skips souvenirs that already
+// have a URI set on-chain — so replays are harmless.
 
 const { ethers } = require('ethers');
 const axios = require('axios');
+const fs    = require('fs');
+const path  = require('path');
 
 const GAME_CONTRACT_ABI = [
   'event PotatoPassed(address indexed from, address indexed to, uint256 price, uint256 holdDuration, uint256 souvenirTokenId, uint8 rarityTier, uint8 buyerBoostLevel)',
 ];
 
-// Track the last processed block to avoid double-processing on restart.
-// In production, persist this to a file or database.
-let lastProcessedBlock = null;
+// ── Block persistence (H-7) ────────────────────────────────────────────────────
+// Survives process crashes/restarts (but not Railway redeploys, which reset the
+// container). Combined with the idempotency guard in /generate, replays are safe.
+
+const BLOCK_FILE = path.join(__dirname, '../data/lastProcessedBlock.json');
+
+function loadLastProcessedBlock() {
+  try {
+    const raw = fs.readFileSync(BLOCK_FILE, 'utf8');
+    const { block } = JSON.parse(raw);
+    if (typeof block === 'number') {
+      console.log(`EventListener: Loaded last processed block ${block} from disk`);
+      return block;
+    }
+  } catch {
+    // File doesn't exist or is corrupt — start fresh
+  }
+  return null;
+}
+
+function saveLastProcessedBlock(block) {
+  try {
+    fs.mkdirSync(path.dirname(BLOCK_FILE), { recursive: true });
+    fs.writeFileSync(BLOCK_FILE, JSON.stringify({ block, savedAt: new Date().toISOString() }));
+  } catch (err) {
+    // Non-fatal — log and continue. The idempotency guard in /generate protects us.
+    console.warn('EventListener: Could not save block number to disk:', err.message);
+  }
+}
+
+// Track the last processed block. Loaded from disk on startup; saved after each event.
+let lastProcessedBlock = loadLastProcessedBlock();
 
 async function triggerGeneration(event) {
   const secret = process.env.GENERATE_SECRET;
@@ -85,8 +121,10 @@ async function startEventListener() {
 
   // ── Catch-up: process any events since last restart ────────────────────
   try {
-    const currentBlock   = await provider.getBlockNumber();
-    const fromBlock      = lastProcessedBlock ? lastProcessedBlock + 1 : Math.max(0, currentBlock - 1000);
+    const currentBlock = await provider.getBlockNumber();
+    const fromBlock    = lastProcessedBlock
+      ? lastProcessedBlock + 1
+      : Math.max(0, currentBlock - 1000);
     console.log(`EventListener: Scanning for missed events from block ${fromBlock} to ${currentBlock}...`);
 
     const missedEvents = await contract.queryFilter('PotatoPassed', fromBlock, currentBlock);
@@ -97,6 +135,7 @@ async function startEventListener() {
       }
     }
     lastProcessedBlock = currentBlock;
+    saveLastProcessedBlock(currentBlock); // H-7: persist after catch-up
   } catch (err) {
     console.error('EventListener: Catch-up scan failed:', err.message);
   }
@@ -105,6 +144,7 @@ async function startEventListener() {
   contract.on('PotatoPassed', async (...args) => {
     const event = args[args.length - 1]; // ethers v6: last arg is the event object
     lastProcessedBlock = event.blockNumber;
+    saveLastProcessedBlock(event.blockNumber); // H-7: persist after each live event
     await triggerGeneration(event);
   });
 
