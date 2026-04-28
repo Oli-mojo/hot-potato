@@ -22,6 +22,8 @@ const {
 } = require('../services/promoCode');
 
 const { ethers } = require('ethers');
+const requireSignature   = require('../middleware/requireSignature');
+const requireInternalKey = require('../middleware/requireInternalKey');
 
 const BURN_ADDRESS  = '0x000000000000000000000000000000000000dEaD';
 const IPFS_GATEWAY  = 'https://gateway.pinata.cloud/ipfs/';
@@ -49,6 +51,11 @@ const SOUVENIR_ABI     = [
 
 // POST /api/souvenir/generate
 // Body: { fromAddress, souvenirTokenId, holdDurationSeconds?, pricePaid?, newAskingPrice? }
+// Authorization: Bearer <GENERATE_SECRET>
+//
+// H-1 fix: protected by requireInternalKey — only callable by the on-chain
+// event listener service (or manually by an operator for recovery).
+// The frontend no longer calls this endpoint directly.
 //
 // Rarity flow (single source of truth):
 //   1. Read rarityScore from the on-chain SouvenirNFT — the contract computed this
@@ -58,7 +65,7 @@ const SOUVENIR_ABI     = [
 //   3. If the score increased, write it back on-chain via setRarityScore() BEFORE
 //      setting the URI — so on-chain rarityScore and metadata rarity are always identical.
 //   4. Generate art, upload to IPFS, set the token URI.
-router.post('/generate', async (req, res) => {
+router.post('/generate', requireInternalKey, async (req, res) => {
   const { fromAddress, souvenirTokenId } = req.body;
   if (!fromAddress || souvenirTokenId === undefined) {
     return res.status(400).json({ error: 'fromAddress and souvenirTokenId are required' });
@@ -117,9 +124,9 @@ router.post('/generate', async (req, res) => {
 });
 
 // POST /api/souvenir/apply-promo
-// Body: { walletAddress, promoCode }
+// Body: { walletAddress, promoCode, signature, message }
 // Stores a pending boost for this buyer — applied when they eventually get bought out
-router.post('/apply-promo', (req, res) => {
+router.post('/apply-promo', requireSignature, (req, res) => {
   const { walletAddress, promoCode } = req.body;
   if (!walletAddress || !promoCode) {
     return res.status(400).json({ error: 'walletAddress and promoCode required' });
@@ -164,8 +171,8 @@ router.get('/loyalty/:address', async (req, res) => {
 });
 
 // POST /api/souvenir/claim-loyalty — player claims their loyalty boost before buying
-// Body: { walletAddress }
-router.post('/claim-loyalty', async (req, res) => {
+// Body: { walletAddress, signature, message }
+router.post('/claim-loyalty', requireSignature, async (req, res) => {
   const { walletAddress } = req.body;
   if (!walletAddress) return res.status(400).json({ error: 'walletAddress required' });
   try {
@@ -201,9 +208,9 @@ router.get('/referral/:address', (req, res) => {
 });
 
 // POST /api/souvenir/apply-referral
-// Body: { referralCode, walletAddress }
+// Body: { referralCode, walletAddress, signature, message }
 // Applies mutual +1 boost to referee and referrer
-router.post('/apply-referral', (req, res) => {
+router.post('/apply-referral', requireSignature, (req, res) => {
   const { referralCode, walletAddress } = req.body;
   if (!referralCode || !walletAddress) {
     return res.status(400).json({ error: 'referralCode and walletAddress required' });
@@ -216,9 +223,9 @@ router.post('/apply-referral', (req, res) => {
 });
 
 // POST /api/souvenir/trade-in
-// Body: { walletAddress, tokenId, txHash }
+// Body: { walletAddress, tokenId, txHash, signature, message }
 // Verifies souvenir was burned, generates a trade-in promo code
-router.post('/trade-in', async (req, res) => {
+router.post('/trade-in', requireSignature, async (req, res) => {
   const { walletAddress, tokenId, txHash } = req.body;
   if (!walletAddress || tokenId === undefined || !txHash) {
     return res.status(400).json({ error: 'walletAddress, tokenId, and txHash required' });
@@ -232,11 +239,28 @@ router.post('/trade-in', async (req, res) => {
       return res.status(400).json({ error: 'Transaction not confirmed yet — try again in a moment' });
     }
 
-    // Verify the token now lives at the burn address
-    const contract = new ethers.Contract(CONTRACT_ADDRESS, SOUVENIR_ABI, provider);
-    const currentOwner = await contract.ownerOf(tokenId).catch(() => null);
-    if (!currentOwner || currentOwner.toLowerCase() !== BURN_ADDRESS.toLowerCase()) {
-      return res.status(400).json({ error: 'Token not yet at burn address — transaction may still be processing' });
+    // H-3 fix: decode the ERC-721 Transfer event directly from the receipt logs
+    // rather than trusting ownerOf() alone. ownerOf() can be gamed by a race
+    // condition where someone burns then immediately re-mints into the same slot.
+    // Decoding the log proves the burn happened in THIS specific transaction.
+    const transferIface = new ethers.Interface([
+      'event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)',
+    ]);
+    const burnConfirmed = receipt.logs.some(log => {
+      if (log.address.toLowerCase() !== CONTRACT_ADDRESS.toLowerCase()) return false;
+      try {
+        const parsed = transferIface.parseLog({ topics: log.topics, data: log.data });
+        return (
+          parsed.name === 'Transfer' &&
+          parsed.args.to.toLowerCase()       === BURN_ADDRESS.toLowerCase() &&
+          parsed.args.tokenId.toString()     === tokenId.toString()
+        );
+      } catch { return false; }
+    });
+    if (!burnConfirmed) {
+      return res.status(400).json({
+        error: 'No burn Transfer event found for this tokenId in the provided transaction',
+      });
     }
 
     // Get souvenir rarity from on-chain data

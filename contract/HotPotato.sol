@@ -168,6 +168,11 @@ contract HotPotato is ERC721, ERC2981, Ownable, ReentrancyGuard {
         uint256 minNextAsk = (msg.value * bps) / BPS_DENOMINATOR;
         require(newAskingPrice >= minNextAsk, "New asking price below tiered minimum");
 
+        // M-3 fix: cap the asking price at 10× what was paid.
+        // Prevents a griefing attack where a buyer sets an astronomical price
+        // (e.g. 1000 ETH after paying 0.001 ETH) to permanently freeze the game.
+        require(newAskingPrice <= msg.value * 10, "New asking price above 10x cap");
+
         // ── Capture pre-sale state ───────────────────────────
         uint256 holdDuration     = block.timestamp - holderInfo.purchaseTimestamp;
         uint8   sellerBoost      = holderInfo.premiumBoostLevel;
