@@ -21,8 +21,12 @@ const WALLET_PRIVATE_KEY = process.env.WALLET_PRIVATE_KEY;
 
 // HotPotato.sol — game contract (token 0 only)
 const GAME_ABI = [
-  // Core buy function
-  'function buyPotato(uint256 newAskingPrice) external payable',
+  // Core buy function — v5: added maxCurrentPrice slippage guard (H-4)
+  'function buyPotato(uint256 newAskingPrice, uint256 maxCurrentPrice) external payable',
+  // Pull-payment withdraw (C-1)
+  'function withdrawPayments() external',
+  'function pendingWithdrawals(address) view returns (uint256)',
+  'function totalPendingWithdrawals() view returns (uint256)',
   // Read
   'function getGameState() external view returns (address currentOwner, uint256 price, uint256 timeHeld, uint256 totalTransfers)',
   'function getExtendedState() external view returns (address currentOwner, uint256 price, uint256 timeHeld, uint256 totalTransfers, uint256 totalSouvenirs, uint8 currentBoostLevel, uint256 minNextPayment)',

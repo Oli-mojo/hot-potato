@@ -2,16 +2,16 @@
 pragma solidity ^0.8.20;
 
 // ============================================================
-//  HOT POTATO — v4
+//  HOT POTATO — v5
 //  Single ERC-721 NFT always for sale. Price only goes up.
 //  Souvenir NFTs are minted by a separate HotPotatoSouvenir
 //  contract, keeping the two collections cleanly separated on
 //  OpenSea and marketplaces.
 //
-//  What changed from v3:
-//  - Souvenir minting delegated to ISouvenirContract
-//  - Souvenir storage removed from this contract entirely
-//  - Constructor takes souvenir contract address
+//  What changed from v4 (post-audit):
+//  - buyPotato takes a maxCurrentPrice slippage guard (H-4)
+//  - souvenirContract.mint now forwards capped gas (N-7)
+//  - Pull-payment: pendingWithdrawals + withdrawPayments (C-1)
 //
 //  Game rules (unchanged):
 //  - Token 0 = The Hot Potato, always for sale
@@ -144,8 +144,15 @@ contract HotPotato is ERC721, ERC2981, Ownable, ReentrancyGuard {
 
     // ─── Buy The Potato ───────────────────────────────────────
     /**
-     * @param newAskingPrice  Your new asking price for the next buyer.
-     *                        Must be >= msg.value × (1 + minIncrease%).
+     * @param newAskingPrice   Your new asking price for the next buyer.
+     *                         Must be >= msg.value × (1 + minIncrease%).
+     * @param maxCurrentPrice  H-4 slippage guard: the maximum price you're
+     *                         willing to pay. Pass currentPrice from the frontend
+     *                         at the time the user clicks "Buy". If a MEV bot or
+     *                         another buyer gets in first and drives the price
+     *                         above this value, the tx reverts rather than
+     *                         silently consuming more ETH than the user expected.
+     *                         Set to type(uint256).max to opt out of the check.
      *
      * Overpay above the minimum to bank a rarity boost on your souvenir:
      *   Boost   Overpayment above asking   Effect
@@ -156,9 +163,15 @@ contract HotPotato is ERC721, ERC2981, Ownable, ReentrancyGuard {
      *   3       50–99%                     +3 rarity tiers
      *   4       100%+                      Max (Legendary odds)
      */
-    function buyPotato(uint256 newAskingPrice) external payable nonReentrant {
+    function buyPotato(uint256 newAskingPrice, uint256 maxCurrentPrice) external payable nonReentrant {
         address seller = ownerOf(POTATO_TOKEN_ID);
         require(msg.sender != seller, "You already hold the potato");
+
+        // ── H-4 Slippage guard ───────────────────────────────
+        // Revert if the price moved above the caller's stated maximum between
+        // the time they read the price and the time this tx executes. Protects
+        // against MEV boost-level sandwiching and front-running.
+        require(currentPrice <= maxCurrentPrice, "Price moved — increase maxCurrentPrice or try again");
 
         // ── Validate payment ────────────────────────────────
         require(msg.value >= currentPrice, "Payment too low");
@@ -194,7 +207,12 @@ contract HotPotato is ERC721, ERC2981, Ownable, ReentrancyGuard {
         // their souvenir. The SouvenirMintFailed event lets off-chain services
         // detect and recover (e.g. re-trigger generation manually).
         uint256 souvenirId = 0;
-        try souvenirContract.mint(
+        // N-7 fix: cap gas forwarded to the souvenir mint so a hostile or buggy
+        // souvenir contract can't consume the parent call's gas budget via the
+        // 63/64ths rule, causing buyPotato to OOG after the try/catch.
+        // 500_000 is generous (real mint costs well under 100k); it ensures the
+        // remaining code after the try block always has gas to finish.
+        try souvenirContract.mint{gas: 500_000}(
             seller, handNumber, msg.value, holdDuration, rarityTierUint
         ) returns (uint256 id) {
             souvenirId = id;

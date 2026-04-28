@@ -4,8 +4,9 @@
 
 const express = require('express');
 const router  = express.Router();
-const { ethers } = require('ethers');
 const { mutationLimiter } = require('../middleware/rateLimiter');
+const requireSignature    = require('../middleware/requireSignature');
+const { buildExpectedMessage } = require('../middleware/signedMessage');
 
 // Map: lowercaseAddress → { name, taunt, updatedAt }
 const profiles = new Map();
@@ -13,43 +14,43 @@ const profiles = new Map();
 // POST /api/player/profile
 // Body: { walletAddress, name, taunt, signature, message }
 //
-// C-3 fix: requires a wallet signature so only the key-holder can set their
-// own profile. Without this anyone could set a name/taunt for any address,
-// enabling stored XSS via the leaderboard/gallery/HoF innerHTML render paths.
+// C-3 / N-2 fix: requires a wallet signature where the signed message commits
+// to the exact name and taunt being submitted. A captured signature cannot be
+// replayed with different name/taunt values.
 //
-// Client-side: const sig = await signer.signMessage(message);
-// where message = `Hot Potato profile update\nAddress: ${walletAddress}\nTimestamp: ${timestamp}`
-router.post('/profile', mutationLimiter, (req, res) => {
-  const { walletAddress, name, taunt, signature, message } = req.body;
+// Message format:
+//   Hot Potato profile-update
+//   Address: <walletAddress lowercase>
+//   Name: <name trimmed to 20 chars>
+//   Taunt: <taunt trimmed to 80 chars>
+//   Timestamp: <unix ms>
+router.post('/profile', mutationLimiter, requireSignature, (req, res) => {
+  const { walletAddress, name, taunt, message } = req.body;
   if (!walletAddress) return res.status(400).json({ error: 'walletAddress required' });
 
-  // ── Signature verification ─────────────────────────────────
-  if (!signature || !message) {
-    return res.status(401).json({ error: 'signature and message are required' });
-  }
-  // Guard against absurdly long messages (no need to verify a 1MB string)
-  if (typeof message !== 'string' || message.length > 500) {
-    return res.status(400).json({ error: 'message too long' });
-  }
-  let signer;
-  try {
-    signer = ethers.verifyMessage(message, signature);
-  } catch {
-    return res.status(401).json({ error: 'Invalid signature' });
-  }
-  if (signer.toLowerCase() !== walletAddress.toLowerCase()) {
-    return res.status(401).json({ error: 'Signature does not match walletAddress' });
+  // N-2 fix: rebuild the canonical message from the submitted body and
+  // require a byte-exact match with what the user signed. Without this,
+  // a captured signature could be replayed with different name/taunt.
+  const expected = buildExpectedMessage({
+    action: 'profile-update',
+    walletAddress,
+    fields: {
+      Name:  (name  || '').trim().slice(0, 20),
+      Taunt: (taunt || '').trim().slice(0, 80),
+    },
+    timestamp: req.signedTimestamp,
+  });
+  if (message !== expected) {
+    return res.status(401).json({ error: 'Signed message does not match submitted name/taunt' });
   }
 
   const addr = walletAddress.toLowerCase();
   const existing = profiles.get(addr) || {};
-
   const updated = {
     name:      (name  || '').trim().slice(0, 20)  || existing.name  || null,
     taunt:     (taunt || '').trim().slice(0, 80)  || existing.taunt || null,
     updatedAt: Date.now(),
   };
-
   profiles.set(addr, updated);
   console.log(`👤 Profile saved: ${addr} → "${updated.name}" / "${updated.taunt}"`);
   res.json({ ok: true, profile: updated });

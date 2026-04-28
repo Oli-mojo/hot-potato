@@ -26,6 +26,7 @@ const { ethers } = require('ethers');
 const requireSignature   = require('../middleware/requireSignature');
 const requireInternalKey = require('../middleware/requireInternalKey');
 const { mutationLimiter, validateLimiter, galleryLimiter } = require('../middleware/rateLimiter');
+const { buildExpectedMessage } = require('../middleware/signedMessage');
 
 const BURN_ADDRESS  = '0x000000000000000000000000000000000000dEaD';
 const IPFS_GATEWAY  = 'https://gateway.pinata.cloud/ipfs/';
@@ -42,7 +43,9 @@ if (!process.env.SOUVENIR_ADDRESS) {
 }
 const CONTRACT_ADDRESS = process.env.SOUVENIR_ADDRESS;
 const RPC_URL          = process.env.RPC_URL;
-const RARITY_MAP       = ['common', 'uncommon', 'rare', 'epic', 'legendary']; // 5-tier V4 mapping
+// N-4 fix: contract has 4 RarityTier values (Common=0, Rare=1, Epic=2, Legendary=3).
+// The previous 5-tier map shifted every Rare→uncommon, Epic→rare, Legendary→epic.
+const RARITY_MAP       = ['common', 'rare', 'epic', 'legendary'];
 const SOUVENIR_ABI     = [
   // V3 legacy ABI — kept for gallery/owned routes until V4 migration
   'function souvenirCount() view returns (uint256)',
@@ -139,10 +142,22 @@ router.post('/generate', requireInternalKey, async (req, res) => {
 // Body: { walletAddress, promoCode, signature, message }
 // Stores a pending boost for this buyer — applied when they eventually get bought out
 router.post('/apply-promo', mutationLimiter, requireSignature, (req, res) => {
-  const { walletAddress, promoCode } = req.body;
+  const { walletAddress, promoCode, message } = req.body;
   if (!walletAddress || !promoCode) {
     return res.status(400).json({ error: 'walletAddress and promoCode required' });
   }
+
+  // N-2 fix: bind the signature to the specific promo code being applied.
+  const expected = buildExpectedMessage({
+    action: 'apply-promo',
+    walletAddress,
+    fields: { PromoCode: promoCode },
+    timestamp: req.signedTimestamp,
+  });
+  if (message !== expected) {
+    return res.status(401).json({ error: 'Signed message does not match submitted promoCode' });
+  }
+
   const result = validateCode(promoCode);
   if (!result.valid) {
     return res.status(400).json({ error: result.reason });
@@ -185,8 +200,19 @@ router.get('/loyalty/:address', async (req, res) => {
 // POST /api/souvenir/claim-loyalty — player claims their loyalty boost before buying
 // Body: { walletAddress, signature, message }
 router.post('/claim-loyalty', mutationLimiter, requireSignature, async (req, res) => {
-  const { walletAddress } = req.body;
+  const { walletAddress, message } = req.body;
   if (!walletAddress) return res.status(400).json({ error: 'walletAddress required' });
+
+  // N-2 fix: bind the signature to this specific action (no extra fields needed).
+  const expected = buildExpectedMessage({
+    action: 'claim-loyalty',
+    walletAddress,
+    timestamp: req.signedTimestamp,
+  });
+  if (message !== expected) {
+    return res.status(401).json({ error: 'Signed message does not match claim-loyalty action' });
+  }
+
   try {
     const result = await claimLoyaltyBoost(walletAddress);
     if (!result.success) return res.status(400).json({ error: result.reason });
@@ -223,10 +249,22 @@ router.get('/referral/:address', (req, res) => {
 // Body: { referralCode, walletAddress, signature, message }
 // Applies mutual +1 boost to referee and referrer
 router.post('/apply-referral', mutationLimiter, requireSignature, (req, res) => {
-  const { referralCode, walletAddress } = req.body;
+  const { referralCode, walletAddress, message } = req.body;
   if (!referralCode || !walletAddress) {
     return res.status(400).json({ error: 'referralCode and walletAddress required' });
   }
+
+  // N-2 fix: bind the signature to the specific referral code.
+  const expected = buildExpectedMessage({
+    action: 'apply-referral',
+    walletAddress,
+    fields: { ReferralCode: referralCode },
+    timestamp: req.signedTimestamp,
+  });
+  if (message !== expected) {
+    return res.status(401).json({ error: 'Signed message does not match referralCode' });
+  }
+
   const result = applyReferral(referralCode, walletAddress);
   if (!result.success) {
     return res.status(400).json({ error: result.reason });
@@ -238,12 +276,28 @@ router.post('/apply-referral', mutationLimiter, requireSignature, (req, res) => 
 // Body: { walletAddress, tokenId, txHash, signature, message }
 // Verifies souvenir was burned, generates a trade-in promo code
 router.post('/trade-in', mutationLimiter, requireSignature, async (req, res) => {
-  const { walletAddress, tokenId, txHash } = req.body;
+  const { walletAddress, tokenId, txHash, message } = req.body;
   if (!walletAddress || tokenId === undefined || !txHash) {
     return res.status(400).json({ error: 'walletAddress, tokenId, and txHash required' });
   }
+
+  // N-2 fix: bind the signature to this specific (tokenId, txHash) pair.
+  const expected = buildExpectedMessage({
+    action: 'trade-in',
+    walletAddress,
+    fields: { TokenId: tokenId, TxHash: txHash },
+    timestamp: req.signedTimestamp,
+  });
+  if (message !== expected) {
+    return res.status(401).json({ error: 'Signed message does not match tokenId/txHash' });
+  }
+
   try {
     const provider = new ethers.JsonRpcProvider(RPC_URL);
+    // N-1 fix: define the souvenir contract instance in this scope. The previous
+    // version referenced a `contract` variable that was never declared here,
+    // causing every trade-in to throw ReferenceError.
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, SOUVENIR_ABI, provider);
 
     // Verify transaction exists and succeeded
     const receipt = await provider.getTransactionReceipt(txHash);
@@ -251,10 +305,10 @@ router.post('/trade-in', mutationLimiter, requireSignature, async (req, res) => 
       return res.status(400).json({ error: 'Transaction not confirmed yet — try again in a moment' });
     }
 
-    // H-3 fix: decode the ERC-721 Transfer event directly from the receipt logs
-    // rather than trusting ownerOf() alone. ownerOf() can be gamed by a race
-    // condition where someone burns then immediately re-mints into the same slot.
-    // Decoding the log proves the burn happened in THIS specific transaction.
+    // H-3 + N-3 fix: decode the ERC-721 Transfer event and verify the burn
+    // was *from this wallet* to BURN_ADDRESS for this tokenId on the souvenir
+    // contract. The earlier H-3 fix omitted the from-address check, allowing
+    // anyone to claim a code by submitting someone else's burn tx.
     const transferIface = new ethers.Interface([
       'event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)',
     ]);
@@ -264,18 +318,20 @@ router.post('/trade-in', mutationLimiter, requireSignature, async (req, res) => 
         const parsed = transferIface.parseLog({ topics: log.topics, data: log.data });
         return (
           parsed.name === 'Transfer' &&
-          parsed.args.to.toLowerCase()       === BURN_ADDRESS.toLowerCase() &&
-          parsed.args.tokenId.toString()     === tokenId.toString()
+          parsed.args.from.toLowerCase()   === walletAddress.toLowerCase() && // ← N-3
+          parsed.args.to.toLowerCase()     === BURN_ADDRESS.toLowerCase() &&
+          parsed.args.tokenId.toString()   === tokenId.toString()
         );
       } catch { return false; }
     });
     if (!burnConfirmed) {
       return res.status(400).json({
-        error: 'No burn Transfer event found for this tokenId in the provided transaction',
+        error: 'No matching burn Transfer event found — verify tokenId, txHash, and that you are the burner',
       });
     }
 
     // Get souvenir rarity from on-chain data
+    // REQUIRED: idempotency depends on this check — see eventListener.js
     const data = await contract.souvenirs(tokenId);
     const rarity = RARITY_MAP[Number(data.rarityTier)] || 'common';
 
@@ -368,7 +424,8 @@ router.get('/owned/:address', galleryLimiter, async (req, res) => {
   }
 });
 
-router.get('/demo', async (req, res) => {
+// mutationLimiter added: each call generates a fal.ai image at real cost — cap it.
+router.get('/demo', mutationLimiter, async (req, res) => {
   try {
     const { rarity } = req.query;
     const validRarities = ['common', 'rare', 'epic', 'legendary'];
@@ -387,7 +444,8 @@ router.get('/demo', async (req, res) => {
 // in plaintext. Use server logs or a health-check endpoint that returns only
 // boolean "set / not set" values without exposing actual content.
 
-router.post('/test-discord', async (req, res) => {
+// requireInternalKey added: unauthenticated calls cost a real Discord webhook hit per request.
+router.post('/test-discord', requireInternalKey, async (req, res) => {
   try {
     await announcePotatoPassed({
       hand: 99,

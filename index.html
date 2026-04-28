@@ -981,6 +981,12 @@
       </div>
       <button class="buy-btn" id="buy-btn" onclick="openModal()">🥔 BUY THE POTATO</button>
       <div class="buy-note">Minimum bid: … ETH</div>
+      <!-- N-6: pending proceeds banner — shown when the connected wallet has unclaimed ETH -->
+      <div id="pending-withdraw-banner" style="display:none;margin-top:12px;padding:10px 14px;background:rgba(255,200,0,0.08);border:1px solid rgba(255,200,0,0.3);border-radius:8px;text-align:center;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.06em;color:#FAC775;margin-bottom:4px;">💰 YOU HAVE PENDING PROCEEDS</div>
+        <div id="pending-withdraw-amount" style="font-size:12px;color:rgba(255,245,224,0.7);margin-bottom:8px;">— ETH ready to collect</div>
+        <button id="withdraw-btn" onclick="withdrawProceeds()" style="font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;background:rgba(250,199,117,0.15);border:1px solid rgba(250,199,117,0.4);border-radius:5px;color:#FAC775;padding:6px 14px;cursor:pointer;">Withdraw with one click</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1259,18 +1265,22 @@
 <script>
 // ─── CONFIG ───────────────────────────────────────────────
 const API_BASE = 'https://hot-potato-production.up.railway.app/api';
-const CONTRACT_ADDRESS = '0x12A0C8f0BeaBe3AD904096c77A839f6b87A32bec'; // v4 — two-contract
+const CONTRACT_ADDRESS = '0xf9b3912578893a0c4771db56D7F64B956311524E'; // v5 — post-audit
 
 // Marketplace config — switch to mainnet URLs before launch
 const CHAIN_SLUG    = 'base-sepolia';  // change to 'base' on mainnet
 const OPENSEA_BASE  = `https://testnets.opensea.io/assets/${CHAIN_SLUG}`;  // change to https://opensea.io/assets/base on mainnet
 function openSeaTokenUrl(tokenId) { return `${OPENSEA_BASE}/${CONTRACT_ADDRESS}/${tokenId}`; }
-const OPENSEA_COLLECTION = `https://testnets.opensea.io/0x22dCc7cdE4689260ecA455d33EA460812A0fC8e9`; // souvenir collection
+const OPENSEA_COLLECTION = `https://testnets.opensea.io/0xf4C5c825bCC7C36977062cB1376C5548FE698c5E`; // souvenir collection
 const CHAIN_ID = 84532; // Base Sepolia
 const CONTRACT_ABI = [
-  'function buyPotato(uint256 newAskingPrice) external payable',
+  'function buyPotato(uint256 newAskingPrice, uint256 maxCurrentPrice) external payable',
   'function getGameState() external view returns (address currentOwner, uint256 price, uint256 timeHeld, uint256 totalTransfers)',
   'function safeTransferFrom(address from, address to, uint256 tokenId)',
+  // N-6: pull-payment withdraw UI
+  'function withdrawPayments() external',
+  'function pendingWithdrawals(address) view returns (uint256)',
+  'function totalPendingWithdrawals() view returns (uint256)',
   'event PotatoPassed(address indexed from, address indexed to, uint256 price, uint256 holdDuration, uint256 souvenirTokenId, uint8 rarityTier, uint8 buyerBoostLevel)',
 ];
 const BURN_ADDRESS = '0x000000000000000000000000000000000000dEaD';
@@ -1585,6 +1595,7 @@ async function connectWallet() {
     showToast('✅ Wallet connected — ' + walletAddress.slice(0,6) + '...' + walletAddress.slice(-4));
     checkAndPromptSouvenirs(walletAddress);
     loadProfiles([walletAddress]); // pre-cache own profile for modal pre-fill
+    checkPendingWithdrawal();      // N-6: show banner if this wallet has unclaimed proceeds
   } catch (err) {
     clearTimeout(resetTimer);
     console.error('Wallet connection failed:', err);
@@ -1661,14 +1672,61 @@ async function showLoyaltyStatus() {
   } catch (e) { el.style.display = 'none'; }
 }
 
+// ─── PENDING PROCEEDS (N-6) ──────────────────────────────
+// Check if the connected wallet has unclaimed proceeds from a previous sale.
+// The pull-payment pattern means ETH isn't pushed automatically — sellers must
+// call withdrawPayments() themselves. Show a banner if balance > 0.
+async function checkPendingWithdrawal() {
+  const banner = document.getElementById('pending-withdraw-banner');
+  const amtEl  = document.getElementById('pending-withdraw-amount');
+  if (!banner || !walletAddress || !window.ethereum) return;
+  try {
+    const provider  = new ethers.BrowserProvider(window._ethProvider || window.ethereum);
+    const contract  = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+    const pending   = await contract.pendingWithdrawals(walletAddress);
+    if (pending > 0n) {
+      const ethAmt = parseFloat(ethers.formatEther(pending)).toFixed(5);
+      if (amtEl) amtEl.textContent = `${ethAmt} ETH ready to collect`;
+      banner.style.display = 'block';
+    } else {
+      banner.style.display = 'none';
+    }
+  } catch (e) {
+    banner.style.display = 'none';
+  }
+}
+
+async function withdrawProceeds() {
+  if (!walletAddress) return;
+  const btn = document.getElementById('withdraw-btn');
+  if (btn) { btn.textContent = 'Withdrawing…'; btn.disabled = true; }
+  try {
+    const provider = new ethers.BrowserProvider(window._ethProvider || window.ethereum);
+    const signer   = await provider.getSigner();
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+    const tx       = await contract.withdrawPayments();
+    showToast('⏳ Withdrawal submitted — waiting for confirmation…', '#FF6B00');
+    await tx.wait();
+    showToast('✅ Proceeds withdrawn to your wallet!');
+    checkPendingWithdrawal(); // refresh banner
+  } catch (err) {
+    console.error('Withdraw failed:', err);
+    showToast('❌ Withdrawal failed: ' + (err.reason || err.message || 'unknown'), '#FF4444');
+  } finally {
+    if (btn) { btn.textContent = 'Withdraw with one click'; btn.disabled = false; }
+  }
+}
+
 async function claimLoyalty() {
   const btn = document.getElementById('claim-loyalty-btn');
   if (btn) { btn.textContent = 'Claiming…'; btn.disabled = true; }
   try {
+    // N-2 fix: use signRequest so the signature is bound to this specific action.
+    const { message, signature } = await signRequest('claim-loyalty');
     const res  = await fetch(`${API_BASE}/souvenir/claim-loyalty`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ walletAddress }),
+      body: JSON.stringify({ walletAddress, signature, message }),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -1679,7 +1737,7 @@ async function claimLoyalty() {
     showToast(`🏆 Loyalty boost +${data.boost} locked in!`);
     showLoyaltyStatus(); // refresh to show claimed state
   } catch (e) {
-    showToast('⚠️ Network error — try again');
+    showToast('⚠️ ' + (e?.message || 'Network error — try again'));
     if (btn) { btn.textContent = 'Claim Boost'; btn.disabled = false; }
   }
 }
@@ -1808,10 +1866,16 @@ async function confirmBuy() {
     const sendValue = ethers.parseEther(sendEth.toFixed(8));
     const newAskingPrice = ethers.parseEther(newPriceEth.toFixed(6));
 
+    // H-4 slippage guard: pass the price we read at click time as maxCurrentPrice.
+    // If a MEV bot or another buyer raises the price before our tx lands, the
+    // contract reverts instead of silently charging us more than we expected.
+    // We add a 1% tolerance so normal block-timing variance doesn't cause false reverts.
+    const maxCurrentPrice = ethers.parseEther((currentPriceEth * 1.01).toFixed(8));
+
     btn.textContent = '⏳ Waiting for wallet...';
     btn.disabled = true;
 
-    const tx = await contract.buyPotato(newAskingPrice, { value: sendValue });
+    const tx = await contract.buyPotato(newAskingPrice, maxCurrentPrice, { value: sendValue });
     btn.textContent = '⏳ Transaction pending...';
     const receipt = await tx.wait();
 
@@ -1822,23 +1886,34 @@ async function confirmBuy() {
     showToast('🥔 You now hold the Hot Potato!');
     saveProfile(); // save name + taunt if entered
     loadGameState();
+    checkPendingWithdrawal(); // refresh — previous owner may now have pending proceeds
 
-    // If buyer entered a promo/referral code, store the pending boost on the backend
+    // If buyer entered a promo/referral code, store the pending boost on the backend.
+    // N-2 fix: sign the request so the code is bound to this wallet and can't be
+    // replayed by someone else, or swapped for a different code.
     if (activePromoCode) {
       const isReferral = activePromoCode.toUpperCase().startsWith('REF-');
       const endpoint   = isReferral ? 'apply-referral' : 'apply-promo';
-      const body       = isReferral
-        ? { referralCode: activePromoCode, walletAddress }
-        : { walletAddress, promoCode: activePromoCode };
-      fetch(`${API_BASE}/souvenir/${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      }).then(() => {
-        activePromoCode = null;
-        document.getElementById('promo-input').value = '';
-        document.getElementById('promo-status').textContent = '';
-      });
+      const fields     = isReferral
+        ? { ReferralCode: activePromoCode }
+        : { PromoCode:    activePromoCode };
+      try {
+        const { message, signature } = await signRequest(endpoint, fields);
+        const body = isReferral
+          ? { referralCode: activePromoCode, walletAddress, signature, message }
+          : { walletAddress, promoCode: activePromoCode, signature, message };
+        await fetch(`${API_BASE}/souvenir/${endpoint}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+      } catch (err) {
+        // User rejected signature or wallet error — boost simply isn't applied
+        console.warn(`${endpoint} failed:`, err?.message);
+      }
+      activePromoCode = null;
+      document.getElementById('promo-input').value = '';
+      document.getElementById('promo-status').textContent = '';
     }
 
     // Prompt MetaMask to add the Hot Potato NFT (token #0) to the user's wallet
@@ -1945,10 +2020,15 @@ async function tradeInSouvenir(tokenId, rarity) {
     const receipt  = await tx.wait();
 
     showToast('🔥 Souvenir burned! Generating your code…', '#FF6B00');
+    // N-2 fix: sign the trade-in request binding the signature to this specific tokenId + txHash.
+    const { message, signature } = await signRequest('trade-in', {
+      TokenId: tokenId,
+      TxHash:  receipt.hash,
+    });
     const res  = await fetch(`${API_BASE}/souvenir/trade-in`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ walletAddress, tokenId, txHash: receipt.hash }),
+      body: JSON.stringify({ walletAddress, tokenId, txHash: receipt.hash, signature, message }),
     });
     const data = await res.json();
     if (data.success) {
@@ -2308,6 +2388,29 @@ async function loadProfiles(addresses) {
   } catch {}
 }
 
+// ─── Signed-message helper ────────────────────────────────
+// N-2 fix: builds the canonical message format the backend expects, signs it,
+// and returns { message, signature } ready to include in a request body.
+// The format is duplicated server-side in backend/middleware/signedMessage.js;
+// keep them in sync if you ever change the structure.
+async function signRequest(action, fields = {}) {
+  if (!walletAddress) throw new Error('Wallet not connected');
+  const provider  = new ethers.BrowserProvider(window._ethProvider || window.ethereum);
+  const signer    = await provider.getSigner();
+  const timestamp = Date.now();
+  const lines = [
+    `Hot Potato ${action}`,
+    `Address: ${walletAddress.toLowerCase()}`,
+  ];
+  for (const [k, v] of Object.entries(fields)) {
+    lines.push(`${k}: ${String(v ?? '').replace(/\r?\n/g, ' ')}`);
+  }
+  lines.push(`Timestamp: ${timestamp}`);
+  const message   = lines.join('\n');
+  const signature = await signer.signMessage(message);
+  return { message, signature };
+}
+
 // C-3 fix: HTML escape helper — always call esc() before inserting any
 // user-controlled string into an innerHTML template literal. This prevents
 // stored XSS even if a malicious string reaches the frontend via the API.
@@ -2331,18 +2434,16 @@ function getPlayerTaunt(addr) {
 
 async function saveProfile() {
   if (!walletAddress) return;
-  const name  = (document.getElementById('profile-name-input')?.value  || '').trim();
-  const taunt = (document.getElementById('profile-taunt-input')?.value || '').trim();
+  const name  = (document.getElementById('profile-name-input')?.value  || '').trim().slice(0, 20);
+  const taunt = (document.getElementById('profile-taunt-input')?.value || '').trim().slice(0, 80);
   if (!name && !taunt) return;
   try {
-    // C-3 fix: sign a timestamped message to prove ownership of walletAddress.
-    // The backend verifies ethers.verifyMessage(message, signature) === walletAddress.
-    const timestamp = Date.now();
-    const message = `Hot Potato profile update\nAddress: ${walletAddress}\nTimestamp: ${timestamp}`;
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    const signer   = await provider.getSigner();
-    const signature = await signer.signMessage(message);
-
+    // N-2 fix: use signRequest so the signature commits to the exact name/taunt values.
+    // A captured signature cannot be replayed with different name/taunt.
+    const { message, signature } = await signRequest('profile-update', {
+      Name:  name,
+      Taunt: taunt,
+    });
     await fetch(`${API_BASE}/player/profile`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

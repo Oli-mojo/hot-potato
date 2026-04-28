@@ -35,9 +35,11 @@ function createLimiter({ windowMs, max, message }) {
   }, windowMs).unref(); // .unref() so this timer never prevents the process from exiting
 
   return function rateLimiter(req, res, next) {
-    // Prefer X-Forwarded-For (set by Railway's proxy) but fall back to socket IP.
-    const raw = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
-    const ip  = raw.split(',')[0].trim();
+    // N-8 fix: use req.ip which Express computes from X-Forwarded-For correctly
+    // once app.set('trust proxy', 1) is set in server.js. The old hand-parsed
+    // approach trusted the client-supplied X-Forwarded-For header directly,
+    // allowing an attacker to rotate it and bypass rate limiting entirely.
+    const ip = req.ip || 'unknown';
 
     const now    = Date.now();
     const cutoff = now - windowMs;

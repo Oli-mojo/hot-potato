@@ -159,7 +159,9 @@ Repeat for the souvenir contract.
 | v1 | Base Sepolia | `0x2E8eA15a54Db53375807A8F74ad6ff6eC4a4065e` | — |
 | v2 | Base Sepolia | `0xd04A4fA2B05874d268Ce8bB8E8EaEc252ef2AB22` | — |
 | v3 | Base Sepolia | `0x90Bfcf98282445B35e3ce48b9Eb21E532E603473` | — |
-| v4 | Base Mainnet | TBD | TBD |
+| v4 | Base Sepolia | `0x12A0C8f0BeaBe3AD904096c77A839f6b87A32bec` | `0x22dCc7cdE4689260ecA455d33EA460812A0fC8e9` |
+| v5 | Base Sepolia | `0xf9b3912578893a0c4771db56D7F64B956311524E` | `0xf4C5c825bCC7C36977062cB1376C5548FE698c5E` |
+| v5 | Base Mainnet | TBD | TBD |
 
 ---
 

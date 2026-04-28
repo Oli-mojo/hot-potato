@@ -15,6 +15,12 @@ const { globalLimiter } = require('./middleware/rateLimiter');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// N-8 fix: tell Express to trust 1 proxy hop (Railway's edge).
+// Without this, req.ip resolves to Railway's internal address and the rate
+// limiter keys every request to the same IP, making it useless.
+// With it, Express reads the real client IP from X-Forwarded-For correctly.
+app.set('trust proxy', 1);
+
 // H-6 fix: lock CORS to the deployed frontend origin.
 // Set ALLOWED_ORIGIN in your Railway env vars to e.g. https://hotpotato.xyz
 // For local dev, set ALLOWED_ORIGIN=http://localhost:3000 in .env

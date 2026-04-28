@@ -2,15 +2,19 @@
 pragma solidity ^0.8.20;
 
 // ============================================================
-//  HOT POTATO SOUVENIR — v1
+//  HOT POTATO SOUVENIR — v2
 //  Separate ERC-721 collection for souvenir NFTs.
 //  Minted exclusively by the HotPotato game contract on every sale.
 //  Each souvenir permanently records the holder's stats on-chain.
 //
+//  What changed from v1 (post-audit):
+//  - setGameContract is now one-shot (N-5): once set, cannot be changed
+//  - GameContractUpdated event emitted on authorisation
+//
 //  Deployment order:
 //    1. Deploy HotPotatoSouvenir            → SOUVENIR_ADDRESS
 //    2. Deploy HotPotato(SOUVENIR_ADDRESS)  → GAME_ADDRESS
-//    3. souvenir.setGameContract(GAME_ADDRESS)
+//    3. souvenir.setGameContract(GAME_ADDRESS)  ← permanent, cannot be undone
 //    4. souvenir.transferOwnership(BACKEND_WALLET)
 //    5. game.transferOwnership(BACKEND_WALLET)
 // ============================================================
@@ -71,10 +75,20 @@ contract HotPotatoSouvenir is ERC721, ERC2981, Ownable {
         _;
     }
 
+    /// Emitted when the authorised game contract is changed.
+    /// Allows off-chain watchers to detect unexpected rotations.
+    event GameContractUpdated(address indexed previousGame, address indexed newGame);
+
     /// Authorise the HotPotato game contract to mint souvenirs.
-    /// Call once after deploying the game contract.
+    ///
+    /// N-5 fix: one-shot guard — once set, this cannot be changed. A compromised
+    /// owner key therefore cannot rotate gameContract to a malicious minter and
+    /// produce counterfeit Legendary souvenirs. If a new game contract is ever
+    /// needed, deploy a new HotPotatoSouvenir contract alongside it.
     function setGameContract(address _gameContract) external onlyOwner {
         require(_gameContract != address(0), "Zero address");
+        require(gameContract == address(0), "Game contract already set - deploy a new souvenir contract to change it");
+        emit GameContractUpdated(address(0), _gameContract);
         gameContract = _gameContract;
     }
 
