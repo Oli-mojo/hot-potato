@@ -2226,7 +2226,7 @@ async function loadGallery() {
     gallery.innerHTML = data.souvenirs.map(s => {
       const tier       = s.rarityTier || 'common';
       const isOwned    = !s.burned && ownedIds.has(s.tokenId);
-      const isMyBurned = s.burned && myAddress && s.originalOwner && s.originalOwner.toLowerCase() === myAddress;
+      const isMyBurned = s.burned && walletAddress && s.originalOwner && s.originalOwner.toLowerCase() === walletAddress.toLowerCase();
 
       const imgEl = s.imageUrl
         ? `<img src="${s.imageUrl}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px 8px 0 0;${s.burned ? 'filter:grayscale(0.55) sepia(0.35) brightness(0.65);' : ''}" onerror="this.outerHTML='<div style=\\'aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:40px;background:#1A0E05;\\'>${rarityBadge[tier] || '🥔'}</div>'">`
