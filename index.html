@@ -2069,7 +2069,7 @@ async function checkAndPromptSouvenirs(address) {
         try {
           await window.ethereum.request({
             method: 'wallet_watchAsset',
-            params: { type: 'ERC721', options: { address: CONTRACT_ADDRESS, tokenId: tokenId.toString() } },
+            params: { type: 'ERC721', options: { address: SOUVENIR_ADDRESS, tokenId: tokenId.toString() } },
           });
           alreadyPrompted.push(tokenId);
           localStorage.setItem(storageKey, JSON.stringify(alreadyPrompted));

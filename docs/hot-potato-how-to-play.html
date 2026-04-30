@@ -214,7 +214,7 @@
       <p>You held for 3 days (base tier 2 — Epic-leaning). The buyer overpays by 30% (+2 tiers). Your effective tier is 4 — you roll at 1% Common / 9% Rare / 40% Epic / <strong>50% Legendary.</strong></p>
     </div>
 
-    <p class="onchain-note">▲ Rarity is rolled on-chain at the moment of sale using block randomness. It cannot be predicted or gamed in advance.</p>
+    <p class="onchain-note">▲ Rarity is rolled on-chain at the moment of sale and permanently recorded in the souvenir NFT. The roll uses a combination of <strong style="color:rgba(255,245,224,0.5)">block randomness, timestamp, buyer address, and transfer count</strong> — it is transparent and verifiable on-chain, but not cryptographically unpredictable. In practice, no player can meaningfully influence the outcome of their own roll.</p>
   </section>
 
   <!-- ═══════════════════════════════════════════════════ -->
@@ -337,6 +337,11 @@
       <div class="q">Can I trade or sell my souvenir NFTs?</div>
       <p class="a">Yes. Souvenirs are standard ERC-721 tokens and appear on OpenSea and other marketplaces. You can also burn them via the site's trade-in feature to get a boost code for your next souvenir instead.</p>
     </div>
+
+    <div class="faq">
+      <div class="q">How exactly is rarity randomness generated — is it truly random?</div>
+      <p class="a">Rarity is determined on-chain at the moment of sale using a hash of four inputs: <strong>block randomness (prevrandao), the timestamp, the buyer's address, and the total number of transfers</strong>. This is transparent — anyone can verify the inputs and the result on-chain. It is not, however, cryptographically unpredictable: a block validator could theoretically try to influence block randomness to favour a particular outcome. In practice the economic incentive to do so is extremely low relative to the cost, and no normal player has any influence over it at all. We consider this an acceptable tradeoff for a game at this scale.</p>
+    </div>
   </section>
 
   <!-- ═══════════════════════════════════════════════════ -->
@@ -355,7 +360,7 @@
   </section>
 
   <footer>
-    Hot Potato · Player Guide · v4 · April 2026
+    Hot Potato · Player Guide · v5 · April 2026
   </footer>
 
 </div>

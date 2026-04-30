@@ -16,7 +16,7 @@ pragma solidity ^0.8.20;
 //  Game rules (unchanged):
 //  - Token 0 = The Hot Potato, always for sale
 //  - Price only goes up (tiered minimum increase)
-//  - 5% of every sale → creator wallet
+//  - 5% of every sale → creator wallet (95% to seller)
 //  - Overpaying above the minimum banks a rarity boost
 //  - Hold longer for rarer souvenir odds
 //  - Starting price: 0.001 ETH
@@ -48,7 +48,7 @@ contract HotPotato is ERC721, ERC2981, Ownable, ReentrancyGuard {
 
     // ─── Game constants ───────────────────────────────────────
     uint256 public constant STARTING_PRICE  = 0.001 ether;
-    uint256 public constant CREATOR_FEE_BPS = 500;   // 5%
+    uint256 public constant CREATOR_FEE_BPS = 500;   // 5% — deducted from payment; seller receives 95%
     uint256 public constant BPS_DENOMINATOR = 10000;
 
     // ─── Tiered minimum price increase ────────────────────────
@@ -171,7 +171,7 @@ contract HotPotato is ERC721, ERC2981, Ownable, ReentrancyGuard {
         // Revert if the price moved above the caller's stated maximum between
         // the time they read the price and the time this tx executes. Protects
         // against MEV boost-level sandwiching and front-running.
-        require(currentPrice <= maxCurrentPrice, "Price moved — increase maxCurrentPrice or try again");
+        require(currentPrice <= maxCurrentPrice, "Price moved - increase maxCurrentPrice or try again");
 
         // ── Validate payment ────────────────────────────────
         require(msg.value >= currentPrice, "Payment too low");
