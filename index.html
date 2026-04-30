@@ -840,11 +840,16 @@
     /* Leaderboard — already handles 1 col via existing media query */
 
     /* Modal — bottom sheet */
-    .modal-overlay { align-items: flex-end; }
+    .modal-overlay {
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: stretch;
+    }
     .modal {
       width: 100%;
       max-height: 92dvh;
-      overflow-y: auto;
+      min-height: 0;        /* Required: allows flex child to shrink + scroll */
+      overflow-y: scroll;   /* scroll not auto — more reliable on iOS/Android */
       border-radius: 16px 16px 0 0;
       padding: 24px 20px;
       -webkit-overflow-scrolling: touch;
@@ -1634,7 +1639,9 @@ function openModal() {
     return;
   }
   document.getElementById('modal').classList.add('open');
-  document.body.style.overflow = 'hidden'; // prevent background scroll on iOS
+  // iOS-safe body scroll lock: position:fixed is required — overflow:hidden alone doesn't work on Safari
+  document.body.dataset.scrollY = window.scrollY;
+  document.body.style.cssText += ';overflow:hidden;position:fixed;top:-' + window.scrollY + 'px;width:100%';
   showLoyaltyStatus();
   showReferralCode();
   prefillProfileFields();
@@ -1749,7 +1756,14 @@ async function claimLoyalty() {
 }
 function closeModal() {
   document.getElementById('modal').classList.remove('open');
-  document.body.style.overflow = ''; // restore background scroll
+  // Restore scroll position — must undo position:fixed and scroll back to where we were
+  const scrollY = parseInt(document.body.dataset.scrollY || '0');
+  document.body.style.cssText = document.body.style.cssText
+    .replace(/overflow:[^;]+;?/g, '')
+    .replace(/position:[^;]+;?/g, '')
+    .replace(/top:[^;]+;?/g, '')
+    .replace(/width:[^;]+;?/g, '');
+  window.scrollTo(0, scrollY);
   // Reset overpay to exact on close
   overpayMultiplier = 1.0;
   document.querySelectorAll('.overpay-btn').forEach((b, i) => {
