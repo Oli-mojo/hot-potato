@@ -840,20 +840,21 @@
     /* Leaderboard — already handles 1 col via existing media query */
 
     /* Modal — bottom sheet */
-    .modal-overlay {
-      flex-direction: column;
-      justify-content: flex-end;
-      align-items: stretch;
+    /* Overlay IS the scroll container — avoids iOS flex+overflow issues */
+    .modal-overlay.open {
+      display: block;          /* override base display:flex */
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      padding-top: 8dvh;       /* dark gap above = bottom-sheet appearance */
     }
     .modal {
       width: 100%;
-      max-height: 92dvh;
-      min-height: 0;        /* Required: allows flex child to shrink + scroll */
-      overflow-y: scroll;   /* scroll not auto — more reliable on iOS/Android */
+      min-height: 92dvh;       /* fills most of screen; overlay scrolls it */
       border-radius: 16px 16px 0 0;
       padding: 24px 20px;
-      -webkit-overflow-scrolling: touch;
-      overscroll-behavior: contain;
+      box-sizing: border-box;
+      /* NO max-height, NO overflow-y — overlay handles scroll */
     }
 
     /* Trade-in modal */
@@ -1627,23 +1628,16 @@ function showRulesTab(panelId, btn) {
 }
 
 // ─── BODY SCROLL LOCK ────────────────────────────────────
-// iOS Safari ignores overflow:hidden on body — position:fixed is the only reliable fix.
-// We save scrollY so the page doesn't jump when the modal closes.
+// The modal overlay is position:fixed and is itself the scroll container,
+// so we only need to prevent the body from scrolling underneath it.
+// Simple overflow:hidden is enough — no position:fixed trickery needed.
 let _savedScrollY = 0;
 function _lockScroll() {
   _savedScrollY = window.scrollY;
-  document.body.style.overflow   = 'hidden';
-  document.body.style.position   = 'fixed';
-  document.body.style.top        = `-${_savedScrollY}px`;
-  document.body.style.left       = '0';
-  document.body.style.right      = '0';
+  document.body.style.overflow = 'hidden';
 }
 function _unlockScroll() {
-  document.body.style.overflow   = '';
-  document.body.style.position   = '';
-  document.body.style.top        = '';
-  document.body.style.left       = '';
-  document.body.style.right      = '';
+  document.body.style.overflow = '';
   window.scrollTo(0, _savedScrollY);
 }
 
