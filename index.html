@@ -1626,6 +1626,27 @@ function showRulesTab(panelId, btn) {
   btn.classList.add('active');
 }
 
+// ─── BODY SCROLL LOCK ────────────────────────────────────
+// iOS Safari ignores overflow:hidden on body — position:fixed is the only reliable fix.
+// We save scrollY so the page doesn't jump when the modal closes.
+let _savedScrollY = 0;
+function _lockScroll() {
+  _savedScrollY = window.scrollY;
+  document.body.style.overflow   = 'hidden';
+  document.body.style.position   = 'fixed';
+  document.body.style.top        = `-${_savedScrollY}px`;
+  document.body.style.left       = '0';
+  document.body.style.right      = '0';
+}
+function _unlockScroll() {
+  document.body.style.overflow   = '';
+  document.body.style.position   = '';
+  document.body.style.top        = '';
+  document.body.style.left       = '';
+  document.body.style.right      = '';
+  window.scrollTo(0, _savedScrollY);
+}
+
 // ─── BUY MODAL ────────────────────────────────────────────
 function openModal() {
   if (!walletAddress) {
@@ -1639,9 +1660,7 @@ function openModal() {
     return;
   }
   document.getElementById('modal').classList.add('open');
-  // iOS-safe body scroll lock: position:fixed is required — overflow:hidden alone doesn't work on Safari
-  document.body.dataset.scrollY = window.scrollY;
-  document.body.style.cssText += ';overflow:hidden;position:fixed;top:-' + window.scrollY + 'px;width:100%';
+  _lockScroll();
   showLoyaltyStatus();
   showReferralCode();
   prefillProfileFields();
@@ -1756,14 +1775,7 @@ async function claimLoyalty() {
 }
 function closeModal() {
   document.getElementById('modal').classList.remove('open');
-  // Restore scroll position — must undo position:fixed and scroll back to where we were
-  const scrollY = parseInt(document.body.dataset.scrollY || '0');
-  document.body.style.cssText = document.body.style.cssText
-    .replace(/overflow:[^;]+;?/g, '')
-    .replace(/position:[^;]+;?/g, '')
-    .replace(/top:[^;]+;?/g, '')
-    .replace(/width:[^;]+;?/g, '');
-  window.scrollTo(0, scrollY);
+  _unlockScroll();
   // Reset overpay to exact on close
   overpayMultiplier = 1.0;
   document.querySelectorAll('.overpay-btn').forEach((b, i) => {
