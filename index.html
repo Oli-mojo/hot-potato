@@ -1205,7 +1205,7 @@
   <div class="modal">
     <button class="modal-close" onclick="closeModal()">✕</button>
     <div class="modal-title">BUY THE POTATO</div>
-    <div class="modal-sub">You're entering an unstoppable game. Pay the price — the current holder cashes out and earns their souvenir. Set your ask price high: the next buyer pays <em>you</em> that amount. Hold longer for a rarer souvenir when your turn comes.</div>
+    <div class="modal-sub">You're entering an unstoppable game. Pay the price — the current holder cashes out and earns their souvenir. Set your asking price now — it's locked in the moment you buy. The next buyer must pay you that amount to take it. Hold longer for a rarer souvenir when your turn comes.</div>
     <div class="modal-row"><span class="modal-key">Current price</span><span class="modal-val yellow" id="modal-current-price">… ETH</span></div>
 
     <div style="margin:12px 0 4px;">
@@ -1269,15 +1269,15 @@
 <script>
 // ─── CONFIG ───────────────────────────────────────────────
 const API_BASE = 'https://hot-potato-production.up.railway.app/api';
-const CONTRACT_ADDRESS  = '0xf9b3912578893a0c4771db56D7F64B956311524E'; // v5 — post-audit
-const SOUVENIR_ADDRESS  = '0xf4C5c825bCC7C36977062cB1376C5548FE698c5E'; // v2 — souvenir collection
+const CONTRACT_ADDRESS  = '0x0375610e1384C7E09F6A94C7a57fe46C51E5A2c5'; // v5 — Base Mainnet
+const SOUVENIR_ADDRESS  = '0xD49B7c38a07ee86c889b46f67b341bC117fF75A1'; // v2 — Base Mainnet
 
-// Marketplace config — switch to mainnet URLs before launch
-const CHAIN_SLUG    = 'base-sepolia';  // change to 'base' on mainnet
-const OPENSEA_BASE  = `https://testnets.opensea.io/assets/${CHAIN_SLUG}`;  // change to https://opensea.io/assets/base on mainnet
+// Marketplace config
+const CHAIN_SLUG    = 'base';
+const OPENSEA_BASE  = `https://opensea.io/assets/${CHAIN_SLUG}`;
 function openSeaTokenUrl(tokenId) { return `${OPENSEA_BASE}/${SOUVENIR_ADDRESS}/${tokenId}`; }
-const OPENSEA_COLLECTION = `https://testnets.opensea.io/0xf4C5c825bCC7C36977062cB1376C5548FE698c5E`; // souvenir collection
-const CHAIN_ID = 84532; // Base Sepolia
+const OPENSEA_COLLECTION = `https://opensea.io/assets/base/${SOUVENIR_ADDRESS}`; // souvenir collection
+const CHAIN_ID = 8453; // Base Mainnet
 const CONTRACT_ABI = [
   'function buyPotato(uint256 newAskingPrice, uint256 maxCurrentPrice) external payable',
   'function getGameState() external view returns (address currentOwner, uint256 price, uint256 timeHeld, uint256 totalTransfers)',
@@ -1574,7 +1574,7 @@ async function connectWallet() {
     btn.style.border = '0.5px solid rgba(232,24,106,0.4)';
     btn.style.color = 'var(--pink)';
 
-    // Switch to Base Sepolia if needed — don't let chain errors block wallet connection
+    // Switch to Base Mainnet if needed — don't let chain errors block wallet connection
     try {
       await provider.request({
         method: 'wallet_switchEthereumChain',
@@ -1587,15 +1587,15 @@ async function connectWallet() {
             method: 'wallet_addEthereumChain',
             params: [{
               chainId: '0x' + CHAIN_ID.toString(16),
-              chainName: 'Base Sepolia',
+              chainName: 'Base',
               nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
-              rpcUrls: ['https://sepolia.base.org'],
-              blockExplorerUrls: ['https://sepolia-explorer.base.org'],
+              rpcUrls: ['https://mainnet.base.org'],
+              blockExplorerUrls: ['https://basescan.org'],
             }],
           });
         } catch (addErr) {
           // Network add failed — still connected, just warn
-          showToast('⚠️ Could not auto-switch to Base Sepolia — switch manually in MetaMask', '#FF6B00');
+          showToast('⚠️ Could not auto-switch to Base — switch manually in MetaMask', '#FF6B00');
         }
       }
       // If user rejected switch (4001), just continue — wallet is still connected

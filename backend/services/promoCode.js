@@ -7,8 +7,16 @@
 // 3. Referral codes — deterministic from wallet address (REF-XXXXXXXX), give mutual +1 boost
 //
 // Boost is applied to image generation + metadata rarity (on top of hold-duration tier)
+//
+// Persistence:
+//   State is saved to STATE_FILE (default: <project-root>/data/promoState.json) after every
+//   mutation (debounced to 200ms). On startup the file is read back so codes survive server
+//   restarts. On Railway, mount a Volume at /data and set STATE_FILE=/data/promoState.json
+//   so state also survives redeployments.
 
 const crypto = require('crypto');
+const fs     = require('fs');
+const path   = require('path');
 
 // In-memory store for trade-in codes — persists until server restart
 // { code => { boost, usedBy, createdAt, fromTokenId, fromRarity, walletAddress } }
@@ -34,6 +42,59 @@ const referralRedeemed = new Set();
 const RARITY_BOOST   = { common: 1, rare: 2, epic: 3, legendary: 4 };
 const RARITY_ORDER   = ['common', 'rare', 'epic', 'legendary'];
 
+// ─── PERSISTENCE ──────────────────────────────────────────
+// STATE_FILE env var lets Railway point this at a mounted volume so state
+// survives deployments. Falls back to <project-root>/data/promoState.json.
+const STATE_FILE = process.env.STATE_FILE
+  || path.join(__dirname, '../../data/promoState.json');
+
+function saveState() {
+  try {
+    const dir = path.dirname(STATE_FILE);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    const state = {
+      tradeInCodes:     [...tradeInCodes.entries()],
+      tradeInByWallet:  [...tradeInByWallet.entries()],
+      pendingBoosts:    [...pendingBoosts.entries()],
+      referralCodes:    [...referralCodes.entries()],
+      referralRedeemed: [...referralRedeemed],
+      loyaltyResets:    [...loyaltyResets.entries()],
+      savedAt:          Date.now(),
+    };
+    fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
+  } catch (e) {
+    console.error('⚠️  Failed to save promo state:', e.message);
+  }
+}
+
+// Debounce writes — coalesces rapid mutations into one disk write
+let _saveTimer = null;
+function scheduleStateSave() {
+  if (_saveTimer) clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(saveState, 200);
+}
+
+// Called once at module load — restores Maps/Sets from disk
+function loadState() {
+  try {
+    if (!fs.existsSync(STATE_FILE)) {
+      console.log('ℹ️  No promo state file found — starting fresh');
+      return;
+    }
+    const state = JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'));
+    if (state.tradeInCodes)     state.tradeInCodes.forEach(([k, v]) => tradeInCodes.set(k, v));
+    if (state.tradeInByWallet)  state.tradeInByWallet.forEach(([k, v]) => tradeInByWallet.set(k, v));
+    if (state.pendingBoosts)    state.pendingBoosts.forEach(([k, v]) => pendingBoosts.set(k, v));
+    if (state.referralCodes)    state.referralCodes.forEach(([k, v]) => referralCodes.set(k, v));
+    if (state.referralRedeemed) state.referralRedeemed.forEach(v => referralRedeemed.add(v));
+    if (state.loyaltyResets)    state.loyaltyResets.forEach(([k, v]) => loyaltyResets.set(k, v));
+    const count = tradeInCodes.size + pendingBoosts.size;
+    console.log(`✅ Promo state loaded (${count} active codes/boosts, saved ${new Date(state.savedAt).toISOString()})`);
+  } catch (e) {
+    console.error('⚠️  Failed to load promo state — starting fresh:', e.message);
+  }
+}
+
 function generateCode(rarity) {
   const prefix = { common: 'C', rare: 'R', epic: 'E', legendary: 'L' }[rarity] || 'C';
   const random  = crypto.randomBytes(4).toString('hex').toUpperCase();
@@ -54,6 +115,7 @@ function createTradeInCode(tokenId, rarity, walletAddress) {
     walletAddress: addr,
   });
   if (addr) tradeInByWallet.set(addr, code);
+  scheduleStateSave();
   console.log(`🎟️  Trade-in code ${code} created (boost +${boost}) for token #${tokenId} [${rarity}]`);
   return { code, boost };
 }
@@ -81,6 +143,7 @@ function getReferralCode(walletAddress) {
 function registerReferral(walletAddress) {
   const code = getReferralCode(walletAddress);
   referralCodes.set(code, walletAddress.toLowerCase());
+  scheduleStateSave();
   return { code, boost: 1 };
 }
 
@@ -118,6 +181,7 @@ function applyReferral(referralCode, refereeAddress) {
     console.log(`🤝 Referral: referrer boost +1 stored for ${referrerAddress}`);
   }
 
+  scheduleStateSave();
   return { success: true, referrer: referrerAddress };
 }
 
@@ -176,6 +240,7 @@ function storePendingBoost(walletAddress, boost, code) {
     tradeIn.usedBy  = walletAddress;
     tradeIn.usedAt  = Date.now();
   }
+  scheduleStateSave();
   // Social + referral codes are reusable — not marked used
 }
 
@@ -185,6 +250,7 @@ function consumePendingBoost(walletAddress) {
   const entry = pendingBoosts.get(addr);
   if (!entry) return 0;
   pendingBoosts.delete(addr);
+  scheduleStateSave();
   console.log(`✨ Applied pending boost +${entry.boost} for ${addr}`);
   return entry.boost;
 }
@@ -266,6 +332,7 @@ async function claimLoyaltyBoost(walletAddress) {
 
   // Reset counter to current hold count — new holds start accumulating from here
   loyaltyResets.set(addr, totalHolds);
+  scheduleStateSave();
   console.log(`🏆 Loyalty claimed: +${boost} for ${addr} (${unclaimedHolds} unclaimed holds → reset to ${totalHolds})`);
   return { success: true, boost, unclaimedHolds, newBaseline: totalHolds };
 }
@@ -275,6 +342,9 @@ async function claimLoyaltyBoost(walletAddress) {
 async function getLoyaltyBoost(walletAddress) {
   return { boost: 0, timesHeld: 0 };
 }
+
+// Load persisted state on startup (after all Maps/Sets are declared above)
+loadState();
 
 module.exports = {
   createTradeInCode, getTradeInCodeForWallet, validateCode,
