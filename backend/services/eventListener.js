@@ -32,7 +32,9 @@ const GAME_CONTRACT_ABI = [
 // Survives process crashes/restarts (but not Railway redeploys, which reset the
 // container). Combined with the idempotency guard in /generate, replays are safe.
 
-const BLOCK_FILE = path.join(__dirname, '../data/lastProcessedBlock.json');
+// Allow Railway Volume path via env var so the file survives redeploys
+const BLOCK_FILE = process.env.BLOCK_FILE
+  || path.join(__dirname, '../data/lastProcessedBlock.json');
 
 function loadLastProcessedBlock() {
   try {
@@ -120,19 +122,27 @@ async function startEventListener() {
   const contract = new ethers.Contract(contractAddress, GAME_CONTRACT_ABI, provider);
 
   // ── Catch-up: process any events since last restart ────────────────────
+  // Scans in 10-block chunks to stay within Alchemy free-tier getLogs limits.
   try {
     const currentBlock = await provider.getBlockNumber();
+    const CHUNK        = 10;  // Alchemy free tier: max 10 blocks per eth_getLogs
+    const LOOKBACK     = 500; // ~16 min on Base (2s blocks) — covers typical redeploy cycles
     const fromBlock    = lastProcessedBlock
       ? lastProcessedBlock + 1
-      : Math.max(0, currentBlock - 1000);
+      : Math.max(0, currentBlock - LOOKBACK);
     console.log(`EventListener: Scanning for missed events from block ${fromBlock} to ${currentBlock}...`);
 
-    const missedEvents = await contract.queryFilter('PotatoPassed', fromBlock, currentBlock);
-    if (missedEvents.length > 0) {
-      console.log(`EventListener: Found ${missedEvents.length} missed event(s) — processing...`);
-      for (const event of missedEvents) {
+    let totalMissed = 0;
+    for (let from = fromBlock; from <= currentBlock; from += CHUNK) {
+      const to      = Math.min(from + CHUNK - 1, currentBlock);
+      const missed  = await contract.queryFilter('PotatoPassed', from, to);
+      totalMissed  += missed.length;
+      for (const event of missed) {
         await triggerGeneration(event);
       }
+    }
+    if (totalMissed > 0) {
+      console.log(`EventListener: Found and processed ${totalMissed} missed event(s)`);
     }
     lastProcessedBlock = currentBlock;
     saveLastProcessedBlock(currentBlock); // H-7: persist after catch-up
