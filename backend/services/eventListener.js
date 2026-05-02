@@ -126,7 +126,7 @@ async function startEventListener() {
   try {
     const currentBlock = await provider.getBlockNumber();
     const CHUNK        = 10;  // Alchemy free tier: max 10 blocks per eth_getLogs
-    const LOOKBACK     = 3000; // ~100 min on Base (2s blocks) — covers long redeploy gaps
+    const LOOKBACK     = 5000; // ~166 min on Base (2s blocks) — covers long redeploy gaps
     const fromBlock    = lastProcessedBlock
       ? lastProcessedBlock + 1
       : Math.max(0, currentBlock - LOOKBACK);
