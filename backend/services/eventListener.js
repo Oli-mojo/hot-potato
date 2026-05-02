@@ -132,6 +132,7 @@ async function startEventListener() {
       : Math.max(0, currentBlock - LOOKBACK);
     console.log(`EventListener: Scanning for missed events from block ${fromBlock} to ${currentBlock}...`);
 
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
     let totalMissed = 0;
     for (let from = fromBlock; from <= currentBlock; from += CHUNK) {
       const to      = Math.min(from + CHUNK - 1, currentBlock);
@@ -140,6 +141,7 @@ async function startEventListener() {
       for (const event of missed) {
         await triggerGeneration(event);
       }
+      await sleep(150); // throttle: ~6 req/sec to stay within Alchemy free tier
     }
     if (totalMissed > 0) {
       console.log(`EventListener: Found and processed ${totalMissed} missed event(s)`);
