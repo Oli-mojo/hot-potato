@@ -639,6 +639,18 @@
   .tradein-boost { font-size: 13px; color: rgba(255,245,224,0.5); margin-bottom: 20px; }
   .tradein-close { width: 100%; background: var(--pink); border: none; border-radius: 6px; padding: 14px; font-family: 'Black Ops One', sans-serif; font-size: 14px; letter-spacing: 2px; color: #fff; cursor: pointer; }
 
+  /* About section */
+  .about-section { padding: 64px 24px; border-bottom: 0.5px solid var(--border); max-width: 720px; margin: 0 auto; }
+  .about-eyebrow { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--pink); margin-bottom: 16px; }
+  .about-headline { font-family: 'Black Ops One', sans-serif; font-size: 28px; color: var(--cream); letter-spacing: 1px; line-height: 1.2; margin-bottom: 32px; }
+  .about-headline span { color: var(--pink); }
+  .about-body { display: flex; flex-direction: column; gap: 18px; }
+  .about-body p { font-family: 'Barlow Condensed', sans-serif; font-size: 17px; font-weight: 400; color: rgba(255,245,224,0.65); line-height: 1.65; }
+  .about-body p.highlight { color: var(--cream); font-weight: 600; font-size: 18px; }
+  .about-body p.pull { color: var(--pink); font-weight: 700; font-style: italic; font-size: 18px; border-left: 3px solid var(--pink); padding-left: 16px; margin: 8px 0; }
+  .about-body p.closing { font-family: 'Black Ops One', sans-serif; font-size: 16px; color: var(--cream); letter-spacing: 1px; margin-top: 8px; }
+  .about-divider { width: 48px; height: 3px; background: var(--pink); border-radius: 2px; margin: 32px 0; }
+
   footer { padding: 24px; display: flex; justify-content: space-between; align-items: center; }
   .footer-logo { font-family: 'Black Ops One', sans-serif; font-size: 16px; color: rgba(255,245,224,0.2); letter-spacing: 2px; }
   .footer-links { display: flex; gap: 20px; }
@@ -862,6 +874,9 @@
 
     /* Footer — stack */
     footer { flex-direction: column; gap: 12px; padding: 20px 16px; text-align: center; }
+    .about-section { padding: 48px 16px; }
+    .about-headline { font-size: 22px; }
+    .about-body p { font-size: 15px; }
     .footer-links { justify-content: center; flex-wrap: wrap; gap: 14px; }
   }
 
@@ -1190,6 +1205,29 @@
   </table></div>
 </div>
 
+<section id="about">
+  <div class="about-section">
+    <div class="about-eyebrow">Why I built this</div>
+    <div class="about-headline">WHY DID I BUILD<br/><span>HOT POTATO?</span> 🥔🔥</div>
+    <div class="about-body">
+      <p class="highlight">Not because I wanted another NFT game.</p>
+      <p>Because I wanted to ask a genuinely interesting question: what happens when you engineer an up-only instrument from first principles — rules transparent, enforcement algorithmic, outcomes inevitable — and invite people to participate anyway?</p>
+      <p>The Hot Potato is a single NFT. Always for sale. Price only goes up. When someone takes it from you, the contract pays you out and mints your souvenir. The longer you held, or the more you overpaid on entry, the greater the status that souvenir carries.</p>
+      <p class="pull">No hidden mechanics. No discretionary decisions. No promises. The contract does exactly what it says — every time, without exception.</p>
+      <p>But the game was never really the point.</p>
+      <p>Beneath it is something I find genuinely fascinating — an exploration of what "up only" means when it isn't a marketing slogan but a cryptographic guarantee. A study in the tension between profit and status.</p>
+      <p>Between the patience of waiting for your return — and the creeping anxiety of knowing someone, somewhere, could take it from you at any moment.</p>
+      <p class="highlight">How will it feel?</p>
+      <p>Why do humans hold things they know they'll eventually lose? What does ownership mean when it's always provisional?</p>
+      <div class="about-divider"></div>
+      <p>We also reference the Tulip Factory deliberately. Part irony, part homage — to the enduring strangeness of human speculation, to the way collective belief manufactures value, and yes, to the comedy embedded in all of it.</p>
+      <p>But ultimately tulips are beautiful. They're deeply social. They bloom, circulate, and pass on. And they come in seasons.</p>
+      <p>That isn't a cautionary note. It's the philosophy.</p>
+      <p class="closing">Strong hands only. 🥔</p>
+    </div>
+  </div>
+</section>
+
 <footer>
   <div class="footer-logo">HOT🔥POTATO</div>
   <div class="footer-links">
@@ -1197,6 +1235,7 @@
     <span class="footer-link">OpenSea</span>
     <a class="footer-link" href="https://x.com/HotPotatoMayhem" target="_blank" rel="noopener" style="text-decoration:none;">Twitter</a>
     <a class="footer-link" href="https://discord.gg/mBxGRmNQc" target="_blank" rel="noopener" style="text-decoration:none;">Discord</a>
+    <span class="footer-link" onclick="document.getElementById('about').scrollIntoView({behavior:'smooth'});">About</span>
     <span class="footer-link" onclick="document.getElementById('rules').scrollIntoView({behavior:'smooth'}); setTimeout(()=>{ document.querySelectorAll('.rules-tab')[2].click(); }, 400);">Terms</span>
   </div>
 </footer>

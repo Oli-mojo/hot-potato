@@ -129,7 +129,7 @@ router.post('/generate', requireInternalKey, async (req, res) => {
         holdDurationHours,
         pricePaid:      req.body.pricePaid      || '?',
         rarity:         finalRarity,
-        newAskingPrice: req.body.newAskingPrice || '?',
+        newAskingPrice: req.body.newAskingPrice || state.currentPrice,
         imageUrl:       ipfsImageUrl,
       });
     } catch (err) {

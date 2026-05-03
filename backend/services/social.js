@@ -212,6 +212,13 @@ async function postToX(params) {
 
   const { title, headline } = buildNarrative({ ...params, siteUrl });
 
+  // Price increase %
+  const paidNum = parseFloat(pricePaid);
+  const askNum  = parseFloat(newAskingPrice);
+  const pctLine = (!isNaN(paidNum) && !isNaN(askNum) && paidNum > 0)
+    ? `New min: ${newAskingPrice} ETH (+${Math.round((askNum / paidNum - 1) * 100)}%)`
+    : `New min: ${newAskingPrice} ETH`;
+
   // Twitter version — plain text, punchy, within 280 chars
   const text =
 `${title}
@@ -219,7 +226,7 @@ async function postToX(params) {
 ${headline}
 
 Paid ${pricePaid} ETH → earned ${emoji} ${label}
-New ask: ${newAskingPrice} ETH
+${pctLine}
 
 👉 ${siteUrl}
 #HotPotato #NFT #Base`;
