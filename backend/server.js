@@ -8,7 +8,8 @@ const cors = require('cors');
 const potatoRoutes   = require('./routes/potato');
 const souvenirRoutes = require('./routes/souvenir');
 const playerRoutes   = require('./routes/player');
-const { startEventListener } = require('./services/eventListener');
+const { startEventListener }    = require('./services/eventListener');
+const { startSocialScheduler }  = require('./services/socialScheduler');
 // H-4 fix: blanket rate limit on all API traffic
 const { globalLimiter } = require('./middleware/rateLimiter');
 
@@ -64,5 +65,8 @@ app.listen(PORT, () => {
   // listening before that call is made.
   startEventListener().catch(err =>
     console.error('EventListener startup error:', err.message)
+  );
+  startSocialScheduler().catch(err =>
+    console.error('SocialScheduler startup error:', err.message)
   );
 });

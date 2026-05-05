@@ -154,6 +154,38 @@ async function postToDiscord(params) {
   console.log('📣 Discord notification sent');
 }
 
+// ─── RAW DISCORD (used by social scheduler) ───────────────────────────────────
+// Posts an embed directly to the Discord webhook.
+// Returns true on success, false on failure.
+async function postRawDiscord({ title, description, color, fields, mention }) {
+  const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+  if (!webhookUrl) {
+    console.log('ℹ️  No DISCORD_WEBHOOK_URL set — skipping Discord post');
+    return false;
+  }
+
+  try {
+    const embed = {
+      title,
+      description,
+      color:     color || 0xe8448c,
+      fields:    fields || [],
+      footer:    { text: 'Hot Potato · Built on Base' },
+      timestamp: new Date().toISOString(),
+    };
+
+    // mention = '@here' or '@everyone' — use sparingly
+    const content = mention || undefined;
+
+    await axios.post(webhookUrl, { content, embeds: [embed] }, { timeout: 8000 });
+    console.log('📣 Raw Discord embed posted');
+    return true;
+  } catch (err) {
+    console.error('postRawDiscord failed:', err.response?.data || err.message);
+    return false;
+  }
+}
+
 // ─── X (TWITTER) ──────────────────────────────────────────────────────────────
 const crypto = require('crypto');
 
@@ -246,6 +278,34 @@ ${pctLine}
   console.log('📣 X (Twitter) post sent');
 }
 
+// ─── RAW TWEET (used by social scheduler) ─────────────────────────────────────
+// Posts arbitrary text directly to X. Returns true on success, false on failure.
+async function postRawTweet(text) {
+  const apiKey       = process.env.TWITTER_API_KEY;
+  const apiSecret    = process.env.TWITTER_API_SECRET;
+  const accessToken  = process.env.TWITTER_ACCESS_TOKEN;
+  const accessSecret = process.env.TWITTER_ACCESS_SECRET;
+
+  if (!apiKey || !apiSecret || !accessToken || !accessSecret) {
+    console.log('ℹ️  Twitter credentials not set — skipping raw tweet');
+    return false;
+  }
+
+  try {
+    const url        = 'https://api.twitter.com/2/tweets';
+    const authHeader = oauthSign({ method: 'POST', url, params: {}, apiKey, apiSecret, accessToken, accessSecret });
+    await axios.post(url, { text }, {
+      headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
+      timeout: 10000,
+    });
+    console.log('📣 Raw tweet posted');
+    return true;
+  } catch (err) {
+    console.error('postRawTweet failed:', err.response?.data || err.message);
+    return false;
+  }
+}
+
 // ─── MAIN EXPORT ──────────────────────────────────────────────────────────────
 async function announcePotatoPassed(params) {
   const results = await Promise.allSettled([
@@ -259,4 +319,4 @@ async function announcePotatoPassed(params) {
   }
 }
 
-module.exports = { announcePotatoPassed };
+module.exports = { announcePotatoPassed, postRawTweet, postRawDiscord };
