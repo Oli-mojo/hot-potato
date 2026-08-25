@@ -1579,6 +1579,25 @@ function showToast(msg, color) {
 }
 
 // ─── WALLET ───────────────────────────────────────────────
+// Mobile browsers (Chrome/Safari on iOS, Chrome on Android) can't run the
+// MetaMask extension, so window.ethereum is never injected there and every
+// provider check below fails. The fix is to bounce the user into MetaMask's
+// own in-app browser via a deep link: the same page reloads inside MetaMask,
+// where window.ethereum *does* exist, so all existing code paths work as-is.
+function isMobileDevice() {
+  const ua = navigator.userAgent || '';
+  // iPadOS 13+ reports a Macintosh UA, so fall back to touch-point sniffing.
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(ua)
+      || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+}
+
+function openInMetaMaskApp() {
+  // Link format is metamask.app.link/dapp/<host><path><query> — no scheme.
+  // If MetaMask isn't installed the link falls through to the app store.
+  const target = location.host + location.pathname + location.search;
+  location.href = 'https://metamask.app.link/dapp/' + target;
+}
+
 function getMetaMaskProvider() {
   if (!window.ethereum) return null;
   // Multiple wallets installed — find MetaMask specifically
@@ -1592,7 +1611,13 @@ function getMetaMaskProvider() {
 async function connectWallet() {
   const provider = getMetaMaskProvider();
   if (!provider) {
-    showToast('⚠️ MetaMask not found — please install the MetaMask extension', '#FF6B00');
+    if (isMobileDevice()) {
+      // No extension exists on mobile — hand off to the MetaMask app instead.
+      showToast('📱 Opening in the MetaMask app…', '#FF6B00');
+      setTimeout(openInMetaMaskApp, 400); // let the toast paint before we navigate away
+    } else {
+      showToast('⚠️ MetaMask not found — please install the MetaMask extension', '#FF6B00');
+    }
     return;
   }
   window._ethProvider = provider; // save for use in buy flow
@@ -2173,7 +2198,9 @@ async function recoverTradeInCode(tokenId, btn) {
 // ─── ADD NFT TO METAMASK ──────────────────────────────────
 async function addSouvenirToMetaMask(tokenId) {
   if (!window.ethereum) {
-    showToast('MetaMask not detected', '#FF4444');
+    showToast(isMobileDevice()
+      ? 'Open this page in the MetaMask app to add the NFT'
+      : 'MetaMask not detected', '#FF4444');
     return;
   }
   try {
