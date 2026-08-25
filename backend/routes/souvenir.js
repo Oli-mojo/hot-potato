@@ -5,10 +5,6 @@ const axios = require('axios');
 
 const {
   getPotatoState,
-  getSouvenirScore,
-  scoreToRarity,
-  applyScoreBoost,
-  setRarityScore,
   getTokenURI,
   setTokenURI,
 } = require('../services/contract');
@@ -63,13 +59,14 @@ const SOUVENIR_ABI     = [
 // The frontend no longer calls this endpoint directly.
 //
 // Rarity flow (single source of truth):
-//   1. Read rarityScore from the on-chain SouvenirNFT — the contract computed this
-//      deterministically from hold duration + stage + overpay at mint time.
-//   2. If this holder has a pending boost (promo / loyalty / referral / trade-in),
-//      add 20 points per boost level (one rarity tier per +1), capped at 99.
-//   3. If the score increased, write it back on-chain via setRarityScore() BEFORE
-//      setting the URI — so on-chain rarityScore and metadata rarity are always identical.
-//   4. Generate art, upload to IPFS, set the token URI.
+//   1. Take rarityTier from the on-chain roll — HotPotato._rollRarity() picks it
+//      at mint time from hold duration + the seller's banked overpay boost.
+//      The event listener forwards it; otherwise we read it back over RPC.
+//   2. If this holder has a pending off-chain boost (promo / loyalty / referral /
+//      trade-in), bump the tier by that many steps, capped at Legendary. This is
+//      metadata-only — on-chain rarityTier is immutable after mint, which is why
+//      the gallery route prefers metadata rarity over the raw tier.
+//   3. Generate art, upload to IPFS, set the token URI.
 router.post('/generate', requireInternalKey, async (req, res) => {
   const { fromAddress, souvenirTokenId } = req.body;
   if (!fromAddress || souvenirTokenId === undefined) {
@@ -95,25 +92,33 @@ router.post('/generate', requireInternalKey, async (req, res) => {
       const state   = await getPotatoState();
       const edition = state.totalSouvenirs;
 
-      // ── Step 1: read on-chain base score ────────────────────────────────
-      const baseScore  = await getSouvenirScore(tokenId);
-      const baseRarity = scoreToRarity(baseScore);
+      // ── Step 1: read the authoritative on-chain rarity ──────────────────
+      // v4 rolls rarity on-chain at mint (HotPotato._rollRarity), already
+      // including the seller's banked overpay boost — so the contract's
+      // rarityTier is the source of truth. The event listener forwards it for
+      // free; fall back to an RPC read so manual recovery calls still work.
+      let baseTier = Number(req.body.rarityTier);
+      if (!Number.isInteger(baseTier) || baseTier < 0 || baseTier > 3) {
+        const provider = new ethers.JsonRpcProvider(RPC_URL);
+        const contract = new ethers.Contract(CONTRACT_ADDRESS, SOUVENIR_ABI, provider);
+        const data     = await contract.souvenirs(tokenId);
+        baseTier       = Number(data.rarityTier);
+      }
+      const baseRarity = RARITY_MAP[baseTier] || 'common';
 
-      // ── Step 2: apply any pending boost ─────────────────────────────────
-      const pendingBoost   = consumePendingBoost(fromAddress);
-      const clampedBoost   = Math.min(pendingBoost, 4); // max +4 tiers
-      const boostedScore   = applyScoreBoost(baseScore, clampedBoost);
-      const finalRarity    = scoreToRarity(boostedScore);
+      // ── Step 2: apply any pending off-chain boost ───────────────────────
+      // Promo / loyalty / referral boosts are off-chain, so they bump the
+      // metadata tier above the on-chain roll. The gallery route already
+      // prefers metadata rarity over the raw on-chain tier for this reason.
+      const pendingBoost = consumePendingBoost(fromAddress);
+      const clampedBoost = Math.min(pendingBoost, 4); // max +4 tiers
+      const finalTier    = Math.min(3, baseTier + clampedBoost);
+      const finalRarity  = RARITY_MAP[finalTier] || 'common';
 
       console.log(`\n🥔 Generating souvenir #${tokenId} for ${fromAddress}`);
-      console.log(`   On-chain score: ${baseScore} (${baseRarity}) | Boost: +${clampedBoost} → ${boostedScore} (${finalRarity})`);
+      console.log(`   On-chain tier: ${baseTier} (${baseRarity}) | Boost: +${clampedBoost} → ${finalTier} (${finalRarity})`);
 
-      // ── Step 3: write boosted score back on-chain if it changed ─────────
-      if (boostedScore > baseScore) {
-        await setRarityScore(tokenId, boostedScore);
-      }
-
-      // ── Step 4: generate art + upload metadata ───────────────────────────
+      // ── Step 3: generate art + upload metadata ───────────────────────────
       const imageUrl          = await generateSouvenirImage(finalRarity, holdDurationHours, fromAddress);
       const { cid: imageCid } = await uploadImageToIPFS(imageUrl, `hotpotato-souvenir-${edition}.png`);
       const metadata          = buildMetadata({ rarity: finalRarity, holdDurationHours, holderAddress: fromAddress, imageCid, edition });

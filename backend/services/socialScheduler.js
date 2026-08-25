@@ -14,10 +14,11 @@
 //   — Change copy there — no code changes needed
 // ─────────────────────────────────────────────────────────────────────────────
 
-const fs   = require('fs');
-const path = require('path');
+const fs     = require('fs');
+const path   = require('path');
+const crypto = require('crypto');
 const { getPotatoState }              = require('./contract');
-const { postRawTweet, postRawDiscord } = require('./social');
+const { postRawTweet, postRawDiscord, tweetLength, fitTweet, TWEET_LIMIT } = require('./social');
 const copy                             = require('../config/socialCopy');
 
 // ── State file ─────────────────────────────────────────────────────────────
@@ -25,6 +26,10 @@ const SCHEDULER_FILE = process.env.SCHEDULER_FILE
   || path.join(__dirname, '../data/schedulerState.json');
 
 const CHECK_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
+
+// Never let two scheduler posts land closer together than this, whatever the
+// individual timers say — milestones, nudges and taunts all share the account.
+const MIN_POST_GAP_MS = 90 * 60 * 1000; // 90 minutes
 
 // ── Persistence ────────────────────────────────────────────────────────────
 
@@ -60,6 +65,11 @@ function fmtHours(hours) {
   return `${(hours / 168).toFixed(1)} weeks`;
 }
 
+// Short fingerprint of a rendered tweet, for the duplicate guard
+function textHash(text) {
+  return crypto.createHash('sha1').update(text).digest('hex').slice(0, 12);
+}
+
 function scoreToRarity(score) {
   if (score >= 75) return 'legendary';
   if (score >= 50) return 'epic';
@@ -72,17 +82,20 @@ function randomBetween(min, max) {
   return min + Math.random() * (max - min);
 }
 
-// Build tweet text from a template + optional tags
+// Build tweet text from a template + optional tags.
+// Over-length posts are trimmed above the link, never through it — slicing at a
+// fixed offset used to leave "https://hotpotato…" and drop the hashtags.
 function buildTweetText(templateFn, ctx, tags = []) {
   let text = templateFn(ctx).trim();
   if (tags.length > 0) {
     text += '\n\n' + tags.join(' ');
   }
-  // Twitter hard limit: 280 chars. Truncate gracefully if over.
-  if (text.length > 280) {
-    text = text.slice(0, 277) + '…';
-  }
-  return text;
+  if (tweetLength(text) <= TWEET_LIMIT) return text;
+
+  // Split at the site URL so the link and everything after it survives intact.
+  const idx = text.lastIndexOf(ctx.siteUrl);
+  if (idx === -1) return fitTweet(text);
+  return fitTweet(text.slice(0, idx).trimEnd(), text.slice(idx).trim());
 }
 
 // ── Core check ─────────────────────────────────────────────────────────────
@@ -132,44 +145,84 @@ async function runCheck() {
     console.log(`SocialScheduler: New holder detected (${addr}) — resetting milestone targets`);
 
     const milestoneTargets = {};
+    const alreadyMissed    = [];
     for (const m of copy.milestones) {
       // Pick a random offset within [minHours, maxHours] from holderSince
       const fireOffsetHours = randomBetween(m.minHours, m.maxHours);
       milestoneTargets[m.id] = holderSinceMs + fireOffsetHours * 60 * 60 * 1000;
+
+      // If this holder is already past the milestone's whole window, the post is
+      // genuinely missed — mark it fired. Without this a lost state file (every
+      // Railway redeploy loses it) replays "the potato has a new holder" and
+      // "24 hours" days into someone's hold, one stale post per 30-min check.
+      if (holdHours >= m.maxHours) alreadyMissed.push(m.id);
+    }
+    if (alreadyMissed.length > 0) {
+      console.log(`SocialScheduler: suppressing ${alreadyMissed.length} already-passed milestone(s): ${alreadyMissed.join(', ')}`);
     }
 
     state = {
       holder,
-      holderSince:      holderSinceMs,
-      milestoneTargets,               // { id: fireAtTimestamp }
-      milestonesFired:  [],           // ids already posted
-      lastNudgeAt:      null,
+      holderSince:       holderSinceMs,
+      milestoneTargets,                        // { id: fireAtTimestamp }
+      milestonesFired:   [...alreadyMissed],   // ids already posted to X
+      discordFired:      [...alreadyMissed],   // ids already posted to Discord
+      milestoneAttempts: {},                   // { id: failedAttemptCount }
+      lastNudgeAt:       null,
+      lastPostAt:        null,                 // any scheduler post, any type
+      nextTauntAt:       now + randomBetween(copy.taunts?.minGapHours ?? 5, copy.taunts?.maxGapHours ?? 7) * 60 * 60 * 1000,
+      recentTaunts:      [],                   // recently used template indexes
     };
     saveState(state);
   }
 
   // ── Check milestones ─────────────────────────────────────────────────────
 
+  // Tolerate state files written by an older schema
+  state.milestonesFired   = state.milestonesFired   || [];
+  state.discordFired      = state.discordFired      || [];
+  state.milestoneAttempts = state.milestoneAttempts || {};
+
+  const MAX_ATTEMPTS = 3;
+
   for (const milestone of copy.milestones) {
-    if (state.milestonesFired.includes(milestone.id)) continue; // already posted
+    const xDone       = state.milestonesFired.includes(milestone.id);
+    const discordDone = state.discordFired.includes(milestone.id);
+    if (xDone && discordDone) continue; // fully posted
+
     const fireAt = state.milestoneTargets[milestone.id];
     if (!fireAt || now < fireAt) continue; // not yet time
 
     console.log(`\n📣 SocialScheduler: Firing milestone "${milestone.id}" for ${addr}`);
 
-    // Post to Twitter
-    const tweetText = buildTweetText(milestone.template, ctx, milestone.tags);
-    await postRawTweet(tweetText);
-
-    // Post to Discord (find matching discord milestone by id)
-    const discordMilestone = (copy.discordMilestones || []).find(m => m.id === milestone.id);
-    if (discordMilestone) {
-      const embed = discordMilestone.embed(ctx);
-      await postRawDiscord(embed);
+    // Post to X — track success per channel so a retry can't double-post
+    // the channel that already went out.
+    if (!xDone) {
+      const tweetText = buildTweetText(milestone.template, ctx, milestone.tags);
+      if (await postRawTweet(tweetText)) {
+        state.milestonesFired.push(milestone.id);
+      } else {
+        const attempts = (state.milestoneAttempts[milestone.id] || 0) + 1;
+        state.milestoneAttempts[milestone.id] = attempts;
+        if (attempts >= MAX_ATTEMPTS) {
+          console.warn(`SocialScheduler: milestone "${milestone.id}" failed ${attempts}× — giving up`);
+          state.milestonesFired.push(milestone.id);
+        } else {
+          console.warn(`SocialScheduler: milestone "${milestone.id}" tweet failed (attempt ${attempts}/${MAX_ATTEMPTS}) — retrying next check`);
+        }
+      }
     }
 
-    state.milestonesFired.push(milestone.id);
+    // Post to Discord (find matching discord milestone by id)
+    if (!discordDone) {
+      const discordMilestone = (copy.discordMilestones || []).find(m => m.id === milestone.id);
+      if (!discordMilestone || await postRawDiscord(discordMilestone.embed(ctx))) {
+        state.discordFired.push(milestone.id);
+      }
+    }
+
     state.lastNudgeAt = now; // counts as activity — suppress nudge today
+    state.lastPostAt  = now;
     saveState(state);
 
     // Only fire one milestone per check to avoid bursting
@@ -193,7 +246,7 @@ async function runCheck() {
 
     // Twitter nudge
     const tweetText = buildTweetText(copy.dailyNudge.templates[idx], ctx, copy.dailyNudge.tags);
-    await postRawTweet(tweetText);
+    const posted    = await postRawTweet(tweetText);
 
     // Discord nudge — pick same index (mod length in case arrays differ)
     const discordNudge = copy.discordDailyNudge;
@@ -203,9 +256,85 @@ async function runCheck() {
       await postRawDiscord({ ...embed, mention: discordNudge.mention });
     }
 
-    state.lastNudgeAt          = now;
-    state.lastNudgeTemplateIdx = idx;
+    if (posted) {
+      state.lastNudgeAt          = now;
+      state.lastPostAt           = now;
+      state.lastNudgeTemplateIdx = idx;
+      saveState(state);
+      return; // one post per check
+    } else {
+      // Leave lastNudgeAt alone so the next check retries with a fresh template
+      // (a different template also clears X's duplicate-content rejection).
+      console.warn('SocialScheduler: daily nudge tweet failed — retrying next check');
+    }
+    return;
+  }
+
+  // ── Taunts ───────────────────────────────────────────────────────────────
+  // Steady reach play — X only. Fires on its own randomised timer, but never
+  // within MIN_POST_GAP_MS of any other scheduler post.
+
+  const taunts = copy.taunts;
+  if (!taunts || !taunts.templates?.length) return;
+
+  state.recentTaunts = state.recentTaunts || [];
+  if (!state.nextTauntAt) {
+    state.nextTauntAt = now + randomBetween(taunts.minGapHours, taunts.maxGapHours) * 60 * 60 * 1000;
     saveState(state);
+    return;
+  }
+
+  if (now < state.nextTauntAt) return;
+  if (state.lastPostAt && now - state.lastPostAt < MIN_POST_GAP_MS) {
+    console.log('SocialScheduler: taunt due but another post went out recently — holding');
+    return;
+  }
+
+  // Eligible = passes its `when` gate (if any) and isn't a recent repeat
+  const eligible = taunts.templates
+    .map((t, i) => ({ i, fn: typeof t === 'function' ? t : t.template, when: t.when }))
+    .filter(t => (!t.when || t.when(ctx)));
+  const fresh = eligible.filter(t => !state.recentTaunts.includes(t.i));
+  const pool  = fresh.length > 0 ? fresh : eligible; // all used recently — allow reuse
+  if (pool.length === 0) return;
+
+  // Hard duplicate guard: X rejects byte-identical tweets with a 403, and a
+  // stale potato means addr and price don't change for days. Render each
+  // candidate and skip any whose exact text we've already posted.
+  state.recentTauntHashes = state.recentTauntHashes || [];
+  const shuffled = [...pool].sort(() => Math.random() - 0.5);
+
+  let pick, text;
+  for (const candidate of shuffled) {
+    const rendered = buildTweetText(candidate.fn, ctx, taunts.tags);
+    if (!state.recentTauntHashes.includes(textHash(rendered))) {
+      pick = candidate;
+      text = rendered;
+      break;
+    }
+  }
+  if (!pick) {
+    // Everything eligible would be a repeat — stay quiet rather than get 403'd.
+    console.log('SocialScheduler: every taunt would duplicate a recent post — skipping this window');
+    state.nextTauntAt = now + randomBetween(taunts.minGapHours, taunts.maxGapHours) * 60 * 60 * 1000;
+    saveState(state);
+    return;
+  }
+
+  console.log(`\n📣 SocialScheduler: Firing taunt (template ${pick.i}) for ${addr}`);
+
+  if (await postRawTweet(text)) {
+    state.recentTaunts       = [pick.i, ...state.recentTaunts].slice(0, taunts.avoidRepeats ?? 8);
+    state.recentTauntHashes  = [textHash(text), ...state.recentTauntHashes].slice(0, 60);
+    state.lastPostAt   = now;
+    state.nextTauntAt  = now + randomBetween(taunts.minGapHours, taunts.maxGapHours) * 60 * 60 * 1000;
+    saveState(state);
+  } else {
+    // Push the next attempt out a little so a hard failure doesn't retry every
+    // 30 minutes forever.
+    state.nextTauntAt = now + 60 * 60 * 1000;
+    saveState(state);
+    console.warn('SocialScheduler: taunt tweet failed — retrying in ~1h');
   }
 }
 

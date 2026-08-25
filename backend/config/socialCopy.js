@@ -212,6 +212,130 @@ ${siteUrl} #HotPotato #Base`,
     ],
   },
 
+  // ── Taunts ─────────────────────────────────────────────────────────────────
+  // A steady reach play, separate from milestones and the daily nudge.
+  // Fires roughly every `minGapHours`–`maxGapHours`, X only (Discord already
+  // gets milestone embeds; taunting your own holders is just noise).
+  //
+  // The scheduler avoids repeating any of the last `avoidRepeats` templates —
+  // partly so it doesn't read like a bot, partly because X rejects duplicate
+  // content outright.
+  //
+  // Optional `when(ctx)` gates a taunt to a game state. No `when` = always eligible.
+
+  taunts: {
+    minGapHours:  5,
+    maxGapHours:  7,
+    avoidRepeats: 8,
+    tags: [
+      // '@base',
+    ],
+    templates: [
+
+      ({ addr, price, hours, siteUrl }) =>
+`The potato is for sale right now. ${price} ETH.
+
+It's been for sale every single second of the ${fmtHours(hours)} since ${addr} bought it. Nobody has moved.
+
+${siteUrl}
+#HotPotato #Base`,
+
+      ({ price, hours, siteUrl }) =>
+`Nobody has taken the potato in ${fmtHours(hours)}.
+
+Either you're all extremely patient or you're all a little scared.
+
+${price} ETH. ${siteUrl}
+#HotPotato #Base`,
+
+      ({ addr, price, hours, siteUrl }) =>
+`${addr} is building a souvenir out of your hesitation. ${fmtHours(hours)} of it so far.
+
+${price} ETH ends it.
+${siteUrl}
+#HotPotato #Base`,
+
+      ({ price, hours, siteUrl }) =>
+`Reminder: you cannot be outbid here.
+
+No auction, no allowlist, no queue. One price — ${price} ETH — and it's belonged to whoever moves first for ${fmtHours(hours)} now.
+
+${siteUrl}
+#HotPotato #Base`,
+
+      ({ addr, price, siteUrl }) =>
+`Every hour you scroll past this, ${addr}'s souvenir gets rarer and their exit gets better.
+
+You are actively making someone else money by doing nothing.
+
+${price} ETH. ${siteUrl}
+#HotPotato #Base`,
+
+      ({ price, hours, siteUrl }) =>
+`The potato doesn't care who's holding it.
+
+${fmtHours(hours)} in, still ${price} ETH, still available to anyone who wants it.
+
+${siteUrl}
+#HotPotato #Base`,
+
+      ({ addr, price, hours, siteUrl }) =>
+`${addr} can't sell it. Can't hide it. Can't take it off the market.
+
+They've been waiting on one of you for ${fmtHours(hours)}.
+
+${price} ETH. ${siteUrl}
+#HotPotato #Base`,
+
+      ({ price, hours, siteUrl }) =>
+`There is exactly one Hot Potato.
+
+${price} ETH. No floor, no bids, no queue — just a price and a button, sitting untouched for ${fmtHours(hours)}.
+
+${siteUrl}
+#HotPotato #NFT #Base`,
+
+      ({ addr, price, hours, siteUrl }) =>
+`Current situation: one potato, ${price} ETH, ${fmtHours(hours)} on the clock, zero people brave enough.
+
+${addr} says thanks.
+${siteUrl}
+#HotPotato #Base`,
+
+      ({ addr, price, hours, siteUrl }) =>
+`${fmtHours(hours)} of waiting has made this cost more and made ${addr}'s souvenir better.
+
+Both of those are working against you.
+
+${price} ETH. ${siteUrl}
+#HotPotato #Base`,
+
+      // ── State-gated taunts ───────────────────────────────────────────────
+      {
+        when: ({ hours }) => hours < 6,
+        template: ({ price, hours, siteUrl }) =>
+`The potato changed hands ${fmtHours(hours)} ago.
+
+It's already back on the market. It never left. That's the whole game.
+
+${price} ETH. ${siteUrl}
+#HotPotato #Base`,
+      },
+
+      {
+        when: ({ hours }) => hours >= 168,
+        template: ({ addr, price, siteUrl }) =>
+`A week and nobody has taken the potato.
+
+${addr} isn't holding out of loyalty — they literally cannot get rid of it until one of you moves.
+
+${price} ETH. ${siteUrl}
+#HotPotato #Base`,
+      },
+
+    ],
+  },
+
   // ── Discord milestone posts ──────────────────────────────────────────────
   // Same milestone ids as Twitter — they fire together.
   // Each returns a Discord embed object: { title, description, color, fields, mention }

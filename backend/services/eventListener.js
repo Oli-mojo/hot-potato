@@ -71,9 +71,12 @@ async function triggerGeneration(event) {
     return;
   }
 
-  const { from, souvenirTokenId, holdDuration, price } = event.args;
+  const { from, souvenirTokenId, holdDuration, price, rarityTier } = event.args;
   const holdDurationSeconds = Number(holdDuration);
   const pricePaid           = ethers.formatEther(price);
+  // The contract already rolled the final rarity at mint time — forward it so
+  // /generate doesn't have to re-read it over RPC (and can't get it wrong).
+  const rarityTierUint      = Number(rarityTier);
 
   console.log(`\n🎯 PotatoPassed detected — hand #${souvenirTokenId}, triggering generation for ${from}`);
 
@@ -85,6 +88,7 @@ async function triggerGeneration(event) {
         souvenirTokenId:      Number(souvenirTokenId),
         holdDurationSeconds,
         pricePaid,
+        rarityTier:           rarityTierUint,
       },
       {
         headers: { Authorization: `Bearer ${secret}` },

@@ -8,12 +8,54 @@
 //   TWITTER_ACCESS_TOKEN
 //   TWITTER_ACCESS_SECRET
 //   SITE_URL             — e.g. https://hotpotato.xyz (no trailing slash)
+//
+// Optional:
+//   SOCIAL_DRY_RUN=true  — render and log every post but never call the X API.
+//                          Use this to watch a full posting cycle on Railway
+//                          before letting the account go live.
 
 const axios = require('axios');
 
 const RARITY_EMOJI  = { common: '🥔', rare: '💎', epic: '⚡', legendary: '👑' };
 const RARITY_COLOR  = { common: 0x888888, rare: 0x4FC3F7, epic: 0xCE93D8, legendary: 0xFFD600 };
 const RARITY_LABEL  = { common: 'Common', rare: 'Rare', epic: 'Epic', legendary: 'Legendary' };
+
+// ─── Tweet length ─────────────────────────────────────────────────────────────
+// X counts *weighted* characters, not JS string length: most Latin text is 1 per
+// code point, everything else (emoji, arrows, the … character) is 2, and every
+// URL is billed at a flat 23 no matter how long it really is.
+const TWEET_LIMIT  = 280;
+const TCO_LENGTH   = 23;
+const URL_RE       = /https?:\/\/\S+/g;
+const LIGHT_RANGES = [[0, 4351], [8192, 8205], [8208, 8223], [8242, 8247]];
+
+const DRY_RUN = () => process.env.SOCIAL_DRY_RUN === 'true';
+
+function tweetLength(text) {
+  const urls = text.match(URL_RE) || [];
+  let weight = urls.length * TCO_LENGTH;
+  for (const ch of text.replace(URL_RE, '')) {
+    const cp = ch.codePointAt(0);
+    weight += LIGHT_RANGES.some(([lo, hi]) => cp >= lo && cp <= hi) ? 1 : 2;
+  }
+  return weight;
+}
+
+// Trim `body` until the whole tweet fits, always keeping `tail` — the URL and
+// hashtags — intact. Blind slicing used to cut the link in half, which killed
+// the call to action on exactly the posts we most want to convert.
+function fitTweet(body, tail = '') {
+  const join = (b) => (tail ? `${b.trimEnd()}\n\n${tail}` : b.trimEnd());
+  if (tweetLength(join(body)) <= TWEET_LIMIT) return join(body);
+
+  const chars = Array.from(body); // code points, so emoji never split
+  while (chars.length > 0) {
+    chars.pop();
+    const candidate = chars.join('').trimEnd().replace(/[\s,.;:—-]+$/, '') + '…';
+    if (tweetLength(join(candidate)) <= TWEET_LIMIT) return join(candidate);
+  }
+  return tail;
+}
 
 function shortAddr(addr) {
   if (!addr || addr.length < 10) return addr;
@@ -251,31 +293,41 @@ async function postToX(params) {
     ? `New min: ${newAskingPrice} ETH (+${Math.round((askNum / paidNum - 1) * 100)}%)`
     : `New min: ${newAskingPrice} ETH`;
 
-  // Twitter version — plain text, punchy, within 280 chars
-  const text =
-`${title}
+  // Plain text, punchy. fitTweet keeps the link + hashtags whatever happens.
+  const tweetBody = `${title}
 
 ${headline}
 
 Paid ${pricePaid} ETH → earned ${emoji} ${label}
-${pctLine}
-
-👉 ${siteUrl}
+${pctLine}`;
+  const tweetTail = `👉 ${siteUrl}
 #HotPotato #NFT #Base`;
+  const text = fitTweet(tweetBody, tweetTail);
 
-  const url   = 'https://api.twitter.com/2/tweets';
-  const body  = { text };
+  const url        = 'https://api.twitter.com/2/tweets';
   const authHeader = oauthSign({
     method: 'POST', url,
     params: {},
     apiKey, apiSecret, accessToken, accessSecret,
   });
 
-  await axios.post(url, body, {
-    headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
-    timeout: 10000,
-  });
-  console.log('📣 X (Twitter) post sent');
+  if (DRY_RUN()) {
+    console.log(`🌵 [DRY RUN] would post to X (${tweetLength(text)}/${TWEET_LIMIT} chars):\n${text}\n`);
+    return;
+  }
+
+  try {
+    await axios.post(url, { text }, {
+      headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
+      timeout: 10000,
+    });
+    console.log(`📣 X (Twitter) post sent (${tweetLength(text)}/${TWEET_LIMIT} chars)`);
+  } catch (err) {
+    // X puts the real reason in response.data — err.message on its own is just
+    // "Request failed with status code 403", which tells you nothing.
+    const detail = err.response?.data;
+    throw new Error(`X post failed: ${detail ? JSON.stringify(detail) : err.message}`);
+  }
 }
 
 // ─── RAW TWEET (used by social scheduler) ─────────────────────────────────────
@@ -291,6 +343,18 @@ async function postRawTweet(text) {
     return false;
   }
 
+  // Defensive: callers should fit their own text, but never hand X a tweet we
+  // already know it will reject.
+  if (tweetLength(text) > TWEET_LIMIT) {
+    console.warn(`postRawTweet: text is ${tweetLength(text)} chars — trimming to fit`);
+    text = fitTweet(text);
+  }
+
+  if (DRY_RUN()) {
+    console.log(`🌵 [DRY RUN] would tweet (${tweetLength(text)}/${TWEET_LIMIT} chars):\n${text}\n`);
+    return true;
+  }
+
   try {
     const url        = 'https://api.twitter.com/2/tweets';
     const authHeader = oauthSign({ method: 'POST', url, params: {}, apiKey, apiSecret, accessToken, accessSecret });
@@ -298,10 +362,10 @@ async function postRawTweet(text) {
       headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
       timeout: 10000,
     });
-    console.log('📣 Raw tweet posted');
+    console.log(`📣 Raw tweet posted (${tweetLength(text)}/${TWEET_LIMIT} chars)`);
     return true;
   } catch (err) {
-    console.error('postRawTweet failed:', err.response?.data || err.message);
+    console.error('postRawTweet failed:', JSON.stringify(err.response?.data) || err.message);
     return false;
   }
 }
@@ -319,4 +383,4 @@ async function announcePotatoPassed(params) {
   }
 }
 
-module.exports = { announcePotatoPassed, postRawTweet, postRawDiscord };
+module.exports = { announcePotatoPassed, postRawTweet, postRawDiscord, tweetLength, fitTweet, TWEET_LIMIT };
