@@ -11,6 +11,7 @@ const playerRoutes   = require('./routes/player');
 const { startEventListener }    = require('./services/eventListener');
 const { startSocialScheduler }  = require('./services/socialScheduler');
 const { startEngagement }       = require('./services/engagement');
+const { startAnnounceRetry }    = require('./services/social');
 // H-4 fix: blanket rate limit on all API traffic
 const { globalLimiter } = require('./middleware/rateLimiter');
 
@@ -73,4 +74,7 @@ app.listen(PORT, () => {
   startEngagement().catch(err =>
     console.error('Engagement startup error:', err.message)
   );
+  // Retries pass announcements that failed at the moment of the sale — a pass
+  // only happens once, so a transient failure would otherwise lose it.
+  startAnnounceRetry();
 });

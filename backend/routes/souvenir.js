@@ -449,6 +449,55 @@ router.get('/demo', mutationLimiter, async (req, res) => {
 // in plaintext. Use server logs or a health-check endpoint that returns only
 // boolean "set / not set" values without exposing actual content.
 
+// POST /api/souvenir/announce/:tokenId
+// Manually (re-)announce a pass that was never posted — e.g. the social API was
+// out of credit at the moment of the sale, before the retry queue existed.
+// Rebuilds every field from on-chain data, so it can't invent numbers.
+router.post('/announce/:tokenId', requireInternalKey, async (req, res) => {
+  try {
+    const tokenId  = Number(req.params.tokenId);
+    const provider = new ethers.JsonRpcProvider(RPC_URL);
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, SOUVENIR_ABI, provider);
+
+    const data = await contract.souvenirs(tokenId);
+    if (Number(data.transferNumber) === 0) {
+      return res.status(404).json({ error: `No souvenir #${tokenId} on chain` });
+    }
+
+    // Pull the artwork out of the token's metadata so the Discord embed matches
+    // what was actually minted.
+    let imageUrl = null;
+    try {
+      const uri = await contract.tokenURI(tokenId);
+      if (uri) {
+        const metaUrl  = uri.startsWith('ipfs://') ? IPFS_GATEWAY + uri.slice(7) : uri;
+        const meta     = (await axios.get(metaUrl, { timeout: 10000 })).data;
+        const img      = meta?.image || '';
+        imageUrl = img.startsWith('ipfs://') ? IPFS_GATEWAY + img.slice(7) : (img || null);
+      }
+    } catch (err) {
+      console.warn(`Announce: could not read metadata for #${tokenId}:`, err.message);
+    }
+
+    const state  = await getPotatoState();
+    const params = {
+      hand:              Number(data.transferNumber),
+      fromAddress:       data.originalOwner,
+      holdDurationHours: Number(data.holdDuration) / 3600,
+      pricePaid:         ethers.formatEther(data.pricePaid),
+      rarity:            RARITY_MAP[Number(data.rarityTier)] || 'common',
+      newAskingPrice:    req.body?.newAskingPrice || state.currentPrice,
+      imageUrl,
+    };
+
+    await announcePotatoPassed(params);
+    res.json({ success: true, announced: params });
+  } catch (err) {
+    console.error('Manual announce failed:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // requireInternalKey added: unauthenticated calls cost a real Discord webhook hit per request.
 router.post('/test-discord', requireInternalKey, async (req, res) => {
   try {

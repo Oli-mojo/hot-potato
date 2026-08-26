@@ -15,6 +15,8 @@
 //                          before letting the account go live.
 
 const axios = require('axios');
+const fs    = require('fs');
+const path  = require('path');
 
 const RARITY_EMOJI  = { common: '🥔', rare: '💎', epic: '⚡', legendary: '👑' };
 const RARITY_COLOR  = { common: 0x888888, rare: 0x4FC3F7, epic: 0xCE93D8, legendary: 0xFFD600 };
@@ -381,17 +383,130 @@ async function postRawTweet(text) {
   }
 }
 
-// ─── MAIN EXPORT ──────────────────────────────────────────────────────────────
-async function announcePotatoPassed(params) {
-  const results = await Promise.allSettled([
-    postToDiscord(params),
-    postToX(params),
-  ]);
-  for (const r of results) {
-    if (r.status === 'rejected') {
-      console.error('Social post failed:', r.reason?.message || r.reason);
-    }
+// ─── ANNOUNCE RETRY QUEUE ─────────────────────────────────────────────────────
+// A pass happens once. If the announcement fails at that moment — expired API
+// credits, a rate limit, a network blip — there is no second chance and the
+// post is lost forever. Failures are persisted here and retried with backoff.
+//
+// Set ANNOUNCE_QUEUE_FILE to a path on the Railway Volume so the queue survives
+// redeploys, same as SCHEDULER_FILE and STATE_FILE.
+
+const ANNOUNCE_QUEUE_FILE = process.env.ANNOUNCE_QUEUE_FILE
+  || path.join(__dirname, '../data/announceQueue.json');
+
+const MAX_ANNOUNCE_ATTEMPTS = 6;
+const RETRY_INTERVAL_MS     = 10 * 60 * 1000; // 10 minutes
+
+function loadQueue() {
+  try { return JSON.parse(fs.readFileSync(ANNOUNCE_QUEUE_FILE, 'utf8')); }
+  catch { return []; }
+}
+
+function saveQueue(queue) {
+  try {
+    fs.mkdirSync(path.dirname(ANNOUNCE_QUEUE_FILE), { recursive: true });
+    fs.writeFileSync(ANNOUNCE_QUEUE_FILE, JSON.stringify(queue, null, 2));
+  } catch (err) {
+    console.warn('Announce queue: could not save:', err.message);
   }
 }
 
-module.exports = { announcePotatoPassed, postRawTweet, postRawDiscord, tweetLength, fitTweet, TWEET_LIMIT, oauthSign, DRY_RUN };
+// Exponential backoff: 5m, 10m, 20m, 40m, 80m, capped at 6h.
+function backoffMs(attempts) {
+  return Math.min(6 * 3600000, 5 * 60000 * Math.pow(2, attempts));
+}
+
+function enqueueAnnounce(params, needX, needDiscord, reason) {
+  const queue = loadQueue();
+  queue.push({
+    id:        `hand-${params.hand}-${Date.now()}`,
+    params,
+    needX,
+    needDiscord,
+    attempts:  1,
+    nextTryAt: Date.now() + backoffMs(1),
+    lastError: String(reason || '').slice(0, 300),
+  });
+  saveQueue(queue);
+  console.log(`📮 Queued failed announcement for hand #${params.hand} (X:${needX} Discord:${needDiscord}) — will retry`);
+}
+
+// Retries anything due. Safe to call on a timer; does nothing when the queue is
+// empty. Each channel is retried independently so a working one is never
+// double-posted.
+async function retryQueuedAnnouncements() {
+  const queue = loadQueue();
+  if (queue.length === 0) return;
+
+  const now  = Date.now();
+  const kept = [];
+  let changed = false; // any attempt made, not just any item dropped
+
+  for (const item of queue) {
+    if (now < item.nextTryAt) { kept.push(item); continue; }
+    changed = true;
+
+    let { needX, needDiscord } = item;
+    let lastError = item.lastError;
+
+    if (needDiscord) {
+      try { await postToDiscord(item.params); needDiscord = false; }
+      catch (err) { lastError = err.message; }
+    }
+    if (needX) {
+      try { await postToX(item.params); needX = false; }
+      catch (err) { lastError = err.message; }
+    }
+
+    if (!needX && !needDiscord) {
+      console.log(`✅ Retried announcement for hand #${item.params.hand} — sent`);
+      continue; // drop from queue
+    }
+
+    const attempts = item.attempts + 1;
+    if (attempts >= MAX_ANNOUNCE_ATTEMPTS) {
+      console.warn(`Announce queue: giving up on hand #${item.params.hand} after ${attempts} attempts — ${lastError}`);
+      continue; // drop from queue
+    }
+
+    kept.push({ ...item, needX, needDiscord, attempts, lastError,
+                nextTryAt: now + backoffMs(attempts) });
+    console.log(`Announce queue: hand #${item.params.hand} still failing (attempt ${attempts}/${MAX_ANNOUNCE_ATTEMPTS}), next retry in ${Math.round(backoffMs(attempts)/60000)}m`);
+  }
+
+  // Must save whenever an attempt was made, not only when an item was dropped —
+  // otherwise the incremented attempt count is lost and the cap never bites.
+  if (changed) saveQueue(kept);
+}
+
+function startAnnounceRetry() {
+  const pending = loadQueue().length;
+  if (pending > 0) console.log(`📮 Announce queue: ${pending} pending announcement(s) to retry`);
+  setInterval(
+    () => retryQueuedAnnouncements().catch(err => console.error('Announce retry error:', err.message)),
+    RETRY_INTERVAL_MS
+  );
+}
+
+// ─── MAIN EXPORT ──────────────────────────────────────────────────────────────
+async function announcePotatoPassed(params) {
+  const [discordResult, xResult] = await Promise.allSettled([
+    postToDiscord(params),
+    postToX(params),
+  ]);
+
+  const discordFailed = discordResult.status === 'rejected';
+  const xFailed       = xResult.status === 'rejected';
+
+  if (discordFailed) console.error('Discord post failed:', discordResult.reason?.message || discordResult.reason);
+  if (xFailed)       console.error('X post failed:', xResult.reason?.message || xResult.reason);
+
+  // Queue whichever channel failed — the pass won't come round again.
+  if (discordFailed || xFailed) {
+    enqueueAnnounce(params, xFailed, discordFailed,
+      (xResult.reason || discordResult.reason)?.message);
+  }
+}
+
+module.exports = { announcePotatoPassed, postRawTweet, postRawDiscord, tweetLength, fitTweet, TWEET_LIMIT, oauthSign, DRY_RUN,
+                   startAnnounceRetry, retryQueuedAnnouncements };
