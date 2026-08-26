@@ -28,6 +28,11 @@ module.exports = {
   // quotes, people talking about the potato. That's community management, not
   // reach farming, and it's the lowest-risk automation on the platform.
   likes: {
+    // How many mentions to pull per check. Under X's pay-per-use pricing every
+    // post returned is a billable read ($0.005), so this number is a direct
+    // monthly cost: 25 was ~$15/mo, 5 is ~$3/mo. Raise it only if the service
+    // is regularly finding nothing to like.
+    mentionsPerCheck: 5,
     // Skip anything older than this — liking a three-week-old reply reads as a bot.
     maxAgeHours: 48,
     // Never like the same author twice within this window, so one chatty

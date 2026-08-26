@@ -146,7 +146,7 @@ async function tryLike(state, now) {
   if (!ownId) return false;
 
   const data = await xGet(`${API}/users/${ownId}/mentions`, {
-    max_results:   '25',
+    max_results:   String(targets.likes.mentionsPerCheck ?? 5),
     'tweet.fields': 'created_at,author_id',
   });
 
