@@ -231,6 +231,17 @@ async function postRawDiscord({ title, description, color, fields, mention }) {
 // ─── X (TWITTER) ──────────────────────────────────────────────────────────────
 const crypto = require('crypto');
 
+// OAuth 1.0a requires RFC 3986 percent-encoding. encodeURIComponent leaves
+// ! * ' ( ) unescaped, which produces a signature X will reject. Harmless while
+// we only ever signed an empty param set; not harmless now that the engagement
+// service signs GET requests with real query params.
+function pctEncode(str) {
+  return encodeURIComponent(str).replace(
+    /[!*'()]/g,
+    (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase()
+  );
+}
+
 function oauthSign({ method, url, params, apiKey, apiSecret, accessToken, accessSecret }) {
   const nonce     = crypto.randomBytes(16).toString('hex');
   const timestamp = Math.floor(Date.now() / 1000).toString();
@@ -246,21 +257,21 @@ function oauthSign({ method, url, params, apiKey, apiSecret, accessToken, access
 
   const allParams = { ...params, ...oauthParams };
   const paramStr  = Object.keys(allParams).sort()
-    .map(k => `${encodeURIComponent(k)}=${encodeURIComponent(allParams[k])}`)
+    .map(k => `${pctEncode(k)}=${pctEncode(allParams[k])}`)
     .join('&');
 
   const baseString = [
     method.toUpperCase(),
-    encodeURIComponent(url),
-    encodeURIComponent(paramStr),
+    pctEncode(url),
+    pctEncode(paramStr),
   ].join('&');
 
-  const signingKey = `${encodeURIComponent(apiSecret)}&${encodeURIComponent(accessSecret)}`;
+  const signingKey = `${pctEncode(apiSecret)}&${pctEncode(accessSecret)}`;
   const signature  = crypto.createHmac('sha1', signingKey).update(baseString).digest('base64');
 
   oauthParams.oauth_signature = signature;
   const header = 'OAuth ' + Object.keys(oauthParams).sort()
-    .map(k => `${encodeURIComponent(k)}="${encodeURIComponent(oauthParams[k])}"`)
+    .map(k => `${pctEncode(k)}="${pctEncode(oauthParams[k])}"`)
     .join(', ');
 
   return header;
@@ -383,4 +394,4 @@ async function announcePotatoPassed(params) {
   }
 }
 
-module.exports = { announcePotatoPassed, postRawTweet, postRawDiscord, tweetLength, fitTweet, TWEET_LIMIT };
+module.exports = { announcePotatoPassed, postRawTweet, postRawDiscord, tweetLength, fitTweet, TWEET_LIMIT, oauthSign, DRY_RUN };

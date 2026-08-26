@@ -10,6 +10,7 @@ const souvenirRoutes = require('./routes/souvenir');
 const playerRoutes   = require('./routes/player');
 const { startEventListener }    = require('./services/eventListener');
 const { startSocialScheduler }  = require('./services/socialScheduler');
+const { startEngagement }       = require('./services/engagement');
 // H-4 fix: blanket rate limit on all API traffic
 const { globalLimiter } = require('./middleware/rateLimiter');
 
@@ -51,7 +52,7 @@ app.get('/api/health', (req, res) => {
 // Helps diagnose misconfiguration without exposing secrets in Railway logs.
 function logEnvAudit() {
   const required = ['CONTRACT_ADDRESS', 'SOUVENIR_ADDRESS', 'RPC_URL', 'WALLET_PRIVATE_KEY', 'GENERATE_SECRET', 'ALLOWED_ORIGIN'];
-  const optional = ['PINATA_JWT', 'FAL_API_KEY', 'FAL_LORA_URL', 'DISCORD_WEBHOOK_URL', 'PROMO_CODES', 'SITE_URL'];
+  const optional = ['PINATA_JWT', 'FAL_API_KEY', 'FAL_LORA_URL', 'DISCORD_WEBHOOK_URL', 'PROMO_CODES', 'SITE_URL', 'SOCIAL_DRY_RUN', 'ENGAGEMENT_ENABLED'];
   const fmt = (vars) => vars.map(k => `${k}=${process.env[k] ? '✅' : '❌'}`).join('  ');
   console.log('🔐 Env audit (required):', fmt(required));
   console.log('🔧 Env audit (optional):', fmt(optional));
@@ -68,5 +69,8 @@ app.listen(PORT, () => {
   );
   startSocialScheduler().catch(err =>
     console.error('SocialScheduler startup error:', err.message)
+  );
+  startEngagement().catch(err =>
+    console.error('Engagement startup error:', err.message)
   );
 });
