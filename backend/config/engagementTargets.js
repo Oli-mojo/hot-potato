@@ -44,6 +44,49 @@ module.exports = {
     ],
   },
 
+  // ── Discovery ──────────────────────────────────────────────────────────────
+  // Finds people talking about your corner of the world and engages with them.
+  //
+  // Relevance is the primary filter and the follower band is secondary, on
+  // purpose. A 300-follower account with no interest in onchain games is worth
+  // nothing to you; a 300-follower account deep in Base culture is exactly who
+  // you want, and engaging with them is genuine participation rather than
+  // follow-farming — which is both the honest framing and the defensible one.
+  //
+  // COST: this is the expensive part of the whole system. Every post returned
+  // by a search is a billable read ($0.005), so maxResultsPerSearch and
+  // maxSearchesPerDay are your spend dial. Defaults below work out at roughly
+  // $0.05/day in reads. Author follower counts come back in the same response
+  // via expansions, so there are no extra $0.01 profile lookups.
+
+  discover: {
+    enabled: true,
+
+    // X recent-search queries (7-day window on pay-per-use). Tune these — they
+    // decide who you end up in front of. Keep them narrow; broad queries burn
+    // reads on noise.
+    queries: [
+      '"onchain game" -is:retweet -is:reply lang:en',
+      '(nft OR nfts) base -is:retweet -is:reply lang:en',
+      '(harberger OR "always for sale") -is:retweet lang:en',
+    ],
+
+    // Who's worth engaging. Below the floor is usually a bot or a dead account;
+    // above the ceiling they'll never notice you.
+    followerRange: { min: 100, max: 5000 },
+
+    // Don't engage with posts older than this — it reads as a bot trawling.
+    maxAgeHours: 24,
+
+    // Spend dial. 10 results x 3 searches = at most 30 reads/day = $0.15/day.
+    maxResultsPerSearch: 10,
+    maxSearchesPerDay:   3,
+
+    // Follow the authors we like, at most this many per day. Set to 0 to like
+    // only and never follow strangers.
+    followDiscoveredPerDay: 1,
+  },
+
   // ── Pace ───────────────────────────────────────────────────────────────────
   // Quality over quantity. Some days nothing happens at all — that's the point.
   pace: {

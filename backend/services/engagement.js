@@ -61,6 +61,12 @@ function freshState() {
     likedAuthorsAt: {},     // authorId -> timestamp, for the per-author cooldown
     backoffUntil:   null,   // set when the API pushes back
     ownUserId:      null,
+    searchesToday:  0,      // discovery searches run today
+    followsToday:   0,      // strangers followed today
+    seenAuthors:    [],     // discovered authors already engaged with
+    queryCursor:    0,      // rotate through the query list
+    candidateQueue: [],     // eligible targets found by the last search
+    estimatedSpend: 0,      // running $ estimate, reset daily
   };
 }
 
@@ -111,6 +117,13 @@ function dayKey(now) {
 
 // ── X API ──────────────────────────────────────────────────────────────────
 
+// Rough running cost estimate so the logs show what this is spending.
+// Rates are X's pay-per-use list prices as of Aug 2026 — update if they move.
+const COST = { read: 0.005, action: 0.015, lookup: 0.01 };
+function bill(state, kind, units = 1) {
+  state.estimatedSpend = Number(((state.estimatedSpend || 0) + COST[kind] * units).toFixed(4));
+}
+
 async function xGet(url, params = {}) {
   const auth  = oauthSign({ method: 'GET', url, params, ...creds() });
   const res   = await axios.get(url, {
@@ -151,6 +164,7 @@ async function tryLike(state, now) {
   });
 
   const mentions  = data?.data || [];
+  bill(state, 'read', mentions.length);
   const cooldown  = (targets.likes.perAuthorCooldownHours ?? 24) * 3600000;
   const maxAge    = (targets.likes.maxAgeHours ?? 48) * 3600000;
   const ignore    = new Set((targets.likes.ignore || []).map(h => h.toLowerCase()));
@@ -171,11 +185,122 @@ async function tryLike(state, now) {
     console.log(`🌵 [DRY RUN] would like tweet ${candidate.id} from author ${candidate.author_id}`);
   } else {
     await xPost(`${API}/users/${ownId}/likes`, { tweet_id: candidate.id });
+    bill(state, 'action');
     console.log(`❤️  Liked mention ${candidate.id} (author ${candidate.author_id})`);
   }
 
   state.likedTweets = [candidate.id, ...state.likedTweets].slice(0, 500);
   state.likedAuthorsAt[candidate.author_id] = now;
+  return true;
+}
+
+// ── Action: discover someone relevant and engage ───────────────────────────
+// Searches for people talking about our topics, narrows to a follower band,
+// likes one post and optionally follows the author. Relevance first, follower
+// count second — see the note in config/engagementTargets.js.
+
+async function tryDiscover(state, now) {
+  const d = targets.discover;
+  if (!d?.enabled || !d.queries?.length) return false;
+  if (state.searchesToday >= (d.maxSearchesPerDay ?? 3)) return false;
+
+  const ownId = await getOwnUserId(state);
+  if (!ownId) return false;
+
+  // Rotate queries so one topic doesn't dominate
+  // Work through candidates already found before paying for another search.
+  // One search costs ~10 reads; harvesting every eligible author from it means
+  // a day's actions cost one or two searches, not one search each.
+  state.candidateQueue = state.candidateQueue || [];
+  if (state.candidateQueue.length === 0) {
+    if (state.searchesToday >= (d.maxSearchesPerDay ?? 3)) return false;
+    await refillCandidates(state, now, d, ownId);
+  }
+  if (state.candidateQueue.length === 0) return false;
+
+  return engageCandidate(state, d, ownId);
+}
+
+async function refillCandidates(state, now, d, ownId) {
+  const query = d.queries[state.queryCursor % d.queries.length];
+  state.queryCursor = (state.queryCursor + 1) % d.queries.length;
+  state.searchesToday += 1;
+
+  const data = await xGet(`${API}/tweets/search/recent`, {
+    query,
+    max_results:    String(Math.max(10, d.maxResultsPerSearch ?? 10)),
+    'tweet.fields': 'created_at,author_id,public_metrics',
+    expansions:     'author_id',
+    // Follower counts arrive with the same response — no separate lookups.
+    'user.fields':  'public_metrics,description',
+  });
+
+  const posts = data?.data || [];
+  const users = new Map((data?.includes?.users || []).map(u => [u.id, u]));
+  bill(state, 'read', posts.length);
+
+  const { min = 100, max = 5000 } = d.followerRange || {};
+  const maxAge = (d.maxAgeHours ?? 24) * 3600000;
+
+  const eligible = posts.filter((t) => {
+    if (t.author_id === ownId) return false;
+    if (state.seenAuthors.includes(t.author_id)) return false;
+    if (state.likedTweets.includes(t.id)) return false;
+    if (t.created_at && now - Date.parse(t.created_at) > maxAge) return false;
+    const author = users.get(t.author_id);
+    if (!author) return false;
+    const followers = author.public_metrics?.followers_count ?? 0;
+    return followers >= min && followers <= max;
+  });
+
+  // Keep one post per author — engaging twice with the same person in a day
+  // is the opposite of subtle.
+  const byAuthor = new Map();
+  for (const t of eligible) {
+    if (!byAuthor.has(t.author_id)) {
+      const author = users.get(t.author_id);
+      byAuthor.set(t.author_id, {
+        tweetId:   t.id,
+        authorId:  t.author_id,
+        username:  author.username || t.author_id,
+        followers: author.public_metrics?.followers_count ?? 0,
+        query,
+      });
+    }
+  }
+
+  state.candidateQueue = [...state.candidateQueue, ...byAuthor.values()];
+  console.log(`Engagement: "${query}" — ${posts.length} read, ${byAuthor.size} eligible (band ${min}-${max})`);
+}
+
+async function engageCandidate(state, d, ownId) {
+  const candidate = state.candidateQueue.shift();
+  const { tweetId, authorId, username, followers, query } = candidate;
+
+  if (dryRun()) {
+    console.log(`🌵 [DRY RUN] would like ${tweetId} by @${username} (${followers} followers)`);
+  } else {
+    await xPost(`${API}/users/${ownId}/likes`, { tweet_id: tweetId });
+    bill(state, 'action');
+    console.log(`❤️  Liked @${username} (${followers} followers) — via "${query}"`);
+  }
+  state.likedTweets = [tweetId, ...state.likedTweets].slice(0, 500);
+  state.seenAuthors = [authorId, ...state.seenAuthors].slice(0, 1000);
+
+  // Optionally follow the author too — capped hard, and never more than once.
+  const followCap = d.followDiscoveredPerDay ?? 0;
+  if (followCap > 0 && state.followsToday < followCap && !state.followed.includes(authorId)) {
+    if (dryRun()) {
+      console.log(`🌵 [DRY RUN] would follow @${username}`);
+    } else {
+      await xPost(`${API}/users/${ownId}/following`, { target_user_id: authorId });
+      bill(state, 'action');
+      console.log(`👤 Followed @${username} (${followers} followers)`);
+    }
+    state.followed     = [...state.followed, authorId];
+    state.followsToday += 1;
+  }
+
   return true;
 }
 
@@ -190,6 +315,7 @@ async function tryFollow(state) {
 
   for (const username of list) {
     const lookup = await xGet(`${API}/users/by/username/${username}`);
+    bill(state, 'lookup');
     const id     = lookup?.data?.id;
     if (!id || state.followed.includes(id)) continue;
 
@@ -197,6 +323,7 @@ async function tryFollow(state) {
       console.log(`🌵 [DRY RUN] would follow @${username} (${id})`);
     } else {
       await xPost(`${API}/users/${ownId}/following`, { target_user_id: id });
+      bill(state, 'action');
       console.log(`👤 Followed @${username}`);
     }
     state.followed = [...state.followed, id];
@@ -218,11 +345,17 @@ async function runTick() {
   if (state.day !== today) {
     const p = targets.pace;
     const silent = Math.random() < (p.zeroDayChance ?? 0.25);
+    const spentYesterday = state.estimatedSpend || 0;
     state.day    = today;
     state.used   = 0;
     state.budget = silent ? 0 : randInt(p.minPerActiveDay ?? 3, p.maxPerActiveDay ?? 7);
-    state.nextActionAt = null;
-    console.log(`Engagement: ${today} budget = ${state.budget}${silent ? ' (quiet day)' : ''}`);
+    state.nextActionAt   = null;
+    state.searchesToday  = 0;
+    state.followsToday   = 0;
+    state.candidateQueue = [];
+    state.estimatedSpend = 0;
+    console.log(`Engagement: ${today} budget = ${state.budget}${silent ? ' (quiet day)' : ''}` +
+                (spentYesterday ? ` | yesterday cost ~$${spentYesterday.toFixed(2)}` : ''));
     saveState(state);
   }
 
@@ -244,15 +377,18 @@ async function runTick() {
   if (now < state.nextActionAt) return;
 
   try {
-    // Prefer liking a mention — it's responsive rather than performative.
-    // Fall back to one allowlisted follow if there's nothing to respond to.
-    const acted = (await tryLike(state, now)) || (await tryFollow(state));
+    // Mentions first — responding to someone who talked to you is the most
+    // natural thing to do and the cheapest (5 reads). Then the curated
+    // allowlist. Discovery last, because it's the expensive one.
+    const acted = (await tryLike(state, now))
+               || (await tryFollow(state))
+               || (await tryDiscover(state, now));
 
     if (acted) {
       state.used        += 1;
       state.lastActionAt = now;
       state.nextActionAt = now + nextGapMs(state, now);
-      console.log(`Engagement: ${state.used}/${state.budget} actions used today`);
+      console.log(`Engagement: ${state.used}/${state.budget} actions today | ~$${(state.estimatedSpend || 0).toFixed(2)} spent`);
     } else {
       // Nothing worth doing — check again later rather than burning budget.
       state.nextActionAt = now + 60 * 60000;
